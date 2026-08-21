@@ -3,6 +3,7 @@ import { Montserrat, Geist } from "next/font/google";
 import "./globals.css";
 import Providers from "@/providers/provider";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -27,7 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html className={cn("h-full", "antialiased", montserrat.variable, "font-sans", geist.variable)}>
-      <body className="w-8xl mx-auto px-8">
+      <body>
+        <Toaster/>
         <Providers>{children}</Providers>
       </body>
     </html>

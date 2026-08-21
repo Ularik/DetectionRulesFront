@@ -2,38 +2,65 @@
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useRules } from "@/lib/hooks/rules";
 import { RuleType } from "@/types";
+import { Trash2 } from "lucide-react";
+import { useDeleteRule } from "@/lib/hooks/rules";
+import { toast } from "sonner";
+import axios from "axios";
 
+interface Props {
+  rule: RuleType;
+}
 
-export default function RuleTable() {
-  const { isPending, isError, data, error } = useRules({
-    limit: 10,
-    offset: 0,
-  });
+export default function RuleTable({ rule }: Props) {
+
 
   const formatValue = (value: unknown): string => {
     if (Array.isArray(value)) return value.join(", ");
     return String(value);
   };
 
+  const { mutate, error: delError } = useDeleteRule();
+
+  const deleteRule = async (rule_id: string) => {
+    mutate(rule_id, {
+      onSuccess: () =>
+        toast.success("Правило удалено", { position: "top-center" }),
+      onError: (error) => {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          toast.error("Запись не найдена", { position: "top-center" });
+        } else {
+          toast.error("Ошибка удаления", { position: "top-center" });
+        }
+      },
+    });
+  };
+
   return (
-    <>
-      {data?.items.map((rule, index) => (
-        <div
-          key={index}
-          className="mx-4 my-6 rounded-2xl border shadow-sm overflow-hidden max-w-2xl"
+    <div className="">
+       <div
+          className="mx-4 my-6 rounded-2xl border shadow-sm overflow-hidden"
         >
-          <div className="px-6 py-4 bg-muted/50 border-b">
-            <h2 className="text-lg font-semibold">{rule.rule_id}</h2>
-            <p className="text-sm text-muted-foreground">{rule.description}</p>
+          <div className="px-6 py-4 bg-muted/50 border-b flex justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">{rule.rule_id}</h2>
+              <p className="text-sm text-muted-foreground">
+                {rule.description}
+              </p>
+            </div>
+            <button
+              aria-label="Удалить"
+              type="button"
+              onClick={() => deleteRule(rule.rule_id)}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-red-500 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
           <Table>
             <TableHeader>
@@ -61,7 +88,6 @@ export default function RuleTable() {
             </TableBody>
           </Table>
         </div>
-      ))}
-    </>
+    </div>
   );
 }

@@ -4,9 +4,8 @@ import {
   useForm,
   Controller,
   useFieldArray,
-  UseFormRegister,
 } from "react-hook-form";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -17,8 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { RuleCreateType } from "@/types";
 import { useSeverities } from "@/lib/hooks/severities";
+import { useCreateRule } from "@/lib/hooks/rules";
+import ArrayField, { SectionTitle, FieldError } from "@/services/utils";
+import { toast } from "sonner";
+
 
 const inputClass =
   "w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition " +
@@ -26,77 +30,6 @@ const inputClass =
 
 const errorClass = "border-red-500 focus-visible:ring-red-500";
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="text-xs font-semibold text-red-500 pt-0.5">{message}</p>;
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-sm font-semibold text-[#1E2B6D] uppercase tracking-wider pt-2 border-t border-gray-100">
-      {children}
-    </h3>
-  );
-}
-
-function ArrayField({
-  label,
-  fieldItems,
-  register,
-  append,
-  remove,
-  errors,
-  name,
-  isPending,
-  addLabel = "Добавить",
-}: {
-  label: string;
-  fieldItems: { id: string }[];
-  register: UseFormRegister<any>;
-  append: (v: string) => void;
-  remove: (i: number) => void;
-  errors: Array<{ message?: string } | undefined>;
-  name: string;
-  isPending: boolean;
-  addLabel?: string;
-}) {
-  return (
-    <div className="space-y-3">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="space-y-2">
-        {fieldItems.map((field, index) => (
-          <div key={field.id} className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Input
-                {...register(`${name}.${index}` as never, {
-                  required: "Поле не может быть пустым",
-                })}
-                className={`${inputClass} ${errors[index] ? errorClass : ""}`}
-                disabled={isPending}
-              />
-              <button
-                aria-label="Удалить"
-                type="button"
-                onClick={() => remove(index)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-red-500 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-            <FieldError message={errors[index]?.message} />
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => append("")}
-        className="inline-flex items-center justify-center rounded-xl text-sm font-semibold border border-gray-200 text-[#1E2B6D] bg-transparent hover:bg-gray-50 h-10 px-4 w-full transition-colors"
-      >
-        <Plus className="mr-2 h-4 w-4" /> {addLabel}
-      </button>
-    </div>
-  );
-}
 
 export default function RuleForm() {
   const { data = [], isPending: isSeverityLoading } = useSeverities();
@@ -179,8 +112,14 @@ export default function RuleForm() {
     name: "recommendations" as never,
   });
 
+  const { mutate } = useCreateRule();
   const onSubmit = (data: RuleCreateType) => {
-    console.log(data);
+    mutate(data, {
+      onSuccess: () => {
+        reset();
+        toast.success("Создали правило!", { position: "top-center" });
+      }
+    });
   };
 
   return (
@@ -263,8 +202,8 @@ export default function RuleForm() {
       {/* ── Оценка ── */}
       <SectionTitle>Оценка</SectionTitle>
 
-      <div className="grid grid-cols-1 gap-4">
-        <div className="space-y-1">
+      <div className="w-full">
+        <div className="space-y-1 w-full">
           <label className="text-sm font-medium text-gray-700">
             Критичность
           </label>
@@ -279,30 +218,15 @@ export default function RuleForm() {
                 disabled={isPending}
               >
                 <SelectTrigger
-                  className={`w-full ${inputClass} ${errors.severity_hint ? "border-red-500" : ""}`}
+                  className={`w-full ${errors.severity_hint ? "border-red-500" : ""}`}
                 >
-                  <SelectValue
-                    placeholder={
-                      isSeverityLoading ? (
-                        <span className="flex items-center gap-2 text-gray-400">
-                          <Loader2 className="w-4 h-4 animate-spin text-[#1E2B6D]" />{" "}
-                          Загрузка...
-                        </span>
-                      ) : (
-                        "Выберите критичность"
-                      )
-                    }
-                  />
+                  <SelectValue placeholder="Выберите критичность" />
                 </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  sideOffset={4}
-                  className="w-[var(--radix-select-trigger-width)] min-w-[unset]"
-                >
+                <SelectContent position="popper">
                   <SelectGroup>
-                    {data?.map((cat) => (
-                      <SelectItem key={cat} value={cat} className="">
-                        {cat}
+                    {data.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -435,6 +359,8 @@ export default function RuleForm() {
       <ArrayField
         label="Fields"
         fieldItems={fieldItems}
+        inputClass={inputClass}
+        errorClass={errorClass}
         register={register}
         append={appendField}
         remove={removeField}
@@ -447,6 +373,8 @@ export default function RuleForm() {
       <ArrayField
         label="MITRE IDs"
         fieldItems={mitrItems}
+        inputClass={inputClass}
+        errorClass={errorClass}
         register={register}
         append={appendMitre}
         remove={removeMitre}
@@ -459,6 +387,8 @@ export default function RuleForm() {
       <ArrayField
         label="Tactics"
         fieldItems={tacticItems}
+        inputClass={inputClass}
+        errorClass={errorClass}
         register={register}
         append={appendTactic}
         remove={removeTactic}
@@ -471,6 +401,8 @@ export default function RuleForm() {
       <ArrayField
         label="Tags"
         fieldItems={tagItems}
+        inputClass={inputClass}
+        errorClass={errorClass}
         register={register}
         append={appendTag}
         remove={removeTag}
@@ -483,6 +415,8 @@ export default function RuleForm() {
       <ArrayField
         label="Рекомендации"
         fieldItems={recItems}
+        inputClass={inputClass}
+        errorClass={errorClass}
         register={register}
         append={appendRec}
         remove={removeRec}

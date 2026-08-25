@@ -13,8 +13,8 @@ export default function DetectionRules() {
     <>
       <h1 className="text-3xl font-bold">Detection Rules</h1>
       <div className="flex gap-3 flex-wrap my-5">
-            {data?.items.map((rule, index) => (
-              <RuleCard key={index} rule={rule}/>
+            {data?.items.map((rule) => (
+              <RuleCard key={rule.rule_id} rule={rule}/>
             ))}
       </div>
     </>

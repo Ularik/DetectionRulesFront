@@ -1,6 +1,15 @@
 import { LayoutDashboard, LucideIcon, Plane, Tags } from "lucide-react";
 
-export const apiURL = "http://127.0.0.1:8001/";
+export const isDev = process.env.NODE_ENV === "development";
+
+// На продакшене (в Docker) запросы будут идти на тот же домен, где открыт сайт, в папку /api/
+// В режиме разработки (локально) будет использоваться localhost:8000 (или 8001)
+export const apiURL = isDev
+  ? "http://localhost:8001/api"
+  : typeof window === "undefined"
+    ? "http://backend:8000/api" // имя сервиса из docker-compose + внутренний порт
+    : "/api";
+
 
 
 export type DashboardMenuItem = {
@@ -12,18 +21,9 @@ export type DashboardMenuItem = {
 
 export const dashboardMenuItems: DashboardMenuItem[] = [
   {
-    label: "Панель",
-    href: "/",
+    label: "Правила обнаружения",
+    href: "/admin",
     icon: LayoutDashboard,
   },
-  {
-    label: "Правила обнаружения",
-    href: "/rules",
-    icon: Plane,
-  },
-  {
-    label: "Добавить правило",
-    href: "/addRules",
-    icon: Tags,
-  }
+
 ];

@@ -13,7 +13,7 @@ import axios from "axios";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 
 interface Props {
@@ -21,7 +21,6 @@ interface Props {
 }
 
 export default function RuleCard({ rule }: Props) {
-    const route = useRouter();
     const { mutate, error: delError } = useDeleteRule();
 
     const deleteRule = async (rule_id: string) => {
@@ -84,7 +83,10 @@ export default function RuleCard({ rule }: Props) {
         </CardHeader>
         <CardContent className="h-full">
           {ruleFields.map((key, index) => (
-            <div className="grid grid-cols-2 gap-5 mt-2 border-b items-center justify-between">
+            <div
+              key={key}
+              className="grid grid-cols-2 gap-5 mt-2 border-b items-center justify-between"
+            >
               <p>{key}</p>
               <p
                 className="overflow-hidden text-ellipsis whitespace-nowrap"
@@ -105,7 +107,9 @@ export default function RuleCard({ rule }: Props) {
           </div>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          <button onClick={() => route.push(`rules/${rule.rule_id}`)}>Открыть таблицу</button>
+          <Link href={`${rule.rule_id}`}>
+            Открыть таблицу
+          </Link>
         </CardFooter>
       </Card>
     </>

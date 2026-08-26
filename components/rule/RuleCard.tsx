@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useDeleteRule } from "@/lib/hooks/rules";
+import { useDeleteRule } from "@/services/rules/adminRules/ruleQueries";
 import { RuleType } from "@/types";
 import axios from "axios";
 import { Trash2 } from "lucide-react";

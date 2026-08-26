@@ -19,8 +19,9 @@ import {
 
 import { RuleCreateType } from "@/types";
 import { useSeverities } from "@/lib/hooks/severities";
-import { useCreateRule } from "@/lib/hooks/rules";
+import { useAdminCreateRule } from "@/services/rules/adminRules/ruleQueries";
 import ArrayField, { SectionTitle, FieldError } from "@/services/utils";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 
@@ -32,6 +33,7 @@ const errorClass = "border-red-500 focus-visible:ring-red-500";
 
 
 export default function RuleForm() {
+  const router = useRouter();
   const { data = [], isPending: isSeverityLoading } = useSeverities();
   const isPending = false;
 
@@ -112,11 +114,11 @@ export default function RuleForm() {
     name: "recommendations" as never,
   });
 
-  const { mutate } = useCreateRule();
+  const { mutate } = useAdminCreateRule();
   const onSubmit = (data: RuleCreateType) => {
     mutate(data, {
       onSuccess: () => {
-        reset();
+        router.back();
         toast.success("Создали правило!", { position: "top-center" });
       }
     });

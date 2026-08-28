@@ -22,8 +22,12 @@ export type DashboardMenuItem = {
 export const dashboardMenuItems: DashboardMenuItem[] = [
   {
     label: "Правила обнаружения",
-    href: "/admin",
+    href: "/admin/rules",
     icon: LayoutDashboard,
   },
-
+  {
+    label: "Аудит",
+    href: "/admin/audit",
+    icon: Plane,
+  },
 ];

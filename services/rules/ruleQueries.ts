@@ -1,10 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   fetchRules,
   fetchOneRule,
 } from "@/services/rules/ruleRequests";
 import { QueryFiltersType } from "@/types";
-import { toast } from "sonner";
 
 
 export const useRules = (filters: QueryFiltersType) => {
@@ -20,7 +19,7 @@ export const useRules = (filters: QueryFiltersType) => {
 
 export const useOneRule = (rule_id: string) => {
   return useQuery({
-    queryKey: ["ruleOne", rule_id],
+    queryKey: ["rules", rule_id],
     queryFn: () => fetchOneRule(rule_id),
   });
 };

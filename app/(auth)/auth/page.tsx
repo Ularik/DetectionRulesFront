@@ -1,122 +1,156 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
-import { inputClass, roleDashboardPaths } from "@/lib/constants";
-import type { LoginMutation } from "@/types/user";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { useLogin } from "@/lib/hooks/authHooks";
+import { useRouter } from "next/navigation"; 
+import { useForm } from "react-hook-form";
+import { Eye, EyeOff, Lock, User, LogIn, Loader2 } from "lucide-react";
+import { useRegister } from "@/services/users/usersQueries";
+import { Input } from "@/components/ui/input";
+import type { UsersAuthType } from "@/types/users";
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const router = useRouter();
-  const loginMutation = useLogin();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<LoginMutation>({
+  } = useForm<UsersAuthType>({
     defaultValues: {
-      phone: "",
+      username: "",
       password: "",
+      role: "ADMIN", // Замените на вашу роль по умолчанию
     },
   });
 
-  const onSubmit = (data: LoginMutation) => {
-    loginMutation.mutate(data, {
-      onSuccess: (data) => {
-        router.push(roleDashboardPaths[data.user.role]);
-        reset();
-      },
+  const mute = useRegister();
+  const onSubmit = async (data: UsersAuthType) => {
+    setIsLoading(true);
+    setAuthError(null);
+
+    mute.mutate(data, {
+      onSuccess: () => {
+        router.push('/login');
+      }
     });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7F8F4] px-4 ">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-xl"
-      >
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-[#1E2B6D]">
-            Virgin Travel Studio
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
+      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/50 dark:bg-slate-900 dark:shadow-none">
+        {/* Заголовок */}
+        <div className="text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#1E2B6D]/10 text-[#1E2B6D] dark:bg-indigo-500/20 dark:text-indigo-400">
+            <LogIn className="h-6 w-6" />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1E2B6D] dark:text-white">
+            SOC SIEM
           </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Войдите в панель управления
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            Регистрация
           </p>
         </div>
 
-        <div className="space-y-4">
-          <Input
-            {...register("phone", {
-              required: "Введите номер телефона",
-              validate: (value) =>
-                value.trim() !== "" || "Поле не должно быть пустым",
-              pattern: {
-                value: /^\+?[0-9]{7,15}$/,
-                message: "Некорректный номер телефона",
-              },
-            })}
-            className={inputClass}
-            placeholder="Телефон"
-            id="phone"
-            disabled={loginMutation.isPending}
-          />
-          {errors.phone && (
-            <p className="text-sm text-red-500">{errors.phone.message}</p>
-          )}
-          <div className="relative">
-            <Input
-              type={showPassword ? "text" : "password"}
-              {...register("password", {
-                required: "Введите пароль",
-                validate: (value) =>
-                  value.trim() !== "" || "Поле не должно быть пустым",
-                minLength: {
-                  value: 6,
-                  message: "Пароль должен содержать минимум 6 символов",
-                },
-              })}
-              className={`${inputClass} pr-10`}
-              placeholder="Пароль"
-              id="password"
-              disabled={loginMutation.isPending}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            >
-              {!showPassword ? (
-                <EyeOff className="size-5" />
-              ) : (
-                <Eye className="size-5" />
-              )}
-            </button>
+        {/* Форма */}
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+          {/* Поле Username */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              Имя пользователя
+            </label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                {...register("username", {
+                  required: "Введите имя пользователя",
+                  validate: (value) =>
+                    value.trim() !== "" || "Поле не должно быть пустым",
+                })}
+                className="pl-10 h-11 bg-slate-50 border-slate-200 focus:bg-white dark:bg-slate-800 dark:border-slate-700"
+                placeholder="Username"
+                id="username"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.username && (
+              <p className="text-xs text-red-500 font-medium pl-1 mt-1">
+                {errors.username.message}
+              </p>
+            )}
           </div>
 
-          <button
-            className="w-full rounded-2xl bg-[#1E2B6D] px-4 py-3 font-semibold text-white transition hover:bg-[#176C99] disabled:opacity-50"
-            disabled={loginMutation.isPending}
-          >
-            {loginMutation.isPending ? "Вход..." : "Войти"}
-          </button>
+          {/* Поле Password */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              Пароль
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                type={showPassword ? "text" : "password"}
+                {...register("password", {
+                  required: "Введите пароль",
+                  validate: (value) =>
+                    value.trim() !== "" || "Поле не должно быть пустым",
+                  minLength: {
+                    value: 3,
+                    message: "Пароль должен содержать минимум 3 символов",
+                  },
+                })}
+                className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white dark:bg-slate-800 dark:border-slate-700"
+                placeholder="••••••••"
+                id="password"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((p) => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-xs text-red-500 font-medium pl-1 mt-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
 
-          {loginMutation.isError && (
-            <p className="text-center text-sm text-red-500">
-              Неверный телефон или пароль
-            </p>
+          {/* Сообщение об ошибке сервера/авторизации */}
+          {authError && (
+            <div className="rounded-lg bg-red-50 p-3 text-center text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
+              {authError}
+            </div>
           )}
-        </div>
-      </form>
+
+          {/* Кнопка входа */}
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E2B6D] px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#176C99] active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none dark:bg-indigo-600 dark:hover:bg-indigo-500"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Загрузка...</span>
+              </>
+            ) : (
+              <span>Создать</span>
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

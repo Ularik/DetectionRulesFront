@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createRule,
   deleteRule,
+  updateRule
 } from "@/services/rules/adminRules/rulesRequests";
 import { toast } from "sonner";
 
@@ -14,6 +15,16 @@ export function useAdminCreateRule() {
             queryClient.invalidateQueries({queryKey: ["rules"]});
         }
     })
+}
+
+export function useAdminUpdateRule() {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: updateRule,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["rules"] });
+      },
+    });
 }
 
 export const useDeleteRule = () => {

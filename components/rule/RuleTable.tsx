@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { RuleType } from "@/types";
 import { Trash2 } from "lucide-react";
-import { useDeleteRule } from "@/lib/hooks/rules";
+import { useDeleteRule } from "@/services/rules/adminRules/ruleQueries";
 import { toast } from "sonner";
 import axios from "axios";
 

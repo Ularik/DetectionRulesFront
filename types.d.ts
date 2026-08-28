@@ -26,7 +26,7 @@ export interface RuleType {
     updated_by: string;
 }
 
-export type RuleCreateType = Omit<
+export type RuleCreateUpdateType = Omit<
   RuleType,
   "created_at" | "created_by" | "updated_at" | "updated_by"
 >;

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 
 import { RuleCreateType } from "@/types";
-import { useSeverities } from "@/lib/hooks/severities";
+import { useSeverities } from "@/services/severities/severitiesQueries";
 import { useAdminCreateRule } from "@/services/rules/adminRules/ruleQueries";
 import ArrayField, { SectionTitle, FieldError } from "@/services/utils";
 import { useRouter } from "next/navigation";

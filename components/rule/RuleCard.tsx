@@ -107,7 +107,7 @@ export default function RuleCard({ rule }: Props) {
           </div>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          <Link href={`${rule.rule_id}`}>
+          <Link href={`rules/${rule.rule_id}`}>
             Открыть таблицу
           </Link>
         </CardFooter>

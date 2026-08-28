@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import { inputClass, roleDashboardPaths } from "@/constants/main";
+import { inputClass } from "@/constants/main";
 import type { UserLoginType } from "@/types/users";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ const LoginPage = () => {
       >
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-[#1E2B6D]">
-            Virgin Travel Studio
+            SOC SIEM
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">

@@ -1,4 +1,6 @@
+import { RuleType } from "./rules";
 import { UserType } from "./users";
+
 
 export interface AuditType {
   id: string;
@@ -12,6 +14,11 @@ export interface AuditType {
   created_at: Date;
   updated_at: Date;
   author: UserType;
+}
+
+
+export interface AuditDetailType extends AuditType {
+  rule: RuleType
 }
 
 

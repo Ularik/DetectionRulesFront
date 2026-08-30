@@ -1,10 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  fetchRules,
-  fetchOneRule,
-} from "@/services/rules/ruleRequests";
-import { QueryFiltersType } from "@/types";
-
+import { fetchRules, fetchOneRule } from "@/services/rules/ruleRequests";
+import { QueryFiltersType } from "@/types/rules";
 
 export const useRules = (filters: QueryFiltersType) => {
   return useQuery({

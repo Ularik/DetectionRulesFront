@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RuleType } from "@/types";
+import { RuleType } from "@/types/rules";
 import { Trash2, Edit2, Check, X, RefreshCw, Loader2 } from "lucide-react";
 
 interface RuleTableProps {
@@ -70,7 +70,6 @@ export function RuleDetailTable({
 
     await onUpdate(updatedRule);
     setEditingKey(null);
-
   };
 
   const keys = Object.keys(rule) as (keyof RuleType)[];

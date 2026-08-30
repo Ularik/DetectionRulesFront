@@ -1,9 +1,5 @@
 import axiosApi from "@/lib/axiosAPi";
-import {
-  QueryFiltersType,
-  RuleApiResponse,
-  RuleType,
-} from "@/types";
+import { QueryFiltersType, RuleApiResponse, RuleType } from "@/types/rules";
 
 export const fetchRules = async (filters: QueryFiltersType) => {
   const result = await axiosApi.get<RuleApiResponse>("rules/", {

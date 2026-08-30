@@ -8,52 +8,63 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useDeleteRule } from "@/services/rules/adminRules/ruleQueries";
-import { RuleType } from "@/types";
+import { RuleType } from "@/types/rules";
 import axios from "axios";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-
 interface Props {
-    rule: RuleType
+  rule: RuleType;
 }
 
 export default function RuleCard({ rule }: Props) {
-    const { mutate, error: delError } = useDeleteRule();
+  const { mutate, error: delError } = useDeleteRule();
 
-    const deleteRule = async (rule_id: string) => {
+  const deleteRule = async (rule_id: string) => {
     mutate(rule_id, {
-        onSuccess: () =>
+      onSuccess: () =>
         toast.success("Правило удалено", { position: "top-center" }),
-        onError: (error) => {
+      onError: (error) => {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
-            toast.error("Запись не найдена", { position: "top-center" });
+          toast.error("Запись не найдена", { position: "top-center" });
         } else {
-            toast.error("Ошибка удаления", { position: "top-center" });
+          toast.error("Ошибка удаления", { position: "top-center" });
         }
-        },
+      },
     });
-    };
+  };
 
-    const formatValue = (value: unknown): string => {
-        if (Array.isArray(value)) return value.join(", ");
-        return String(value);
-    };
+  const formatValue = (value: unknown): string => {
+    if (Array.isArray(value)) return value.join(", ");
+    return String(value);
+  };
 
-    const { rule_id, enabled, severity_hint, description, explanation_template, recommendations, scenario_type, created_by, updated_by, created_at, updated_at, ...rest } = rule;
+  const {
+    rule_id,
+    enabled,
+    severity_hint,
+    description,
+    explanation_template,
+    recommendations,
+    scenario_type,
+    created_by,
+    updated_by,
+    created_at,
+    updated_at,
+    ...rest
+  } = rule;
 
-    const ruleFields = Object.keys(rest) as string[];
+  const ruleFields = Object.keys(rest) as string[];
 
-    const RULE_STATUS_STYLES = {
-      info: "bg-blue-100 text-blue-700",
-      low: "bg-yellow-100 text-yellow-700",
-      medium: "bg-purple-100 text-purple-700",
-      critical: "bg-red-100 text-red-700",
-      high: "bg-red-100 text-red-700",
-    };
-
+  const RULE_STATUS_STYLES = {
+    info: "bg-blue-100 text-blue-700",
+    low: "bg-yellow-100 text-yellow-700",
+    medium: "bg-purple-100 text-purple-700",
+    critical: "bg-red-100 text-red-700",
+    high: "bg-red-100 text-red-700",
+  };
 
   return (
     <>
@@ -107,9 +118,7 @@ export default function RuleCard({ rule }: Props) {
           </div>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          <Link href={`rules/${rule.rule_id}`}>
-            Открыть таблицу
-          </Link>
+          <Link href={`rules/${rule.rule_id}`}>Открыть таблицу</Link>
         </CardFooter>
       </Card>
     </>

@@ -4,16 +4,16 @@ import { useParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
-import { RuleDetailTable } from "@/components/rule/RuleDetail.tsx/RuleDetail";
+import { RuleDetailTable } from "@/components/rule/RuleDetail/RuleDetail";
 import { useOneRule } from "@/services/rules/ruleQueries";
 import {
   useAdminUpdateRule,
   useDeleteRule,
 } from "@/services/rules/adminRules/ruleQueries";
-import { RuleCreateUpdateType, RuleType } from "@/types";
+import { RuleCreateUpdateType, RuleType } from "@/types/rules";
 
 export default function RulePage() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -24,7 +24,7 @@ export default function RulePage() {
     isRefetching,
     error,
     refetch,
-  } = useOneRule(id as string);
+  } = useOneRule(slug as string);
 
   const { mutate: deleteMutate, isPending: isDeleting } = useDeleteRule();
   const { mutateAsync: updateMutateAsync, isPending: isUpdating } =
@@ -49,13 +49,13 @@ export default function RulePage() {
   const handleUpdate = async (data: RuleCreateUpdateType) => {
     try {
       const updatedRule: RuleType = await updateMutateAsync({
-        rule_id: id as string,
+        rule_id: slug as string,
         data,
       });
 
       toast.success("Поле успешно обновлено", { position: "top-center" });
 
-      if (id !== updatedRule.rule_id) {
+      if (slug !== updatedRule.rule_id) {
         const newPath = pathname.replace(
           /\/[^\/]+$/,
           `/${updatedRule.rule_id}`,

@@ -9,6 +9,7 @@ import {
   Database,
 } from "lucide-react";
 import type { AuditType } from "@/types/audits";
+import { useRouter } from "next/navigation";
 
 
 interface AuditTableProps {
@@ -56,6 +57,9 @@ export const AuditTable = ({
   isLoading = false,
   limit = 10,
 }: AuditTableProps) => {
+    const router = useRouter();
+
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -76,6 +80,9 @@ export const AuditTable = ({
               </th>
               <th scope="col" className="px-6 py-4">
                 Правило (Rule ID)
+              </th>
+              <th scope="col" className="px-6 py-4">
+                Audit ID
               </th>
               <th scope="col" className="px-6 py-4">
                 Изменения (Before → After)
@@ -128,6 +135,7 @@ export const AuditTable = ({
                 <tr
                   key={item.id}
                   className="hover:bg-gray-50/80 transition-colors"
+                  onClick={() => router.push(`audit/${item.id}`)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                     <div className="flex items-center gap-1.5">
@@ -164,6 +172,11 @@ export const AuditTable = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
                       #{item.rule_unique_id} ({item.rule_general_id})
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                      Audit ID #{item.id}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">

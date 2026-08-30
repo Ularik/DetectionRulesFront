@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useForm,
-  Controller,
-  useFieldArray,
-} from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,20 +13,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { RuleCreateType } from "@/types";
+import { RuleCreateUpdateType } from "@/types/rules";
 import { useSeverities } from "@/services/severities/severitiesQueries";
 import { useAdminCreateRule } from "@/services/rules/adminRules/ruleQueries";
 import ArrayField, { SectionTitle, FieldError } from "@/services/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-
 const inputClass =
   "w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition " +
   "focus-visible:border-[#1E2B6D] focus-visible:ring-2 focus-visible:ring-[#1E2B6D]/20";
 
 const errorClass = "border-red-500 focus-visible:ring-red-500";
-
 
 export default function RuleForm() {
   const router = useRouter();
@@ -41,9 +35,8 @@ export default function RuleForm() {
     register,
     handleSubmit,
     control,
-    reset,
     formState: { errors },
-  } = useForm<RuleCreateType>({
+  } = useForm<RuleCreateUpdateType>({
     defaultValues: {
       rule_id: "",
       rule_type: "",
@@ -115,12 +108,12 @@ export default function RuleForm() {
   });
 
   const { mutate } = useAdminCreateRule();
-  const onSubmit = (data: RuleCreateType) => {
+  const onSubmit = (data: RuleCreateUpdateType) => {
     mutate(data, {
       onSuccess: () => {
         router.back();
         toast.success("Создали правило!", { position: "top-center" });
-      }
+      },
     });
   };
 

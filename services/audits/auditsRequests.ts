@@ -1,5 +1,5 @@
 import axiosApi from "@/lib/axiosAPi";
-import { ApiAuditResponseType } from "@/types/audits";
+import { ApiAuditResponseType, AuditDetailType } from "@/types/audits";
 
 
 export interface AuditParams {
@@ -13,5 +13,10 @@ export async function getAudits(params: AuditParams): Promise<ApiAuditResponseTy
   const result = await axiosApi.get("/audits/", {
     params: params,
   });
+  return result.data;
+};
+
+export async function getAuditDetail(id: string): Promise<AuditDetailType> {
+  const result = await axiosApi.get(`/audits/${id}`);
   return result.data;
 };

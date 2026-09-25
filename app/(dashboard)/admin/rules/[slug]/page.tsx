@@ -14,8 +14,6 @@ import { RuleCreateUpdateType, RuleType } from "@/types/rules";
 
 export default function RulePage() {
   const { slug } = useParams();
-  const router = useRouter();
-  const pathname = usePathname();
 
   // Добавляем isRefetching для отслеживания повторных запросов
   const {
@@ -54,14 +52,6 @@ export default function RulePage() {
       });
 
       toast.success("Поле успешно обновлено", { position: "top-center" });
-
-      if (slug !== updatedRule.rule_id) {
-        const newPath = pathname.replace(
-          /\/[^\/]+$/,
-          `/${updatedRule.rule_id}`,
-        );
-        router.push(newPath);
-      }
     } catch {
       toast.error("Не удалось обновить поле", { position: "top-center" });
       throw new Error("Update failed"); // Пробрасываем ошибку, чтобы таблица не закрывала инпут

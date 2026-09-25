@@ -7,7 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useDeleteRule } from "@/services/rules/adminRules/ruleQueries";
+import {
+  useDeleteRule,
+  useAdminSetStatusRule,
+} from "@/services/rules/adminRules/ruleQueries";
 import { RuleType } from "@/types/rules";
 import axios from "axios";
 import { Trash2 } from "lucide-react";
@@ -22,8 +25,8 @@ interface Props {
 export default function RuleCard({ rule }: Props) {
   const { mutate, error: delError } = useDeleteRule();
 
-  const deleteRule = async (rule_id: string) => {
-    mutate(rule_id, {
+  const deleteRule = async () => {
+    mutate(rule.rule_id, {
       onSuccess: () =>
         toast.success("Правило удалено", { position: "top-center" }),
       onError: (error) => {
@@ -35,6 +38,12 @@ export default function RuleCard({ rule }: Props) {
       },
     });
   };
+
+  const { mutate: setStatus, isPending, error } = useAdminSetStatusRule();
+
+  const updateRule = () => {
+    setStatus({rule_id: rule.rule_id, data: {enabled: !rule.enabled}});
+  }
 
   const formatValue = (value: unknown): string => {
     if (Array.isArray(value)) return value.join(", ");
@@ -81,11 +90,19 @@ export default function RuleCard({ rule }: Props) {
               {severity_hint}
             </Badge>
           </CardDescription>
-          <CardAction>
+          <CardAction className="flex gap-1 items-center">
+            <button
+              type="button"
+              aria-label="включить"
+              onClick={() => updateRule()}
+              className="inline-flex h-10 px-1 shrink-0 items-center justify-center"
+            >
+              {rule.enabled ? "Выключить" : "Включить"}
+            </button>
             <button
               aria-label="Удалить"
               type="button"
-              onClick={() => deleteRule(rule.rule_id)}
+              onClick={() => deleteRule()}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-red-500 hover:bg-red-50 transition-colors"
             >
               <Trash2 className="h-4 w-4" />

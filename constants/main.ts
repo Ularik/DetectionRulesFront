@@ -12,19 +12,48 @@ import {
 } from "lucide-react";
 import type { UserRole } from "@/types/users";
 
+
+export const isDev = process.env.NODE_ENV === "development";
+
+// На продакшене (в Docker) запросы будут идти на тот же домен, где открыт сайт, в папку /api/
+// В режиме разработки (локально) будет использоваться localhost:8000 (или 8001)
+export const apiURL = isDev
+  ? "http://localhost:8001/api"
+  : typeof window === "undefined"
+    ? "http://backend:8000/api" // имя сервиса из docker-compose + внутренний порт
+    : "/api";
+
 export type DashboardMenuItem = {
   label: string;
   href: string;
-  roles: UserRole[];
   icon: LucideIcon;
 };
 
 export const dashboardMenuItems: DashboardMenuItem[] = [
   {
-    label: "Правила",
-    href: "/admin",
-    roles: ["ADMIN"],
+    label: "Правила обнаружения",
+    href: "/admin/rules",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Аудит",
+    href: "/admin/audit",
+    icon: Plane,
+  },
+  {
+    label: "Правила корелляции",
+    href: "/admin/crule",
+    icon: Star,
+  },
+  {
+    label: "Существующие вред скрипты payload",
+    href: "/admin/ioc",
+    icon: Tags,
+  },
+  {
+    label: "Супер правила",
+    href: "/admin/supers",
+    icon: CircleUser,
   },
 ];
 
@@ -52,6 +81,63 @@ export const theme = {
 
   dark: "#031633",
 };
+
+export const actionAction = [
+  {
+    value: "block",
+    label: "Block",
+  },
+  {
+    value: "investigate",
+    label: "Investigate",
+  },
+  {
+    value: "monitor",
+    label: "Monitor",
+  },
+  {
+    value: "ignore",
+    label: "Ignore",
+  },
+];
+
+export const actionSeverity = [
+  {
+    value: "critical",
+    label: "Critical",
+  },
+  {
+    value: "high",
+    label: "High",
+  },
+  {
+    value: "medium",
+    label: "Medium",
+  },
+  {
+    value: "low",
+    label: "Low",
+  },
+  {
+    value: "info",
+    label: "Info",
+  },
+];
+
+export const actionDecision = [
+  {
+    value: "malicious",
+    label: "Malicious",
+  },
+  {
+    value: "suspicious",
+    label: "Suspicious",
+  },
+  {
+    value: "benign",
+    label: "Benign",
+  },
+];
 
 export const tableClassName = "w-full table-fixed text-sm";
 

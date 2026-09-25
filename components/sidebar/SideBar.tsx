@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { LogOut } from "lucide-react";
 import { useLogout } from "@/services/users/usersQueries";
-import { dashboardMenuItems } from "@/lib/constants";
+import { dashboardMenuItems } from "@/constants/main";
 import { useRouter } from "next/navigation";
 
 const Sidebar = () => {

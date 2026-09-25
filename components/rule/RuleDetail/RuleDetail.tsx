@@ -12,7 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RuleType } from "@/types/rules";
-import { Trash2, Edit2, Check, X, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  RefreshCw,
+  Loader2,
+  Lock,
+} from "lucide-react";
 
 interface RuleTableProps {
   rule: RuleType;
@@ -23,6 +31,17 @@ interface RuleTableProps {
   isUpdating?: boolean;
   isRefreshing?: boolean;
 }
+
+// Список полей, запрещенных для редактирования
+const NON_EDITABLE_FIELDS: (keyof RuleType)[] = [
+  "rule_id",
+  "enabled",
+  "tactics",
+  "created_at",
+  "created_by",
+  "updated_at",
+  "updated_by",
+];
 
 export function RuleDetailTable({
   rule,
@@ -39,12 +58,14 @@ export function RuleDetailTable({
   const formatValue = (value: unknown): string => {
     if (Array.isArray(value)) return value.join(", ");
     if (value === null || value === undefined) return "—";
+    if (typeof value === "boolean") return value ? "true" : "false";
     if (typeof value === "object") return JSON.stringify(value);
     return String(value);
   };
 
-  const startEditing = (key: string, currentValue: unknown) => {
-    setEditingKey(key);
+  const startEditing = (key: keyof RuleType, currentValue: unknown) => {
+    if (NON_EDITABLE_FIELDS.includes(key)) return;
+    setEditingKey(String(key));
     setEditValue(formatValue(currentValue));
   };
 
@@ -53,14 +74,21 @@ export function RuleDetailTable({
     setEditValue("");
   };
 
-  const saveEditing = async (key: string) => {
-    if (!onUpdate) return;
+  const saveEditing = async (key: keyof RuleType) => {
+    if (!onUpdate || NON_EDITABLE_FIELDS.includes(key)) return;
 
-    const originalValue = rule[key as keyof RuleType];
+    const originalValue = rule[key];
     let parsedValue: unknown = editValue;
 
+    // Приведение типов при сохранении
     if (Array.isArray(originalValue)) {
-      parsedValue = editValue.split(",").map((item) => item.trim());
+      parsedValue = editValue
+        ? editValue.split(",").map((item) => item.trim())
+        : [];
+    } else if (typeof originalValue === "boolean") {
+      parsedValue = editValue.toLowerCase() === "true";
+    } else if (typeof originalValue === "number") {
+      parsedValue = Number(editValue) || 0;
     }
 
     const updatedRule = {
@@ -75,9 +103,9 @@ export function RuleDetailTable({
   const keys = Object.keys(rule) as (keyof RuleType)[];
 
   return (
-    <div className="rounded-2xl border shadow-sm overflow-hidden bg-white max-w-[900px] relative">
+    <div className="relative max-w-[900px] overflow-hidden rounded-2xl border bg-white shadow-sm">
       {/* Шапка таблицы */}
-      <div className="px-6 py-4 bg-muted/40 border-b flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 border-b bg-muted/40 px-6 py-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
             {rule.rule_id}
@@ -112,7 +140,7 @@ export function RuleDetailTable({
               disabled={isDeleting || isUpdating || isRefreshing}
               onClick={() => onDelete(String(rule.rule_id))}
               title="Удалить правило"
-              className="h-9 w-9 rounded-xl border-gray-200 text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="h-9 w-9 rounded-xl border-gray-200 text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
             >
               {isDeleting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -141,14 +169,22 @@ export function RuleDetailTable({
         </TableHeader>
         <TableBody>
           {keys.map((key) => {
+            const isNonEditable = NON_EDITABLE_FIELDS.includes(key);
             const isEditingThis = editingKey === key;
             const rawValue = rule[key];
             const displayValue = formatValue(rawValue);
 
             return (
               <TableRow key={String(key)} className="hover:bg-muted/20">
-                <TableCell className="font-medium text-muted-foreground text-sm text-center border-r">
-                  {String(key)}
+                <TableCell className="border-r text-center text-sm font-medium text-muted-foreground">
+                  <div className="flex items-center justify-center gap-1.5">
+                    {String(key)}
+                    {isNonEditable && (
+                      <Lock
+                        className="h-3 w-3 text-gray-400"
+                      />
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="max-w-[400px]">
                   {isEditingThis ? (
@@ -160,7 +196,7 @@ export function RuleDetailTable({
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !isUpdating) {
-                          saveEditing(String(key));
+                          saveEditing(key);
                         } else if (e.key === "Escape" && !isUpdating) {
                           cancelEditing();
                         }
@@ -183,7 +219,7 @@ export function RuleDetailTable({
                           size="icon"
                           variant="ghost"
                           disabled={isUpdating}
-                          onClick={() => saveEditing(String(key))}
+                          onClick={() => saveEditing(key)}
                           className="h-7 w-7 text-emerald-600 hover:bg-emerald-50"
                         >
                           {isUpdating ? (
@@ -203,15 +239,17 @@ export function RuleDetailTable({
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        disabled={isUpdating || isDeleting || isRefreshing}
-                        onClick={() => startEditing(String(key), rawValue)}
-                        className="h-7 w-7 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
+                      !isNonEditable && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          disabled={isUpdating || isDeleting || isRefreshing}
+                          onClick={() => startEditing(key, rawValue)}
+                          className="h-7 w-7 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )
                     )}
                   </TableCell>
                 )}

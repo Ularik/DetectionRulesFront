@@ -1,3 +1,5 @@
+import { NewEventType } from "@/types/events";
+
 export interface RuleType {
     rule_id: string;
     rule_type: string;
@@ -26,6 +28,10 @@ export interface RuleType {
     updated_by: string;
 }
 
+export interface RuleStatusPatchType {
+  enabled: boolean;
+}
+
 export type RuleCreateUpdateType = Omit<
   RuleType,
   "created_at" | "created_by" | "updated_at" | "updated_by"
@@ -40,6 +46,7 @@ export interface QueryFiltersType {
   offset: number;
 }
 
+
 export interface RuleApiResponse {
   total: number;
   has_next: boolean;
@@ -50,4 +57,15 @@ export interface MetaType {
   total: number;
   limit: number;
   offset: number;
+}
+
+
+export interface TestRuleType {
+  rule: RuleCreateUpdateType;
+  event: NewEventType;
+}
+
+export interface TestRuleResponseType {
+  matched: boolean;
+  rule_id: string
 }

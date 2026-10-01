@@ -20,7 +20,7 @@ import {
   usePatchIncidentStatus,
 } from "@/services/incident/incidentQueries";
 import type { ANALYST_STATUS, Incident } from "@/types/incidents";
-import type { WazuhEvent } from "@/types/incidentEvents";
+import type { WazuhEvent } from "@/types/events";
 
 interface IncidentDetailProps {
   incidentId: string;
@@ -590,7 +590,7 @@ export default function IncidentDetail({ incidentId }: IncidentDetailProps) {
     <main className="mx-auto max-w-7xl">
       <Button
         variant="ghost"
-        onClick={() => router.push("/admin/incidents")}
+        onClick={() => router.push("/admin/hunters/incidents")}
         className="mb-4 -ml-3"
       >
         <ArrowLeft /> К списку инцидентов

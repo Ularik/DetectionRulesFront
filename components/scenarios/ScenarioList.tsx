@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -29,7 +30,8 @@ const severityStyles: Record<Severity, string> = {
   critical: "bg-red-100 text-red-800",
 };
 
-const formatDate = (value: string) => {
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
@@ -182,14 +184,23 @@ export default function ScenarioList() {
                 data.items.map((scenario) => (
                   <TableRow key={scenario.scenario_id}>
                     <TableCell className="font-medium">
-                      {scenario.scenario_id}
+                      {scenario.scenario_id ? (
+                        <Link
+                          href={`/admin/hunters/scenarios/${encodeURIComponent(scenario.scenario_id)}`}
+                          className="text-blue-700 hover:text-blue-900 hover:underline"
+                        >
+                          {scenario.scenario_id}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>{scenario.scenario_type}</TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex rounded px-2 py-1 text-xs font-medium capitalize ${severityStyles[scenario.severity]}`}
+                        className={`inline-flex rounded px-2 py-1 text-xs font-medium capitalize ${scenario.severity ? severityStyles[scenario.severity] : "bg-gray-100 text-gray-600"}`}
                       >
-                        {scenario.severity}
+                        {scenario.severity ?? "—"}
                       </span>
                     </TableCell>
                     <TableCell>{scenario.analyst_status}</TableCell>

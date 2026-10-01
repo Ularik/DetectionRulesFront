@@ -1,5 +1,5 @@
-import ScenarioList from "@/components/scenarios/ScenarioList";
+import { redirect } from "next/navigation";
 
 export default function ScenariosPage() {
-  return <ScenarioList />;
+  redirect("/admin/hunters/scenarios");
 }

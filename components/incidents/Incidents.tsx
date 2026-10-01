@@ -414,7 +414,7 @@ export default function Incidents() {
                       >
                         <td className="max-w-[220px] px-4 py-4">
                           <Link
-                            href={`/admin/incidents/${encodeURIComponent(incident.incident_id)}`}
+                            href={`/admin/hunters/incidents/${encodeURIComponent(incident.incident_id)}`}
                             className="truncate font-mono text-xs font-semibold text-gray-900"
                             title={`Открыть инцидент ${incident.incident_id}`}
                           >

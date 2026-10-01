@@ -1,103 +1,110 @@
-export interface RawData {
-  [key: string]: Record<string, unknown>;
+export interface WazuhAgent {
+  ip?: string | null;
+  id?: string | null;
+  name?: string | null;
+  version?: string | null;
+  ephemeral_id?: string | null;
+  type?: string | null;
 }
 
-export interface NewEventType {
-  timestamp: string; // ISO 8601 дата-время
-  timestamp_raw?: string;
+export interface WazuhDecoder {
+  name?: string | null;
+}
 
-  // Сетевые параметры
+export interface WazuhEcs {
+  version?: string | null;
+}
+
+export interface WazuhOs {
+  codename?: string | null;
+  type?: string | null;
+  platform?: string | null;
+  version?: string | null;
+  family?: string | null;
+  name?: string | null;
+  kernel?: string | null;
+}
+
+export interface WazuhHost {
+  os?: WazuhOs | null;
+  id?: string | null;
+  containerized?: boolean | null;
+  name?: string | null;
+  ip: string[];
+  mac: string[];
+  hostname?: string | null;
+  architecture?: string | null;
+}
+
+export interface WazuhLogFile {
+  path?: string | null;
+  device_id?: string | null;
+  inode?: number | null;
+}
+
+export interface WazuhLog {
+  offset?: number | null;
+  file?: WazuhLogFile | null;
+}
+
+export interface WazuhManager {
+  name?: string | null;
+}
+
+export interface WazuhPredecoder {
+  program_name?: string | null;
+  timestamp?: string | null;
+  hostname?: string | null;
+}
+
+export interface WazuhInput {
+  type?: string | null;
+}
+
+export interface WazuhEvent {
+  "@timestamp"?: string | null;
+  timestamp?: string | null;
+
+  agent?: WazuhAgent | null;
+  decoder?: WazuhDecoder | null;
+  ecs?: WazuhEcs | null;
+  host?: WazuhHost | null;
+  log?: WazuhLog | null;
+
+  location?: string | null;
+  manager?: WazuhManager | null;
+
+  full_log?: string | null;
+  id?: string | null;
+
+  predecoder?: WazuhPredecoder | null;
+  input?: WazuhInput | null;
+
+  _elastic_index?: string | null;
+  _elastic_id?: string | null;
+}
+
+export interface WazuhEventApiResponse {
+  items: WazuhEvent[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface RawEventsQueryParamsSchema {
+  from_time?: string | Date;
+  to_time?: string | Date;
   source_ip?: string;
-  source_user?: string;
-  source_host?: string;
   destination_ip?: string;
-  destination_host?: string;
-  dst_port?: number;
-  observer_host?: string;
-
-  // Правила и сигнатуры
+  host?: string;
+  user?: string;
+  agent_name?: string;
+  agent_ip?: string;
+  location?: string;
+  decoder?: string;
+  program_name?: string;
   rule_id?: string;
-  rule_level?: number;
-  rule_name?: string;
-  rule_groups?: string[];
-  signature?: string;
-  signature_id?: string;
-  attack_name?: string;
-
-  // MITRE ATT&CK
-  mitre_ids?: string[];
-  mitre_tactics?: string[];
-  mitre_techniques?: string[];
-
-  // Детекция и классификация
-  event_type: string; // По умолчанию "unknown"
-  action?: string;
-  outcome?: string;
-  detection_rule_id?: string;
-  detection_rule_description?: string;
-  detection_category?: string;
-  detection_confidence?: number;
-  severity_hint?: string;
-  attack_type?: string;
-  scenario_type?: string;
-  explanation_template?: string;
-  recommendations?: string[];
-
-  // Источник логов и Вендор
-  log_source_type?: string;
-  szi_source?: string;
-  product_name?: string;
-  vendor_name?: string;
-
-  // HTTP параметры
-  request_uri?: string;
-  url?: string;
-  http_method?: string;
-  http_status?: number;
-  user_agent?: string;
-  referrer?: string;
-
-  // Пейлоад
-  payloads?: string[];
-  payload_type?: string;
-  payload_indicators?: string[];
-
-  // Системные события Windows / ОС
-  event_code?: string;
-  winlog_channel?: string;
-  computer_name?: string;
-
-  // Процессы
-  process_name?: string;
-  process_path?: string;
-  process_command_line?: string;
-  process_pid?: string;
-  parent_process_name?: string;
-  parent_process_path?: string;
-  parent_process_command_line?: string;
-  parent_process_pid?: string;
-
-  // Авторизация и УЗ
-  target_user?: string;
-  logon_type?: string;
-  logon_id?: string;
-
-  // Файлы и хеши
-  file_path?: string;
-  file_hash?: string;
-  md5_hash?: string;
-  sha1_hash?: string;
-  sha256_hash?: string;
-
-  // Системные объекты
-  registry_key?: string;
-  service_name?: string;
-  task_name?: string;
-
-  // Произвольные сырые данные
-  raw?: RawData;
-}
-
-export interface EventPayload {
-  event: Event;
+  text?: string;
+  page?: number;
+  size?: number;
 }

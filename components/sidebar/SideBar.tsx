@@ -13,13 +13,13 @@ const Sidebar = () => {
   const router = useRouter();
   const { mutate, isPending, isError, error } = useLogout();
 
-const logoutFunc = () => {
-  mutate(undefined, {
-    onSuccess: () => {
-      router.push("/login");
-    },
-  });
-};
+  const logoutFunc = () => {
+    mutate(undefined, {
+      onSuccess: () => {
+        router.push("/login");
+      },
+    });
+  };
 
   return (
     <aside className="hidden w-72 sticky top-0 border-r border-gray-200 bg-white lg:flex lg:flex-col h-dvh">
@@ -48,7 +48,7 @@ const logoutFunc = () => {
                 href={item.href}
                 className={clsx(
                   "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  pathname === item.href
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
                     ? "bg-[#1E2B6D] text-white shadow-md"
                     : "text-[#1E2B6D] hover:bg-[#F3F4F6]",
                 )}

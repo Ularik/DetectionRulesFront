@@ -56,6 +56,25 @@ export interface IncidentLite {
   ioc_match_count: number;
 }
 
+export interface IncidentLiteForScenario {
+  incident_id: string;
+  start_time: string | Date;
+  end_time: string | Date;
+  severity: string;
+  risk_score: number;
+  priority: number;
+  attack_type: string;
+  source_ip?: string | null;
+  source_user?: string | null;
+  observer_host?: string | null;
+  destination_ip?: string | null;
+  destination_host?: string | null;
+  decision: string;
+  action: string;
+  organization_id?: string | null;
+  event_count: number;
+}
+
 export interface IncidentApiResponse {
   items: IncidentLite[];
   total: number;

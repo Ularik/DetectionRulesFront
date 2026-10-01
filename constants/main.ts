@@ -1,12 +1,12 @@
 import {
   FileUser,
   CircleUser,
+  Crosshair,
   FolderOpen,
   LayoutDashboard,
   type LucideIcon,
   Newspaper,
   Plane,
-  ShieldAlert,
   Star,
   Tags,
   Users,
@@ -56,14 +56,9 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     icon: CircleUser,
   },
   {
-    label: "Инциденты",
-    href: "/admin/incidents",
-    icon: CircleUser,
-  },
-  {
-    label: "Сценарии",
-    href: "/admin/scenarios",
-    icon: ShieldAlert,
+    label: "Охотники",
+    href: "/admin/hunters",
+    icon: Crosshair,
   },
 ];
 

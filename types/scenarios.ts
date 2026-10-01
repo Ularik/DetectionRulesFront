@@ -1,4 +1,6 @@
-// --- Перечисления (Enums и Literals) ---
+import { IncidentLiteForScenario } from "./incidents";
+import type { IocType } from "./ioc";
+import { MitreType } from "./mitre";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 
@@ -83,4 +85,87 @@ export interface ScenarioApiResponse {
   total: number;
   page: number;
   size: number;
+}
+
+
+// 2. Вложенный объект ссылок
+export interface LinksSchema {
+  /** Ссылка на сырые события */
+  raw_events?: string | null;
+  /** Ссылки на инциденты */
+  incidents: string[];
+}
+
+// 3. Детальная схема сценария (ScenarioDetailSchema)
+export interface ScenarioDetailType {
+  scenario_id: string;
+  scenario_key?: string | null;
+  scenario_type?: string | null;
+  status: string;
+  engine_status: string;
+  analyst_status: string;
+
+  // Временные метки (в JSON передаются строками ISO 8601)
+  first_seen?: string | Date | null;
+  last_seen?: string | Date | null;
+
+  // Сетевые и субъектные атрибуты
+  source_ip?: string | null;
+  source_ips: string[];
+  source_user?: string | null;
+  source_users: string[];
+  source_hosts: string[];
+  observer_host?: string | null;
+  destination_ip?: string | null;
+  destination_ips: string[];
+  destination_host?: string | null;
+  destination_hosts: string[];
+
+  // Данные об активе (Asset)
+  asset_id?: string | null;
+  asset_hostname?: string | null;
+  asset_type?: string | null;
+  asset_criticality?: string | null;
+  asset_tags: string[];
+
+  // Запросы и полезная нагрузка
+  request_uris: string[];
+  payloads: string[];
+  signatures: string[];
+
+  // Хэши файлов
+  file_hashes: string[];
+  md5_hashes: string[];
+  sha1_hashes: string[];
+  sha256_hashes: string[];
+
+  // Детекты и правила
+  detection_rule_ids: string[];
+  detection_categories: string[];
+  detection_rule_descriptions: string[];
+  recommendations: string[];
+
+  // Индикаторы компрометации (IoC)
+  ioc_matches: IocType[];
+  ioc_match_count: number;
+  ioc_severity?: string | null;
+  ioc_confidence?: number | null;
+
+  // Блеклисты
+  blacklisted: boolean;
+  blacklist_sources: string[];
+}
+
+// 5. Итоговая агрегирующая схема (ScenarioAggregateSchema)
+export interface ScenarioAggregateSchema {
+  /** Детальная информация о сценарии */
+  scenario: ScenarioDetailType;
+  incident_count: number;
+  related_incidents: IncidentLiteForScenario[];
+  related_incident_count: number;
+  raw_event_count: number;
+  ioc_match_count: number;
+  ioc_matches: unknown[];
+  mitre: MitreType;
+  links?: LinksSchema | null;
 }

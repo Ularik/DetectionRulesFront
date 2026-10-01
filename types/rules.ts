@@ -1,4 +1,3 @@
-import { NewEventType } from "@/types/events";
 
 export interface RuleType {
     rule_id: string;
@@ -60,12 +59,3 @@ export interface MetaType {
 }
 
 
-export interface TestRuleType {
-  rule: RuleCreateUpdateType;
-  event: NewEventType;
-}
-
-export interface TestRuleResponseType {
-  matched: boolean;
-  rule_id: string
-}

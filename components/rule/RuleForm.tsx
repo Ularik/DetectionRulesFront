@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { Loader2, FlaskConical } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,6 @@ import { useSeverities } from "@/services/severities/severitiesQueries";
 import { useAdminCreateRule } from "@/services/rules/adminRules/ruleQueries";
 import ArrayField, { SectionTitle, FieldError } from "@/services/utils";
 import { useRouter } from "next/navigation";
-import TestRuleModal from "@/components/event/TestRuleModal";
 import { toast } from "sonner";
 
 const inputClass =
@@ -30,7 +28,6 @@ const errorClass = "border-red-500 focus-visible:ring-red-500";
 
 export default function RuleForm() {
   const router = useRouter();
-  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const { data = [], isPending: isSeverityLoading } = useSeverities();
   const isPending = false;
 
@@ -128,19 +125,6 @@ export default function RuleForm() {
         className="space-y-5 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm"
         autoComplete="off"
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-[#1E2B6D]">
-            Создание правила
-          </h2>
-          <button
-            type="button"
-            onClick={() => setIsTestModalOpen(true)}
-            className="flex items-center gap-2 rounded-2xl border border-[#1E2B6D] px-4 py-2 text-sm font-semibold text-[#1E2B6D] transition hover:bg-[#1E2B6D]/10"
-          >
-            <FlaskConical className="h-4 w-4" />
-            Тестировать правило
-          </button>
-        </div>
 
         {/* ── Идентификация ── */}
         <SectionTitle>Идентификация</SectionTitle>
@@ -489,14 +473,6 @@ export default function RuleForm() {
 
         {/* ── Кнопки ── */}
         <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => setIsTestModalOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 rounded-2xl border-2 border-[#1E2B6D] px-4 py-3 font-semibold text-[#1E2B6D] transition hover:bg-[#1E2B6D]/5 h-12"
-          >
-            <FlaskConical className="w-5 h-5" />
-            Тестировать
-          </button>
 
           <button
             type="submit"
@@ -514,12 +490,6 @@ export default function RuleForm() {
         </div>
       </form>
 
-      {/* Модальное окно тестирования правила */}
-      <TestRuleModal
-        new_rule={getValues()}
-        isOpen={isTestModalOpen}
-        onClose={() => setIsTestModalOpen(false)}
-      />
     </>
   );
 }

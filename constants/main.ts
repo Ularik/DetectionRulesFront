@@ -6,12 +6,12 @@ import {
   type LucideIcon,
   Newspaper,
   Plane,
+  ShieldAlert,
   Star,
   Tags,
   Users,
 } from "lucide-react";
 import type { UserRole } from "@/types/users";
-
 
 export const isDev = process.env.NODE_ENV === "development";
 
@@ -54,6 +54,16 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     label: "Супер правила",
     href: "/admin/supers",
     icon: CircleUser,
+  },
+  {
+    label: "Инциденты",
+    href: "/admin/incidents",
+    icon: CircleUser,
+  },
+  {
+    label: "Сценарии",
+    href: "/admin/scenarios",
+    icon: ShieldAlert,
   },
 ];
 

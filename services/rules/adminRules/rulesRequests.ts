@@ -35,8 +35,3 @@ export async function patchRule({ rule_id, data }: {rule_id: string, data: RuleS
   return result.data;
 }
 
-
-export async function testRule(data: TestRuleType) {
-  const result = await axiosApi.post<TestRuleResponseType>(`rules/admin/test`, data);
-  return result.data;
-}

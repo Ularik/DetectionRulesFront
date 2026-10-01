@@ -4,7 +4,6 @@ import {
   deleteRule,
   updateRule,
   patchRule,
-  testRule
 } from "@/services/rules/adminRules/rulesRequests";
 import { toast } from "sonner";
 import { RuleApiResponse, RuleStatusPatchType, RuleType } from "@/types/rules";
@@ -80,8 +79,3 @@ export const useAdminSetStatusRule = () => {
   });
 };
 
-export const useAdminTestRule = () => {
-  return useMutation({
-    mutationFn: testRule,
-  });
-}

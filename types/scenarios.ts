@@ -1,16 +1,34 @@
 import { IncidentLiteForScenario } from "./incidents";
+import type { WazuhEvent } from "./events";
 import type { IocType } from "./ioc";
 import { MitreType } from "./mitre";
 
+
+export interface ScenarioEventsParams {
+  page: number;
+  size: number;
+}
+
+
+export interface ScenarioEvents {
+  organization_id: string;
+  scenario_type: string;
+  incident_ids: string[];
+  items: WazuhEvent[];
+  total: number;
+  page: number;
+  size: number;
+  returned: number;
+  missing: string[];
+  missing_count: number;
+}
+
+
 export type Severity = "low" | "medium" | "high" | "critical";
-
 export type AssetCriticality = "low" | "medium" | "high" | "critical";
-
 // Для AnalystStatus используйте ваши значения из src/incidents/schemas
 export type AnalystStatus = "new" | "in_progress" | "closed" | "resolved";
-
 export type Decision = "malicious" | "suspicious";
-
 export type Action = "monitor" | "block" | "investigate";
 
 // --- Query параметры запроса ---

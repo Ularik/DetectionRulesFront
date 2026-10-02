@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PaginationControl } from "@/components/pagination/pagination";
@@ -28,7 +29,6 @@ function formatDate(value: string | null | undefined) {
 function eventKey(event: WazuhEvent, index: number) {
   return (
     event._elastic_id ??
-    event.id ??
     `${event["@timestamp"] ?? event.timestamp ?? "event"}-${index}`
   );
 }
@@ -92,56 +92,76 @@ export default function Events() {
                   </TableCell>
                 </TableRow>
               ) : query.data?.items.length ? (
-                query.data.items.map((event, index) => (
-                  <TableRow key={eventKey(event, index)}>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDate(event["@timestamp"] ?? event.timestamp)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-gray-900">
-                        {event.agent?.name ||
-                          event.host?.name ||
-                          event.host?.hostname ||
-                          "—"}
-                      </div>
-                      {event.agent?.id && (
-                        <div className="mt-1 text-xs text-gray-500">
-                          Агент {event.agent.id}
+                query.data.items.map((event, index) => {
+                  const eventId =
+                    event._elastic_id;
+                  const indexName = event._elastic_index;
+                  const detailHref =
+                    indexName && eventId
+                      ? `/admin/hunters/events/${indexName}/${eventId}`
+                      : null;
+
+                  return (
+                    <TableRow key={eventKey(event, index)}>
+                      <TableCell className="whitespace-nowrap">
+                        {formatDate(event["@timestamp"] ?? event.timestamp)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-gray-900">
+                          {event.agent?.name ||
+                            event.host?.name ||
+                            event.host?.hostname ||
+                            "—"}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {event.host?.ip?.length
-                        ? event.host.ip.join(", ")
-                        : event.agent?.ip || "—"}
-                    </TableCell>
-                    <TableCell>{event.decoder?.name || "—"}</TableCell>
-                    <TableCell>
-                      <div>{event.location || "—"}</div>
-                      {event.predecoder?.program_name && (
-                        <div className="mt-1 text-xs text-gray-500">
-                          {event.predecoder.program_name}
+                        {event.agent?.id && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            Агент {event.agent.id}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {event.host?.ip?.length
+                          ? event.host.ip.join(", ")
+                          : event.agent?.ip || "—"}
+                      </TableCell>
+                      <TableCell>{event.decoder?.name || "—"}</TableCell>
+                      <TableCell>
+                        <div>{event.location || "—"}</div>
+                        {event.predecoder?.program_name && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            {event.predecoder.program_name}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[520px]">
+                        <div className="space-y-2">
+                          {event.full_log ? (
+                            <details>
+                              <summary className="max-w-[440px] cursor-pointer truncate text-sm text-gray-700">
+                                {event.full_log}
+                              </summary>
+                              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-50 p-3 text-xs text-gray-700">
+                                {event.full_log}
+                              </pre>
+                            </details>
+                          ) : (
+                            <span className="text-gray-400">
+                              Нет текста события
+                            </span>
+                          )}
+                          {detailHref && (
+                            <Link
+                              href={detailHref}
+                              className="inline-flex items-center text-sm font-medium text-indigo-700 hover:text-indigo-900 hover:underline"
+                            >
+                              Просмотреть детально
+                            </Link>
+                          )}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[480px]">
-                      {event.full_log ? (
-                        <details>
-                          <summary className="max-w-[440px] cursor-pointer truncate text-sm text-gray-700">
-                            {event.full_log}
-                          </summary>
-                          <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-50 p-3 text-xs text-gray-700">
-                            {event.full_log}
-                          </pre>
-                        </details>
-                      ) : (
-                        <span className="text-gray-400">
-                          Нет текста события
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell

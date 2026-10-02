@@ -1,5 +1,6 @@
 import {
   FileUser,
+  Building2,
   CircleUser,
   Crosshair,
   FolderOpen,
@@ -30,6 +31,11 @@ export type DashboardMenuItem = {
 };
 
 export const dashboardMenuItems: DashboardMenuItem[] = [
+  {
+    label: "Организации",
+    href: "/admin/organizations",
+    icon: Building2,
+  },
   {
     label: "Правила обнаружения",
     href: "/admin/rules",

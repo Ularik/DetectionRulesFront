@@ -5,8 +5,6 @@ import {
   RuleCreateUpdateType,
   RuleStatusPatchType,
   RuleType,
-  TestRuleResponseType,
-  TestRuleType,
 } from "@/types/rules";
 
 export const createRule = async (data: RuleCreateUpdateType) => {
@@ -29,9 +27,13 @@ export async function updateRule({
   return result.data;
 }
 
-
-export async function patchRule({ rule_id, data }: {rule_id: string, data: RuleStatusPatchType}): Promise<RuleType> {
+export async function patchRule({
+  rule_id,
+  data,
+}: {
+  rule_id: string;
+  data: RuleStatusPatchType;
+}): Promise<RuleType> {
   const result = await axiosApi.patch<RuleType>(`rules/admin/${rule_id}`, data);
   return result.data;
 }
-

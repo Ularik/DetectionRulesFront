@@ -1,9 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { useScenarioDetail } from "@/services/scenarios/scenariosQueries";
+import { useState } from "react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PaginationControl } from "@/components/pagination/pagination";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  useScenarioDetail,
+  useScenarioEvents,
+} from "@/services/scenarios/scenariosQueries";
 import type { ScenarioDetailType } from "@/types/scenarios";
+import type { WazuhEvent } from "@/types/events";
 
 interface ScenarioDetailProps {
   scenarioId: string;
@@ -22,6 +37,155 @@ function formatDate(value: string | Date | null | undefined) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function eventKey(event: WazuhEvent, index: number) {
+  return (
+    event._elastic_id ??
+    event.id ??
+    `${event["@timestamp"] ?? event.timestamp ?? "event"}-${index}`
+  );
+}
+
+function ScenarioEventsTable({
+  query,
+  page,
+  size,
+  onPageChange,
+  onSizeChange,
+}: {
+  query: ReturnType<typeof useScenarioEvents>;
+  page: number;
+  size: number;
+  onPageChange: (page: number) => void;
+  onSizeChange: (size: number) => void;
+}) {
+  if (query.isPending) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+        Загрузка событий...
+      </div>
+    );
+  }
+
+  if (query.isError) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-white p-6 text-center">
+        <p className="text-sm text-red-700" role="alert">
+          Не удалось загрузить события сценария.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={() => query.refetch()}
+        >
+          Повторить попытку
+        </Button>
+      </div>
+    );
+  }
+
+  const events = query.data?.items ?? [];
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3">
+        <h2 className="text-base font-semibold text-gray-900">
+          События сценария
+        </h2>
+        <p className="text-sm text-gray-500">
+          Показано {query.data?.returned ?? events.length} из{" "}
+          {query.data?.total ?? events.length}
+        </p>
+      </div>
+      {query.data?.missing_count ? (
+        <p className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          Не удалось получить события для {query.data.missing_count} инцидентов.
+        </p>
+      ) : null}
+      {events.length ? (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead>Время</TableHead>
+                <TableHead>Агент / хост</TableHead>
+                <TableHead>IP хоста</TableHead>
+                <TableHead>Декодер</TableHead>
+                <TableHead>Источник журнала</TableHead>
+                <TableHead>Событие</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {events.map((event, index) => (
+                <TableRow key={eventKey(event, index)}>
+                  <TableCell className="whitespace-nowrap">
+                    {formatDate(event["@timestamp"] ?? event.timestamp)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-gray-900">
+                      {event.agent?.name ||
+                        event.host?.name ||
+                        event.host?.hostname ||
+                        "—"}
+                    </div>
+                    {event.agent?.id && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        Агент {event.agent.id}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {event.host?.ip?.length
+                      ? event.host.ip.join(", ")
+                      : event.agent?.ip || "—"}
+                  </TableCell>
+                  <TableCell>{event.decoder?.name || "—"}</TableCell>
+                  <TableCell>
+                    <div>{event.location || "—"}</div>
+                    {event.predecoder?.program_name && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        {event.predecoder.program_name}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-120">
+                    {event.full_log ? (
+                      <details>
+                        <summary className="max-w-110 cursor-pointer truncate text-sm text-gray-700">
+                          {event.full_log}
+                        </summary>
+                        <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap wrap-break-word rounded-md bg-gray-50 p-3 text-xs text-gray-700">
+                          {event.full_log}
+                        </pre>
+                      </details>
+                    ) : (
+                      <span className="text-gray-400">Нет текста события</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <p className="p-6 text-center text-sm text-gray-500">
+          События не найдены
+        </p>
+      )}
+      <div className="px-4 pb-3">
+        <PaginationControl
+          page={page}
+          limit={size}
+          total={query.data?.total ?? 0}
+          onPageChange={onPageChange}
+          onLimitChange={onSizeChange}
+          isLoading={query.isFetching}
+        />
+      </div>
+    </section>
+  );
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -65,9 +229,23 @@ function Section({
 function ScenarioContent({
   scenario,
   data,
+  eventsVisible,
+  eventsQuery,
+  eventsPage,
+  eventsSize,
+  onEventsPageChange,
+  onEventsSizeChange,
+  onToggleEvents,
 }: {
   scenario: ScenarioDetailType;
   data: NonNullable<ReturnType<typeof useScenarioDetail>["data"]>;
+  eventsVisible: boolean;
+  eventsQuery: ReturnType<typeof useScenarioEvents>;
+  eventsPage: number;
+  eventsSize: number;
+  onEventsPageChange: (page: number) => void;
+  onEventsSizeChange: (size: number) => void;
+  onToggleEvents: () => void;
 }) {
   return (
     <>
@@ -115,6 +293,31 @@ function ScenarioContent({
             </p>
           </div>
         ))}
+      </div>
+
+      <div className="mb-6 space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={eventsVisible}
+          onClick={onToggleEvents}
+        >
+          {eventsVisible ? (
+            <EyeOff aria-hidden="true" />
+          ) : (
+            <Eye aria-hidden="true" />
+          )}
+          {eventsVisible ? "Скрыть события" : "Показать события"}
+        </Button>
+        {eventsVisible && (
+          <ScenarioEventsTable
+            query={eventsQuery}
+            page={eventsPage}
+            size={eventsSize}
+            onPageChange={onEventsPageChange}
+            onSizeChange={onEventsSizeChange}
+          />
+        )}
       </div>
 
       <div className="space-y-5">
@@ -289,7 +492,15 @@ function ScenarioContent({
 }
 
 export default function ScenarioDetail({ scenarioId }: ScenarioDetailProps) {
+  const [eventsVisible, setEventsVisible] = useState(false);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsSize, setEventsSize] = useState(10);
   const query = useScenarioDetail(scenarioId);
+  const eventsQuery = useScenarioEvents(
+    scenarioId,
+    { page: eventsPage, size: eventsSize },
+    eventsVisible,
+  );
 
   if (query.isPending) {
     return (
@@ -320,7 +531,20 @@ export default function ScenarioDetail({ scenarioId }: ScenarioDetailProps) {
 
   return (
     <main className="mx-auto max-w-6xl">
-      <ScenarioContent scenario={query.data.scenario} data={query.data} />
+      <ScenarioContent
+        scenario={query.data.scenario}
+        data={query.data}
+        eventsVisible={eventsVisible}
+        eventsQuery={eventsQuery}
+        eventsPage={eventsPage}
+        eventsSize={eventsSize}
+        onEventsPageChange={setEventsPage}
+        onEventsSizeChange={(size) => {
+          setEventsSize(size);
+          setEventsPage(1);
+        }}
+        onToggleEvents={() => setEventsVisible((visible) => !visible)}
+      />
     </main>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
-import { SuppressionRuleUpdateType } from "@/types/supers";
+import type { SuppressionRuleUpdateType } from "@/entities/suppression-rule";
 
 interface SuperRuleEditFormProps {
   initialData: SuppressionRuleUpdateType;
@@ -9,7 +9,7 @@ interface SuperRuleEditFormProps {
   isSubmitting?: boolean;
 }
 
-export default function SuperRuleEditForm({
+export function SuppressionRuleEditForm({
   initialData,
   onSubmit,
   isSubmitting = false,

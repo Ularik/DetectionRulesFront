@@ -1,22 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { SuppressionRuleTypes } from "@/types/supers"; // Путь к вашему TS интерфейсу
+import type { SuppressionRuleTypes } from "../model/types";
+import { routes } from "@/shared/config";
 
 interface SuperRuleDetailsProps {
   rule: SuppressionRuleTypes;
-  onStatusToggle?: (enabled: boolean) => void;
   onDelete?: (id: string) => void;
 }
 
-export default function SuperRuleDetailsPage({
+export function SuppressionRuleDetailsCard({
   rule,
-  onStatusToggle,
   onDelete,
 }: SuperRuleDetailsProps) {
-  const pathname = usePathname();
   const [copied, setCopied] = useState(false);
 
   // Копирование JSON структуры правила
@@ -45,7 +42,7 @@ export default function SuperRuleDetailsPage({
       {/* 1. Хлебные крошки */}
       <nav className="flex items-center gap-2 text-sm text-gray-500">
         <Link
-          href="/superrules"
+          href={routes.suppressionRules}
           className="hover:text-indigo-600 transition-colors"
         >
           Super Rules
@@ -89,7 +86,7 @@ export default function SuperRuleDetailsPage({
         {/* Действия со страницей */}
         <div className="flex items-center gap-3">
           <Link
-            href={`${pathname}/edit`}
+            href={routes.suppressionRuleEdit(rule.suppression_id)}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
           >
             <svg

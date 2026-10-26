@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { SuppressionRuleTypes } from "@/types/supers"; // Путь к вашему TS интерфейсу
+import type { SuppressionRuleTypes } from "../model/types";
+import { routes } from "@/shared/config";
 
 interface SuperRuleCardProps {
   rule: SuppressionRuleTypes;
 }
 
-export default function SuperRuleCard({ rule }: SuperRuleCardProps) {
+export function SuppressionRuleCard({ rule }: SuperRuleCardProps) {
   // Цветовая индикация в зависимости от уровня суровости (severity)
   const getSeverityBadge = (severity: string) => {
     switch (severity.toLowerCase()) {
@@ -24,7 +25,7 @@ export default function SuperRuleCard({ rule }: SuperRuleCardProps) {
 
   return (
     <Link
-      href={`supers/${rule.suppression_id}`}
+      href={routes.suppressionRule(rule.suppression_id)}
       className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md"
     >
       <div className="flex flex-col justify-between transition-all">

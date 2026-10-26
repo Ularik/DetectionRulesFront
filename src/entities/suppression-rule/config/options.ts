@@ -1,4 +1,4 @@
-// Перенесено из constants/main.ts. При миграции домена → entities/suppression-rule/config
+// Варианты значений для селектов action / severity / decision правила подавления
 export const actionAction = [
   {
     value: "block",

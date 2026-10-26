@@ -29,6 +29,10 @@ export const routes = {
   iocNew: "/admin/ioc/new",
   iocEntry: (iocId: string) => `/admin/ioc/${iocId}`,
   suppressionRules: "/admin/supers",
+  suppressionRuleNew: "/admin/supers/new",
+  suppressionRule: (suppressionId: string) => `/admin/supers/${suppressionId}`,
+  suppressionRuleEdit: (suppressionId: string) =>
+    `/admin/supers/${suppressionId}/edit`,
   hunters: "/admin/hunters",
   scenarios: "/admin/hunters/scenarios",
   scenario: (scenarioId: string) =>

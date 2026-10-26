@@ -87,7 +87,7 @@ export interface SuppressionRuleTypes {
   updated_by?: string | null;
 }
 
-export interface SuppresionRuleCreateType {
+export interface SuppressionRuleCreateType {
     enabled: boolean;
     description?: string; 
     reason?: string;

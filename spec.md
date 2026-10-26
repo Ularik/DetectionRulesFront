@@ -1,8 +1,8 @@
 # Техническая спецификация: Detection Rules (frontend)
 
 > Это главный технический документ проекта. На него ссылаются при разработке, ревью и рефакторинге.
-> Целевая архитектура — **Feature-Sliced Design (FSD)**. Раздел 4 описывает целевое состояние,
-> раздел 8 — план миграции с текущей структуры.
+> Проект построен по **Feature-Sliced Design (FSD)**. Раздел 4 описывает архитектуру и правила,
+> раздел 8 — историю миграции со старой плоской структуры (завершена).
 
 ---
 
@@ -28,7 +28,7 @@
 | Уведомления     | sonner                                                                             |
 | Утилиты стилей  | `clsx` + `tailwind-merge` (`cn`), `class-variance-authority`                        |
 | Шрифты          | `next/font/google`: Montserrat (latin + cyrillic), Geist                           |
-| Линт            | ESLint 9 (flat config, `eslint-config-next`)                                       |
+| Линт            | ESLint 9 (flat config, `eslint-config-next`), Steiger (правила FSD)                |
 | Тесты           | не настроены                                                                       |
 
 > ⚠️ Next.js 16 отличается от предыдущих версий. Перед использованием API Next.js сверяйтесь с
@@ -41,7 +41,11 @@ npm run dev     # dev-сервер, backend ожидается на http://local
 npm run build   # production-сборка (standalone)
 npm run start   # запуск production-сборки
 npm run lint    # ESLint
+npm run lint:fsd  # Steiger — проверка правил FSD в src/
 ```
+
+Если `tsc`/`next build` падают на `.next/dev/types/validator.ts`, это устаревшие типы от `next dev`:
+при остановленном dev-сервере удалите `.next/dev`.
 
 Docker: многоэтапный `Dockerfile` (node:20-alpine). Образ запускает `node server.js` на порту 3000 от пользователя `nextjs`.
 
@@ -66,7 +70,7 @@ Docker: многоэтапный `Dockerfile` (node:20-alpine). Образ за�
 
 ---
 
-## 4. Целевая архитектура: Feature-Sliced Design
+## 4. Архитектура: Feature-Sliced Design
 
 ### 4.1. Слои
 
@@ -115,6 +119,20 @@ export default function Page() {
 Для динамических сегментов route-файл передаёт параметры во view.
 В Next 16 `params` — это Promise (см. `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md`).
 
+> ⚠️ Значения `params` приходят **URL-кодированными** (проверено: `/x/a%20b` даёт `"a%20b"`), так же как `useParams()`.
+> Если параметр — человекочитаемый id, который дальше снова кодируется (`routes.*`, `encodeURIComponent` в API),
+> декодируйте его в route-файле: `decodeURIComponent(param)`. Так сделано для организаций, событий и редиректа сценариев.
+
+```tsx
+// app/(dashboard)/admin/rules/[slug]/page.tsx — динамический route-файл
+import { RuleDetailPage } from "@/views/rule-detail";
+
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return <RuleDetailPage ruleId={slug} />;
+}
+```
+
 ### 4.3. Сегменты внутри слайса
 
 | Сегмент   | Содержимое                                                                 |
@@ -127,82 +145,82 @@ export default function Page() {
 
 Сегменты именуются по назначению (`api`, `model`), а не по типу файла (`hooks`, `types`, `components`).
 
-### 4.4. Целевая структура каталогов
+### 4.4. Структура каталогов
 
 ```
 /
-├─ app/                          # ТОЛЬКО роутинг Next.js (тонкие файлы)
-│  ├─ layout.tsx                 # → @/app/layouts/RootLayout, providers
-│  ├─ globals.css → перенести в src/app/styles (импорт из layout)
-│  ├─ (auth)/login/page.tsx      # → @/views/login
-│  ├─ (auth)/auth/page.tsx       # → @/views/register
+├─ app/                          # ТОЛЬКО роутинг Next.js (тонкие файлы, без "use client")
+│  ├─ layout.tsx                 # html/body, шрифты, metadata, Toaster, @/app/providers, @/app/styles
+│  ├─ page.tsx                   # redirect(routes.login)
+│  ├─ (auth)/login, (auth)/auth  # → @/views/login, @/views/register
 │  └─ (dashboard)/
-│     ├─ layout.tsx              # → @/app/layouts/DashboardLayout
-│     └─ admin/...               # → @/views/*
-├─ proxy.ts                      # (опционально) server-side проверки
+│     ├─ layout.tsx              # → @/app/layouts (DashboardLayout)
+│     ├─ admin/page.tsx          # redirect(routes.organizations)
+│     ├─ admin/hunters/layout.tsx  # → @/widgets/hunters-tabs
+│     └─ admin/**/page.tsx       # → @/views/*
+├─ steiger.config.ts             # конфиг линтера FSD
 └─ src/
    ├─ app/
-   │  ├─ providers/              # QueryProvider, Toaster
-   │  ├─ guards/                 # RoleGuard (бывший middleware/ProtectedLayout)
-   │  ├─ layouts/                # DashboardLayout (Sidebar + guard + main)
+   │  ├─ providers/              # Providers (QueryClient + Devtools)
+   │  ├─ guards/                 # RoleGuard
+   │  ├─ layouts/                # DashboardLayout (RoleGuard + Sidebar + main)
    │  └─ styles/globals.css
    ├─ views/
-   │  ├─ login/  register/
-   │  ├─ organizations/  organization-detail/  organization-edit/  organization-create/
+   │  ├─ login/  register/  analyst-home/  viewer-home/  test-rule/
+   │  ├─ organizations/  organization-detail/  organization-create/  organization-edit/
    │  ├─ rules/  rule-detail/  rule-create/
    │  ├─ correlation-rules/  correlation-rule-detail/  correlation-rule-create/
-   │  ├─ suppression-rules/  suppression-rule-detail/  suppression-rule-edit/  suppression-rule-create/
+   │  ├─ suppression-rules/  suppression-rule-detail/  suppression-rule-create/  suppression-rule-edit/
    │  ├─ ioc/  ioc-detail/  ioc-create/
-   │  ├─ incidents/  incident-detail/
-   │  ├─ scenarios/  scenario-detail/
-   │  ├─ events/  event-detail/
-   │  ├─ audit/  audit-detail/
-   │  ├─ mitre/
-   │  ├─ analyst-home/  viewer-home/
+   │  ├─ incidents/  incident-detail/  scenarios/  scenario-detail/  events/  event-detail/
+   │  └─ audit/  audit-detail/  mitre/
    ├─ widgets/
-   │  ├─ sidebar/                # config/menu.ts (бывш. dashboardMenuItems)
-   │  ├─ hunters-tabs/           # навигация Инциденты / Сценарии / События
-   │  ├─ incidents-table/  incident-details/
-   │  ├─ scenarios-list/  scenario-details/
-   │  ├─ events-table/  event-details/
-   │  ├─ rules-list/  rule-details/
-   │  ├─ correlation-rules-list/  correlation-rule-details/
+   │  ├─ sidebar/  hunters-tabs/
+   │  ├─ rules-list/  rule-details/  correlation-rules-list/
    │  ├─ suppression-rules-list/  suppression-rule-details/
-   │  ├─ ioc-table/  audit-table/  organizations-list/
-   │  └─ mitre-techniques/
+   │  ├─ ioc-list/  ioc-details/  audit-list/  audit-details/
+   │  ├─ incidents-table/  incident-details/  scenarios-list/  scenario-details/
+   │  ├─ events-table/  event-details/
+   │  └─ organizations-list/  organization-details/  mitre-techniques/
    ├─ features/
    │  ├─ auth-login/  auth-logout/  auth-register/
-   │  ├─ rule-upsert/  rule-delete/  rule-toggle-status/  rules-filter/
-   │  ├─ correlation-rule-upsert/
-   │  ├─ suppression-rule-upsert/
+   │  ├─ rule-upsert/  rule-delete/  rule-toggle-status/
+   │  ├─ correlation-rule-upsert/  suppression-rule-upsert/
    │  ├─ ioc-create/  ioc-edit/
-   │  ├─ incident-change-status/  incidents-filter/
-   │  ├─ scenarios-filter/  events-filter/
+   │  ├─ incident-change-status/  incidents-filter/  scenarios-filter/
    │  ├─ organization-upsert/  organization-delete/
    │  └─ mitre-sync/
    ├─ entities/
    │  ├─ user/  rule/  correlation-rule/  suppression-rule/  ioc/
    │  ├─ incident/  scenario/  event/  organization/  audit/
-   │  ├─ mitre-technique/  attack-type/
+   │  └─ mitre-technique/  attack-type/
    └─ shared/
-      ├─ api/                    # axios-инстанс + interceptor 401, общие типы ответов
-      ├─ config/                 # env, apiURL, routes, roleDashboardPaths
-      ├─ ui/                     # shadcn-компоненты, Pagination, FieldError, SectionTitle, ArrayField
-      └─ lib/                    # cn(), форматирование дат, хелперы
+      ├─ api/                    # axiosApi + interceptor 401
+      ├─ config/                 # env (apiURL), routes, roleDashboardPaths, UserRole, theme
+      ├─ ui/                     # shadcn, pagination, form (ArrayField, inputClass…), detail-fields, table-styles
+      └─ lib/                    # utils (cn), errors (getErrorMessage)
 ```
+
+Фильтров у списков правил и событий в UI нет, поэтому `rules-filter` и `events-filter` не созданы. Таблицы IoC и аудита — это
+презентационный UI сущностей (`entities/ioc/ui/IocTable`, `entities/audit/ui/AuditTable`), а не отдельные виджеты.
 
 ### 4.5. Шаблон слайса сущности
 
 ```
 entities/rule/
 ├─ api/
-│  ├─ ruleApi.ts        # fetchRules, fetchOneRule, fetchSeverityHints
+│  ├─ ruleApi.ts        # fetchRules, fetchRule, fetchSeverityHints, createRule, updateRule, …
 │  ├─ queryKeys.ts      # ruleKeys — единый источник query-ключей
 │  └─ queries.ts        # useRules, useRule, useSeverityHints
+├─ config/severity.ts   # RULE_SEVERITY_STYLES
 ├─ model/types.ts       # RuleType, RuleApiResponse, QueryFiltersType
-├─ ui/RuleCard.tsx
+├─ ui/                  # RuleCard (слот actions), RuleDetailTable (callback-driven)
+├─ @x/audit.ts          # типы для entities/audit
 └─ index.ts             # public API
 ```
+
+В небольших сущностях фабрика ключей лежит прямо в `api/queries.ts`. UI сущности презентационный: действия
+(features) передаются в него через слоты (`actions`) или колбэки (`onDelete`, `onUpdate`).
 
 Фабрика query-ключей обязательна для каждой сущности. Features инвалидируют кэш только через неё:
 
@@ -225,15 +243,11 @@ feature оборачивает их в `useMutation` и инвалидирует
 
 ### 4.7. Алиасы
 
-Целевой `tsconfig.json`: `"@/*": ["./src/*"]`.
-
-**Сейчас (переходный период)** действуют алиасы на каждый слой: `@/app/*`, `@/views/*`, `@/widgets/*`, `@/features/*`,
-`@/entities/*`, `@/shared/*` → `./src/<слой>/*`, а `@/*` → `./*` для ещё не перенесённых папок (`components/`, `services/`, `types/`).
-TypeScript выбирает самый специфичный паттерн. Когда старых папок не останется, все алиасы заменяются одним `"@/*": ["./src/*"]`.
+`tsconfig.json`: `"@/*": ["./src/*"]`. Обратите внимание: `@/app/*` — это слой FSD `src/app`, а не папка роутинга `app/`.
 
 Импорты: `@/shared/ui`, `@/entities/rule`, `@/features/rule-delete`, `@/widgets/sidebar`, `@/views/rules`, `@/app/providers`.
 
-`components.json` (shadcn) нужно перенастроить, чтобы `npx shadcn add` клал компоненты в shared:
+`components.json` (shadcn) настроен так, чтобы `npx shadcn add` клал компоненты в shared:
 
 ```json
 "aliases": {
@@ -247,7 +261,15 @@ TypeScript выбирает самый специфичный паттерн. К
 
 и `"tailwind.css": "src/app/styles/globals.css"`.
 
-Для автоматической проверки правил FSD рекомендуется линтер **Steiger** (`@feature-sliced/steiger`).
+### 4.8. Проверка правил FSD (Steiger)
+
+`npm run lint:fsd` запускает **Steiger** (`steiger` + `@feature-sliced/steiger-plugin`, конфиг `steiger.config.ts`).
+Steiger знает только стандартное имя слоя `pages`, поэтому в конфиге отключены:
+- `fsd/insignificant-slice` — ссылки из `views` он не видит и ложно считает виджеты/фичи неиспользуемыми;
+- `fsd/segments-by-purpose` для `src/app` — `providers` является устоявшимся именем сегмента.
+
+Импорты внутри `views` Steiger не проверяет: при ревью следите, чтобы views импортировали только widgets/features/entities/shared
+через public API.
 
 ---
 
@@ -257,39 +279,39 @@ TypeScript выбирает самый специфичный паттерн. К
 
 ### 5.1. Сущности
 
-| Entity (FSD)        | Текущие файлы                       | Ключевые типы                                                 | Пагинация        |
-| ------------------- | ----------------------------------- | ------------------------------------------------------------- | ---------------- |
-| `user`              | `services/users`, `types/users.ts`  | `UserType`, `UserRole`, `UserLoginType`, `UsersAuthType`      | —                |
-| `rule`              | `services/rules`, `services/severities`, `lib/hooks/severities.ts` | `RuleType`, `RuleCreateUpdateType`, `QueryFiltersType` | `limit/offset` → `{total, has_next, items}` |
-| `correlation-rule`  | `services/crule`, `services/autoFields` | `CorrelationRuleType`, `SequenceValueType`, `CorrelationGroupByFieldsType` | нет (массив) |
-| `suppression-rule`  | `services/supers`                   | `SuppressionRuleTypes`, `MatchFieldResponseType`              | нет (массив)     |
-| `ioc`               | `services/ioc`                      | `IocType`, `IocCreateType`, `IocPatchType`                    | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
-| `incident`          | `services/incident`, `types/incidentEvents.ts` | `IncidentSchema`, `IncidentLite`, `IncidentParams`, `ANALYST_STATUS` | `page/size` |
-| `scenario`          | `services/scenarios`                | `SecurityScenario`, `ScenarioAggregateSchema`, `ScenarioQueryParams` | `page/size` |
-| `event`             | `services/events`                   | `WazuhEvent`, `WazuhEventApiResponse`, `RawEventsQueryParamsSchema` | да |
-| `organization`      | `services/organizations`            | `Organization`, `AgentType`, `OrganizationCreateUpdateType`   | нет              |
-| `audit`             | `services/audits`                   | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | да               |
-| `mitre-technique`   | `services/mitre`, `types/mitre.ts`  | `MitreTechnique`, `MitreSyncResponse`, `MitreType`            | нет (массив)     |
-| `attack-type`       | `services/attackTypes`              | `AttackTypes`                                                 | —                |
+| Entity            | Query-хуки (`*Keys`)                                             | Ключевые типы                                                 | Пагинация        |
+| ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------- | ---------------- |
+| `user`            | `useMe` (`userKeys`)                                             | `UserType`, `UserRole`, `UserLoginType`, `UsersAuthType`      | —                |
+| `rule`            | `useRules`, `useRule`, `useSeverityHints` (`ruleKeys`)           | `RuleType`, `RuleCreateUpdateType`, `QueryFiltersType`        | `limit/offset` → `{total, has_next, items}` |
+| `correlation-rule`| `useCorrelationRules`, `useCorrelationRule`, `useSequenceOptions`, `useGroupByFields` (`correlationRuleKeys`) | `CorrelationRuleType`, `SequenceValueType`, `CorrelationGroupByFieldsType` | нет (массив) |
+| `suppression-rule`| `useSuppressionRules`, `useSuppressionRule`, `useSuppressionMatchFields` (`suppressionRuleKeys`) | `SuppressionRuleTypes`, `SuppressionRuleCreateType`, `MatchFieldResponseType` | нет (массив) |
+| `ioc`             | `useIocs`, `useIoc` (`iocKeys`)                                  | `IocType`, `IocCreateType`, `IocPatchType`                    | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
+| `incident`        | `useIncidents`, `useIncident`, `useIncidentEvents` (`incidentKeys`) | `IncidentSchema`, `Incident`, `IncidentParams`, `ANALYST_STATUS` | `page/size` |
+| `scenario`        | `useScenarios`, `useScenario`, `useScenarioEvents` (`scenarioKeys`) | `SecurityScenario`, `ScenarioAggregateSchema`, `ScenarioQueryParams` | `page/size` |
+| `event`           | `useEvents`, `useEvent` (`eventKeys`)                            | `WazuhEvent`, `WazuhEventApiResponse`, `RawEventsQueryParamsSchema` | `page/size` |
+| `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
+| `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
+| `mitre-technique` | `useMitreTechniques` (`mitreKeys`)                               | `MitreTechnique`, `MitreSyncResponse`, `MitreType`            | нет (массив)     |
+| `attack-type`     | `useAttackTypes` (`attackTypeKeys`)                              | `AttackTypes`                                                 | —                |
 
-Связи между сущностями (оформляются через `@x`):
-`audit → rule, user`; `scenario → incident, event, ioc, mitre-technique`; `incident → event, mitre-technique`.
+Связи между сущностями оформлены через `@x`:
+`audit → rule, user`; `scenario → incident, event, ioc, mitre-technique`; `incident → event`.
 
 ### 5.2. Эндпоинты
 
-| Метод  | Путь                                           | Назначение                                | Слайс-владелец (цель) |
+| Метод  | Путь                                           | Назначение                                | Слайс-владелец        |
 | ------ | ---------------------------------------------- | ----------------------------------------- | --------------------- |
 | GET    | `/users/me`                                    | текущий пользователь                      | entities/user         |
 | POST   | `/users/login`                                 | вход; пустое тело — обновление сессии     | features/auth-login, shared/api |
 | DELETE | `/users/logout`                                | выход                                     | features/auth-logout  |
 | POST   | `/users/`                                      | регистрация                               | features/auth-register |
-| GET    | `rules/`                                       | список правил обнаружения (фильтры)       | entities/rule         |
-| GET    | `rules/{rule_id}`                              | правило                                   | entities/rule         |
-| GET    | `rules/enums/severity-hints`                   | справочник severity                       | entities/rule         |
-| POST   | `rules/admin/`                                 | создать правило                           | features/rule-upsert  |
-| PUT    | `rules/admin/{rule_id}`                        | обновить правило                          | features/rule-upsert  |
-| PATCH  | `rules/admin/{rule_id}`                        | вкл/выкл (`{enabled}`)                    | features/rule-toggle-status |
-| DELETE | `rules/admin/{rule_id}`                        | удалить правило                           | features/rule-delete  |
+| GET    | `/rules/`                                       | список правил обнаружения (фильтры)       | entities/rule         |
+| GET    | `/rules/{rule_id}`                              | правило                                   | entities/rule         |
+| GET    | `/rules/enums/severity-hints`                   | справочник severity                       | entities/rule         |
+| POST   | `/rules/admin/`                                 | создать правило                           | features/rule-upsert  |
+| PUT    | `/rules/admin/{rule_id}`                        | обновить правило                          | features/rule-upsert  |
+| PATCH  | `/rules/admin/{rule_id}`                        | вкл/выкл (`{enabled}`)                    | features/rule-toggle-status |
+| DELETE | `/rules/admin/{rule_id}`                        | удалить правило                           | features/rule-delete  |
 | GET    | `/correlation-rules/`                          | список правил корреляции                  | entities/correlation-rule |
 | GET    | `/correlation-rules/{id}`                      | правило корреляции                        | entities/correlation-rule |
 | GET    | `/correlation-rules/sequence`                  | справочники sequence / group-by полей     | entities/correlation-rule |
@@ -325,7 +347,10 @@ TypeScript выбирает самый специфичный паттерн. К
 | POST   | `/mitre/sync-mitre`                            | синхронизация MITRE                       | features/mitre-sync   |
 | GET    | `/attack-types/`                               | справочник типов атак                     | entities/attack-type  |
 
-> Пути `rules/...` указаны без ведущего `/`. В целевой реализации пути единообразны: всегда начинаются с `/`.
+> Все пути в `entities/*/api` начинаются с `/`.
+>
+> ⚠️ `fetchGroupByFields` ходит на тот же `/correlation-rules/sequence`, что и `fetchSequenceOptions`, хотя ожидает
+> `CorrelationGroupByFieldsType[]` (с `description`). Похоже на опечатку — нужно сверить адрес с backend (раздел 9).
 
 ---
 
@@ -348,129 +373,104 @@ TypeScript выбирает самый специфичный паттерн. К
 
 ## 7. Маршруты
 
-| URL                                          | View (цель)                    | Примечание |
+| URL                                          | View                           | Примечание |
 | -------------------------------------------- | ------------------------------ | ---------- |
-| `/`                                          | —                              | редирект на `/login` |
+| `/`                                          | —                              | `redirect(routes.login)` |
 | `/login`                                     | `views/login`                  | |
 | `/auth`                                      | `views/register`               | регистрация |
-| `/admin`                                     | —                              | редирект на `/admin/organizations` |
-| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | |
+| `/admin`                                     | —                              | `redirect(routes.organizations)` |
+| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | id декодируется в route-файле |
 | `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | правила обнаружения |
-| `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | правила корреляции |
+| `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | правила корреляции; `/[id]` — форма редактирования |
 | `/admin/supers`, `/new`, `/[slug]`, `/[slug]/edit` | `views/suppression-rule*` | правила подавления |
 | `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | |
 | `/admin/audit`, `/[id]`                      | `views/audit*`                 | |
 | `/admin/mitre`                               | `views/mitre`                  | |
-| `/admin/hunters`                             | —                              | редирект на `/admin/hunters/incidents` |
-| `/admin/incidents`, `/[id]`                  | `views/incident*`              | ⚠️ раньше был `/admin/hunters/incidents`; вкладка и редирект `/admin/hunters` ещё ведут туда (раздел 9) |
-| `/admin/hunters/scenarios`, `/[scenarioId]`  | `views/scenario*`              | вкладки `widgets/hunters-tabs` |
-| `/admin/hunters/events`, `/[index_name]/[event_id]` | `views/event*`          | |
-| `/admin/scenarios`, `/[scenarioId]`          | —                              | редирект на `/admin/hunters/scenarios` |
-| `/admin/testRule`                            | —                              | заглушка |
+| `/admin/incidents`, `/[id]`                  | `views/incident*`              | вкладка «Инциденты» в `widgets/hunters-tabs` ведёт сюда |
+| `/admin/hunters`                             | —                              | `redirect(routes.incidents)` |
+| `/admin/hunters/scenarios`, `/[scenarioId]`  | `views/scenario*`              | layout с `widgets/hunters-tabs` |
+| `/admin/hunters/events`, `/[index_name]/[event_id]` | `views/event*`          | параметры декодируются в route-файле |
+| `/admin/scenarios`, `/[scenarioId]`          | —                              | редирект на `/admin/hunters/scenarios[/id]` |
+| `/admin/testRule`                            | `views/test-rule`              | заглушка |
 | `/analyst`, `/viewer`                        | `views/analyst-home`, `views/viewer-home` | заглушки |
 
-Константы путей хранятся в `shared/config/routes.ts`. Строки URL в компонентах не хардкодятся.
+Константы путей хранятся в `shared/config/routes.ts` (`routes.rule(id)`, `routes.organizationEdit(id)` и т. д.).
+Строки URL в компонентах не хардкодятся.
+
+Внутри layout `(dashboard)` серверный `redirect()` отвечает не HTTP 307, а инструкцией `NEXT_REDIRECT` в RSC-потоке
+(layout уже начал стримиться) — это штатное поведение Next, клиент выполняет переход сам.
 
 ---
 
-## 8. План миграции на FSD
+## 8. История миграции на FSD
 
-Мигрировать нужно **по одному домену**, чтобы после каждого шага работали `npm run build` и `npm run lint`.
+Миграция **завершена**. Каждый шаг — отдельный коммит в ветке `refactor/fsd`; после каждого проверялись `tsc`, `eslint` и `next build`.
 
-### Прогресс
+| Этап | Что сделано |
+| ---- | ----------- |
+| 0. Каркас | `src/{app,views,widgets,features,entities,shared}`, переходные алиасы, `components.json` → shared |
+| 1. `shared` и `app` | axios, config, ui, lib; Providers, RoleGuard, DashboardLayout, widgets/sidebar |
+| 2–5. Домены | `rules` (эталон) → `user`/auth, `audit` → `attack-type`, `mitre-technique`, `organization` → `ioc` → `event` → `incident` → `scenario` → `correlation-rule` → `suppression-rule` |
+| 6. Очистка | удалены `components/`, `services/`, `types/`, `lib/`, `constants/`, `providers/`, `middleware/`; единый алиас `@/*` → `./src/*`; Steiger; `widgets/hunters-tabs` |
 
-| Этап                                   | Статус        |
-| -------------------------------------- | ------------- |
-| Шаг 0. Каркас и переходные алиасы       | ✅ выполнен    |
-| Шаг 1. `shared` и `app`                 | ✅ выполнен    |
-| Домен `rules` (шаги 2–5)                | ✅ выполнен, это **эталон** |
-| Домены `user`/auth, `audit`, `correlation-rule`, `suppression-rule`, `ioc`, `incident`, `scenario`, `event`, `organization`, `mitre-technique`, `attack-type` | ⏳ не начаты |
-| Шаг 6. Очистка                         | ⏳             |
+Соответствие старых файлов новым (для чтения истории git):
 
-**Эталон для переноса домена** — `rules`:
-- `src/entities/rule`: `model/types.ts`, `api/{ruleApi,queryKeys,queries}.ts`, `config/`, `ui/` (презентационные компоненты, действия передаются через слот `actions`);
-- `src/features/rule-{delete,toggle-status,upsert}`: `model/use*.ts` (мутация, инвалидация через `ruleKeys`, тосты) и `ui/` (кнопка или форма);
-- `src/widgets/{rules-list,rule-details}`: собирают entity и features, держат состояние экрана (пагинация, загрузка, ошибка);
-- `src/views/{rules,rule-detail,rule-create}` и тонкие `app/(dashboard)/admin/rules/**/page.tsx` (`params` — Promise).
-
-Временные зависимости от старого кода: `src/app/guards/RoleGuard.tsx` и `src/widgets/sidebar` импортируют `@/services/users/usersQueries`.
-Их нужно убрать при переносе домена `user`/auth.
-
-### Шаг 0. Каркас ✅
-1. Создать `src/{app,views,widgets,features,entities,shared}`.
-2. Переходные алиасы в `tsconfig.json` (раздел 4.7).
-3. Обновить `components.json` (раздел 4.7).
-
-### Шаг 1. `shared` и `app` ✅
-| Было                              | Стало                                       |
-| --------------------------------- | ------------------------------------------- |
-| `lib/axiosAPi.ts`                 | `src/shared/api/base.ts` (`import { axiosApi } from "@/shared/api"`) |
-| `constants/main.ts` (`apiURL`, `isDev`) | `src/shared/config/env.ts`            |
-| `constants/main.ts` (`roleDashboardPaths`) + объект `routes` | `src/shared/config/routes.ts` |
-| `constants/main.ts` (`theme`)     | `src/shared/config/theme.ts`                |
-| `constants/main.ts` (`inputClass`) | `src/shared/ui/form/styles.ts` (+ `errorClass`) |
-| `constants/main.ts` (классы таблиц) | `src/shared/ui/table-styles.ts`           |
-| `constants/main.ts` (`actionAction`, `actionSeverity`, `actionDecision`) | `services/supers/options.ts` (при переносе supers → `entities/suppression-rule/config`) |
-| `constants/main.ts` (`dashboardMenuItems`) | `src/widgets/sidebar/config/menu.ts` |
-| `lib/utils.ts`                    | `src/shared/lib/utils.ts`                   |
-| `components/ui/*`                 | `src/shared/ui/*`                           |
-| `components/pagination/pagination.tsx` | `src/shared/ui/pagination.tsx`         |
-| `services/utils.tsx` (`FieldError`, `SectionTitle`, `ArrayField`) | `src/shared/ui/form` |
-| `providers/provider.tsx`          | `src/app/providers/Providers.tsx`           |
-| `middleware/ProtectedLayout.tsx`  | `src/app/guards/RoleGuard.tsx`              |
-| `app/(dashboard)/layout.tsx` (разметка) | `src/app/layouts/DashboardLayout.tsx` |
-| `components/sidebar/SideBar.tsx`  | `src/widgets/sidebar`                       |
-| `app/globals.css`                 | `src/app/styles/globals.css`                |
-
-### Шаг 2. `entities`
-Для каждого домена: `types/<x>.ts` → `entities/<x>/model/types.ts`; GET-запросы и `useQuery`-хуки из `services/<x>` → `entities/<x>/api`;
-добавить `queryKeys.ts`; базовые карточки и строки (`RuleCard`, `CruleCard`, `SuperRulesCard`) → `entities/<x>/ui`.
-
-### Шаг 3. `features`
-`useMutation`-хуки и формы: `RuleForm` → `features/rule-upsert`; `SuperRuleEditForm` → `features/suppression-rule-upsert`;
-формы IoC и организаций из `app/.../new|edit/page.tsx` → `features/*-upsert`; фильтры из `Incidents.tsx`, `ScenarioList.tsx`, `Events.tsx` → `features/*-filter`;
-`usePatchIncidentStatus` → `features/incident-change-status`; `useSyncMitre` → `features/mitre-sync`; `useLogin`/`useLogout`/`useRegister` → `features/auth-*`.
-
-### Шаг 4. `widgets`
-Крупные компоненты из `components/*`: `Incidents`, `IncidentDetail`, `ScenarioList`, `ScenarioDetail`, `Events`, `EventDetail`,
-`RuleDetail`, `CorrelationDetailPage`, `SuperRule`, `AuditTable`, `IocTable`, `MitreTechniques`, `SideBar`, вкладки из `admin/hunters/layout.tsx`.
-Самые большие файлы (`IncidentDetail` ~630 строк, `ScenarioDetail` ~550, `RuleForm` ~500, `Incidents` ~500)
-нужно разбить на виджет и features.
-
-### Шаг 5. `views` и тонкие route-файлы
-Перенести содержимое `app/**/page.tsx` во `views/*`. В `app/` оставить только `import` и `return <XPage />`.
-
-### Шаг 6. Очистка
-Удалить `components/`, `services/`, `types/`, `lib/`, `constants/`, `providers/`, `middleware/` и временные алиасы.
-Подключить Steiger и обновить `CLAUDE.md`.
+| Было | Стало |
+| ---- | ----- |
+| `lib/axiosAPi.ts`, `lib/utils.ts` | `shared/api`, `shared/lib/utils` |
+| `constants/main.ts` | `shared/config` (env, routes, theme), `shared/ui/form/styles`, `shared/ui/table-styles`, `widgets/sidebar/config/menu`, `entities/suppression-rule/config/options` |
+| `components/ui/*`, `components/pagination` | `shared/ui/*` |
+| `services/utils.tsx` | `shared/ui/form` |
+| `providers/provider.tsx`, `middleware/ProtectedLayout.tsx` | `app/providers`, `app/guards/RoleGuard` |
+| `types/<x>.ts` | `entities/<x>/model/types.ts` |
+| `services/<x>/*Requests.ts` + GET-хуки из `*Queries.ts` | `entities/<x>/api` |
+| мутации из `services/<x>/*Queries.ts` | `features/<x>-*/model` |
+| `components/<x>/*` | `entities/<x>/ui` (карточки, таблицы) или `widgets/*` (экраны) |
+| формы из `app/**/new|edit/page.tsx` | `features/*-upsert/ui` |
+| `app/**/page.tsx` (разметка) | `views/*` + `widgets/*` |
 
 ---
 
 ## 9. Известные проблемы и техдолг
 
-Их исправляют попутно, при переносе соответствующего слайса.
+### Исправлено при миграции
+1. ✅ Битые ссылки: `/admin/hunters/incidents` (вкладка, редирект, ссылки в инцидентах и сценариях), `/dashboard` (логотип сайдбара),
+   `/superrules` (детали правила подавления).
+2. ✅ Дубли: `lib/hooks/severities.ts`, неиспользуемые `RuleTable.tsx` и пустой `Header.tsx`; одна форма организации
+   вместо двух копий; общие `DetailField`/`DetailFieldList`/`DetailSection` вместо копий в 4 виджетах.
+3. ✅ Query-ключи: фабрика `*Keys` у каждой сущности, единый префикс на сущность.
+4. ✅ Опечатки: `useIncidentDetai` → `useIncident`, `useSeguence` → `useSequenceOptions`, `SuppresionRuleCreateType` →
+   `SuppressionRuleCreateType`, `axiosAPi.ts` убран, `ViewertHome` → `ViewerHomePage`.
+   `IocItemPatchcSchema` оставлен намеренно — это алиас имени схемы backend.
+5. ✅ `RoleGuard` скрывает контент чужого раздела для всех ролей, включая `/viewer`.
+6. ✅ Редиректы `/` и `/admin` — серверный `redirect()` вместо `useEffect` + `router.push`.
+7. ✅ Двойной тост при ошибке удаления правила; падение переключателя статуса правила на детальном кэше;
+   `toast.success` вместо `toast.error` при ошибке сохранения правила подавления; двойное кодирование id
+   в редиректе `/admin/scenarios/[scenarioId]`.
+8. ✅ ESLint: 0 ошибок и 0 предупреждений (было 3 и 47), в том числе `setState` в `useEffect` у формы организации и `any`.
 
-1. ✅ **Битые ссылки на `/admin/hunters/incidents`** (вкладка охотников, редирект `/admin/hunters`, ссылки в `Incidents`,
-   `IncidentDetail`, `ScenarioDetail`) и на `/dashboard` (логотип сайдбара) заменены на `routes.*`.
-2. ✅ **Дубли:** удалены `lib/hooks/severities.ts` и неиспользуемый `components/rule/RuleTable.tsx`.
-3. **Query-ключи не согласованы:** `["organizations"]` и `["organization", id]`, `["event-detail", ...]`, опечатка `["seguence"]`.
-   Префикс для одной сущности должен быть единым, решается фабриками ключей (4.5). ✅ Для `rules` уже сделано (`ruleKeys`).
-4. **Опечатки в именах:** `useIncidentDetai`, `useSeguence`, `IocItemPatchcSchema`, `SuppresionRuleCreateType`, `ViewertHome`
-   (✅ `axiosAPi.ts` убран).
-5. ✅ **Guard:** `RoleGuard` скрывает контент чужого раздела для всех трёх ролей, в том числе `/viewer`.
-6. **Редиректы `/` и `/admin`** сделаны через `useEffect` + `router.push` на клиенте. Лучше использовать `redirect()` в серверном компоненте или `redirects` в `next.config.ts`.
-7. **Env:** `NEXT_BACK_URL` не задана, а `NEXT_API_URL`, `NEXT_IMAGE_URL` и `NEXT_PUBLIC_BACK_API_URL` не используются (раздел 3).
-8. **Разные схемы пагинации** (`limit/offset` и `page/size`). Общие типы ответов вынести в `shared/api/types.ts`.
-9. **Цвета захардкожены** (`#1E2B6D`, `#F7F8F4` и др.) в классах Tailwind. Перенести в CSS-переменные темы в `globals.css`.
-10. **Тестов нет.**
+### Открыто
+1. **`fetchGroupByFields` и `fetchSequenceOptions` ходят на один эндпоинт** `/correlation-rules/sequence` (см. 5.2).
+2. **Заглушки в правилах корреляции:** кнопка удаления на карточке делает `console.log("delete")` (эндпоинта удаления нет);
+   форма создания пишет данные в консоль и показывает тост «Заглушка: …» до ответа сервера.
+3. **Пагинация правил подавления** — `PaginationControl` отображается, но список не режется (backend отдаёт массив целиком).
+4. **`features/ioc-edit`** содержит только хук `useUpdateIoc` — UI редактирования IoC нет.
+5. **Env:** `NEXT_BACK_URL` не задана, а `NEXT_API_URL`, `NEXT_IMAGE_URL` и `NEXT_PUBLIC_BACK_API_URL` не используются (раздел 3).
+6. **Разные схемы пагинации** (`limit/offset` и `page/size`). Общие типы ответов можно вынести в `shared/api/types.ts`.
+7. **Цвета захардкожены** (`#1E2B6D`, `#F7F8F4` и др.) в классах Tailwind. Перенести в CSS-переменные темы в `globals.css`.
+8. **Защита маршрутов только на клиенте** (раздел 6). Для server-side проверок — `proxy.ts`.
+9. **Тестов нет.**
 
 ---
 
 ## 10. Соглашения по коду
 
 - Компоненты: `PascalCase.tsx`. Хуки: `useX`. Слайсы и папки: `kebab-case`.
-- Request-функции — глаголы: `fetchX`, `createX`, `updateX`, `deleteX`, `patchXStatus`.
-- Query-хуки: `useX` / `useXDetail`. Mutation-хуки: `useCreateX` / `useUpdateX` / `useDeleteX`.
+- Request-функции — глаголы: `fetchXs` (список), `fetchX` (одна запись), `createX`, `updateX`, `deleteX`, `patchXStatus`.
+- Query-хуки: `useXs` (список) / `useX` (одна запись) — в `entities`. Mutation-хуки: `useCreateX` / `useUpdateX` /
+  `useDeleteX` / `useToggleXStatus` — в `features`.
+- Новый route-файл: тонкий `app/**/page.tsx` → `views/<page>` → `widgets`/`features` → `entities` → `shared`.
+  Пути добавляются в `shared/config/routes.ts`.
 - Типы ответов API называются по схеме backend, описываются через `interface` и лежат в `model/types.ts` своей сущности.
 - Тексты UI пишутся на русском.
 - `"use client"` ставится только там, где нужны хуки или браузерные API.

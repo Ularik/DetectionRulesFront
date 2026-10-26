@@ -24,6 +24,8 @@ export const routes = {
     `/admin/audit/${encodeURIComponent(auditId)}`,
   correlationRules: "/admin/crule",
   ioc: "/admin/ioc",
+  iocNew: "/admin/ioc/new",
+  iocEntry: (iocId: string) => `/admin/ioc/${iocId}`,
   suppressionRules: "/admin/supers",
   hunters: "/admin/hunters",
   scenarios: "/admin/hunters/scenarios",

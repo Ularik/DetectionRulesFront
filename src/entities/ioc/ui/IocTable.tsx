@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Eye, ShieldAlert } from "lucide-react";
-import type { IocType } from "@/types/ioc";
+import type { IocType } from "../model/types";
+import { routes } from "@/shared/config";
 
 interface IocTableProps {
   items: IocType[];
@@ -65,7 +66,7 @@ export function IocTable({ items, isLoading = false, limit = 10 }: IocTableProps
                 <tr key={item.ioc_id} className="transition-colors hover:bg-gray-50/80">
                   <td className="max-w-[280px] px-6 py-4">
                     <Link
-                      href={`/admin/ioc/${item.ioc_id}`}
+                      href={routes.iocEntry(item.ioc_id)}
                       className="block truncate font-mono text-xs font-semibold text-[#1E2B6D] hover:underline"
                       title={item.value}
                     >
@@ -96,7 +97,7 @@ export function IocTable({ items, isLoading = false, limit = 10 }: IocTableProps
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link
-                      href={`/admin/ioc/${item.ioc_id}`}
+                      href={routes.iocEntry(item.ioc_id)}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E2B6D] hover:underline"
                     >
                       <Eye className="h-4 w-4" />

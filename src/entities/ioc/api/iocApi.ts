@@ -1,19 +1,19 @@
 import { axiosApi } from "@/shared/api";
-import {
+import type {
   IocCreateType,
   IocPaginatedResponse,
   IocPatchResponse,
   IocPatchType,
   IocQueryParams,
   IocType,
-} from "@/types/ioc";
+} from "../model/types";
 
-export async function postIoc(data: IocCreateType): Promise<IocType> {
+export async function createIoc(data: IocCreateType): Promise<IocType> {
   const result = await axiosApi.post<IocType>("/ioc/", data);
   return result.data;
 }
 
-export async function getIoc(
+export async function fetchIocs(
   params: IocQueryParams,
 ): Promise<IocPaginatedResponse> {
   const result = await axiosApi.get<IocPaginatedResponse>("/ioc/", {
@@ -22,12 +22,12 @@ export async function getIoc(
   return result.data;
 }
 
-export async function getIocDetail(iocId: string): Promise<IocType> {
+export async function fetchIoc(iocId: string): Promise<IocType> {
   const result = await axiosApi.get<IocType>(`/ioc/${iocId}`);
   return result.data;
 }
 
-export async function patchIocDetail(
+export async function patchIoc(
   iocId: string,
   data: IocPatchType,
 ): Promise<IocPatchResponse> {

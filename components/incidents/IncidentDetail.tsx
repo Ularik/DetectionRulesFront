@@ -20,7 +20,7 @@ import {
   usePatchIncidentStatus,
 } from "@/services/incident/incidentQueries";
 import type { ANALYST_STATUS, Incident } from "@/types/incidents";
-import type { WazuhEvent } from "@/types/events";
+import type { WazuhEvent } from "@/entities/event";
 import { routes } from "@/shared/config";
 
 interface IncidentDetailProps {

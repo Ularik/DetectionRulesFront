@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import { useEventDetail } from "@/services/events/eventQueries";
-import type { WazuhEvent } from "@/types/events";
+import { useEvent, type WazuhEvent } from "@/entities/event";
+import { routes } from "@/shared/config";
 
 interface EventDetailProps {
   indexName: string;
@@ -44,7 +44,7 @@ function EventContent({ event }: { event: WazuhEvent }) {
     <div className="space-y-6">
       <header className="border-b border-gray-200 pb-5">
         <Link
-          href="/admin/hunters/events"
+          href={routes.events}
           className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-950"
         >
           <ArrowLeft className="h-4 w-4" />К списку событий
@@ -133,8 +133,8 @@ function EventContent({ event }: { event: WazuhEvent }) {
   );
 }
 
-export default function EventDetail({ indexName, eventId }: EventDetailProps) {
-  const query = useEventDetail({
+export function EventDetails({ indexName, eventId }: EventDetailProps) {
+  const query = useEvent({
     index_name: indexName,
     event_id: eventId,
   });

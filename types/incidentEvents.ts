@@ -1,4 +1,4 @@
-import { WazuhEvent } from "./events";
+import type { WazuhEvent } from "@/entities/event/@x/incident";
 
 
 export interface IncidentEventResponse {

@@ -18,7 +18,7 @@ import {
   useScenarioEvents,
 } from "@/services/scenarios/scenariosQueries";
 import type { ScenarioDetailType } from "@/types/scenarios";
-import type { WazuhEvent } from "@/types/events";
+import type { WazuhEvent } from "@/entities/event";
 import { routes } from "@/shared/config";
 
 interface ScenarioDetailProps {

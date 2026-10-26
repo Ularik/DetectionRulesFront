@@ -12,8 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui/table";
-import { useEvents } from "@/services/events/eventQueries";
-import type { WazuhEvent } from "@/types/events";
+import { useEvents, type WazuhEvent } from "@/entities/event";
+import { routes } from "@/shared/config";
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -33,7 +33,7 @@ function eventKey(event: WazuhEvent, index: number) {
   );
 }
 
-export default function Events() {
+export function EventsTable() {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const query = useEvents({ page, size });
@@ -98,7 +98,7 @@ export default function Events() {
                   const indexName = event._elastic_index;
                   const detailHref =
                     indexName && eventId
-                      ? `/admin/hunters/events/${indexName}/${eventId}`
+                      ? routes.event(indexName, eventId)
                       : null;
 
                   return (

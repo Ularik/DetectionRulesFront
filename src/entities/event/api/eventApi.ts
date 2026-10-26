@@ -3,19 +3,18 @@ import type {
   WazuhEventApiResponse,
   RawEventsQueryParamsSchema,
   WazuhEvent,
-} from "@/types/events";
+} from "../model/types";
 
-
-export async function getEvents(
+export async function fetchEvents(
   params: RawEventsQueryParamsSchema,
 ): Promise<WazuhEventApiResponse> {
   const res = await axiosApi.get<WazuhEventApiResponse>("/events/", {
-    params: params,
+    params,
   });
   return res.data;
-};
+}
 
-export async function getEventDetail({
+export async function fetchEvent({
   index_name,
   event_id,
 }: {
@@ -24,4 +23,4 @@ export async function getEventDetail({
 }): Promise<WazuhEvent> {
   const res = await axiosApi.get<WazuhEvent>(`/events/${index_name}/${event_id}`);
   return res.data;
-};
+}

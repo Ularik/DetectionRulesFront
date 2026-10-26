@@ -30,6 +30,8 @@ export const routes = {
   hunters: "/admin/hunters",
   scenarios: "/admin/hunters/scenarios",
   events: "/admin/hunters/events",
+  event: (indexName: string, eventId: string) =>
+    `/admin/hunters/events/${encodeURIComponent(indexName)}/${encodeURIComponent(eventId)}`,
   mitre: "/admin/mitre",
 } as const;
 

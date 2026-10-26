@@ -1,21 +1,16 @@
-"use client";
+import { EventDetailPage } from "@/views/event-detail";
 
-import { useParams } from "next/navigation";
-import EventDetail from "@/components/events/EventDetail";
-
-export default function HuntersEventDetailPage() {
-  const params = useParams<{ index_name: string; event_id: string }>();
-
-  const indexName = decodeURIComponent(params.index_name ?? "");
-  const eventId = decodeURIComponent(params.event_id ?? "");
-
-  if (!indexName || !eventId) {
-    return (
-      <div className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700">
-        Не удалось определить событие для просмотра.
-      </div>
-    );
-  }
-
-  return <EventDetail indexName={indexName} eventId={eventId} />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ index_name: string; event_id: string }>;
+}) {
+  const { index_name, event_id } = await params;
+  // params приходят URL-кодированными — как и раньше с useParams, декодируем
+  return (
+    <EventDetailPage
+      indexName={decodeURIComponent(index_name)}
+      eventId={decodeURIComponent(event_id)}
+    />
+  );
 }

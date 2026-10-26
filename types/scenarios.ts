@@ -1,5 +1,5 @@
 import { IncidentLiteForScenario } from "./incidents";
-import type { WazuhEvent } from "./events";
+import type { WazuhEvent } from "@/entities/event/@x/scenario";
 import type { IocType } from "@/entities/ioc/@x/scenario";
 import type { MitreType } from "@/entities/mitre-technique";
 

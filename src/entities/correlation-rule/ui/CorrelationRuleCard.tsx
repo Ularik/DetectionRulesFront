@@ -8,33 +8,38 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
-import { CorrelationRuleType } from "@/types/crules";
-import axios from "axios";
-import { Trash2 } from "lucide-react";
+import { routes } from "@/shared/config";
 import Link from "next/link";
-import { toast } from "sonner";
+import type { ReactNode } from "react";
+import type { CorrelationRuleType } from "../model/types";
 
 interface Props {
   rule: CorrelationRuleType;
+  // Действия над правилом — передаются из widgets/features
+  actions?: ReactNode;
 }
 
-export default function CRuleCard({ rule }: Props) {
-  //   const { mutate } = useDeleteCorrelationRule();
+// Поля, которые выводятся явно или скрыты в карточке
+const KNOWN_FIELDS = new Set<string>([
+  "correlation_id",
+  "enabled",
+  "severity",
+  "min_unique_categories",
+  "description",
+  "scenario_type",
+  "window_seconds",
+  "confidence",
+  "sequence",
+  "group_by",
+  "recommendations",
+  "tags",
+  "created_by",
+  "updated_by",
+  "created_at",
+  "updated_at",
+]);
 
-  //   const deleteRule = async (correlationId: string) => {
-  //     mutate(correlationId, {
-  //       onSuccess: () =>
-  //         toast.success("Правило корреляции удалено", { position: "top-center" }),
-  //       onError: (error) => {
-  //         if (axios.isAxiosError(error) && error.response?.status === 404) {
-  //           toast.error("Запись не найдена", { position: "top-center" });
-  //         } else {
-  //           toast.error("Ошибка удаления", { position: "top-center" });
-  //         }
-  //       },
-  //     });
-  //   };
-
+export function CorrelationRuleCard({ rule, actions }: Props) {
   const formatValue = (value: unknown): string => {
     if (Array.isArray(value)) return value.join(", ");
     if (typeof value === "boolean") return value ? "Да" : "Нет";
@@ -45,24 +50,18 @@ export default function CRuleCard({ rule }: Props) {
     correlation_id,
     enabled,
     severity,
-    min_unique_categories,
     description,
     scenario_type,
     window_seconds,
     confidence,
     sequence,
     group_by,
-    recommendations,
     tags,
-    created_by,
-    updated_by,
-    created_at,
-    updated_at,
-    ...rest
   } = rule;
 
-  // Поля, которые динамически выводятся в цикле
-  const ruleFields = Object.keys(rest) as (keyof typeof rest)[];
+  // Поля сверх известных (если backend прислал лишнее) выводятся в цикле
+  const extraFields = rule as unknown as Record<string, unknown>;
+  const ruleFields = Object.keys(rule).filter((key) => !KNOWN_FIELDS.has(key));
 
   const SEVERITY_STYLES: Record<string, string> = {
     info: "bg-blue-100 text-blue-700",
@@ -97,16 +96,7 @@ export default function CRuleCard({ rule }: Props) {
             {severity}
           </Badge>
         </CardDescription>
-        <CardAction>
-          <button
-            aria-label="Удалить"
-            type="button"
-            onClick={() => console.log("delete")}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-red-500 hover:bg-red-50 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </CardAction>
+        {actions && <CardAction>{actions}</CardAction>}
       </CardHeader>
 
       <CardContent className="h-full space-y-2">
@@ -172,9 +162,9 @@ export default function CRuleCard({ rule }: Props) {
             <p className="text-gray-500 text-sm">{String(key)}</p>
             <p
               className="overflow-hidden text-ellipsis whitespace-nowrap text-right"
-              title={formatValue(rest[key])}
+              title={formatValue(extraFields[key])}
             >
-              {formatValue(rest[key])}
+              {formatValue(extraFields[key])}
             </p>
           </div>
         ))}
@@ -192,7 +182,7 @@ export default function CRuleCard({ rule }: Props) {
 
       <CardFooter className="flex-col gap-2 pt-2">
         <Link
-          href={`/admin/crule/${correlation_id}`}
+          href={routes.correlationRule(correlation_id)}
           className="text-sm font-medium text-blue-600 hover:underline"
         >
           Открыть детальнее

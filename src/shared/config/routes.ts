@@ -23,6 +23,8 @@ export const routes = {
   auditEntry: (auditId: string) =>
     `/admin/audit/${encodeURIComponent(auditId)}`,
   correlationRules: "/admin/crule",
+  correlationRuleNew: "/admin/crule/new",
+  correlationRule: (correlationId: string) => `/admin/crule/${correlationId}`,
   ioc: "/admin/ioc",
   iocNew: "/admin/ioc/new",
   iocEntry: (iocId: string) => `/admin/ioc/${iocId}`,

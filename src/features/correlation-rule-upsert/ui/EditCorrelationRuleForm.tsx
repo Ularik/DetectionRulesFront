@@ -8,12 +8,16 @@ import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
-import { useGroupByFields, useSeguence } from "@/services/autoFields/queries";
-import { useCruleDetail, useUpdateCrule } from "@/services/crule/cRuleQueries";
+import {
+  useCorrelationRule,
+  useGroupByFields,
+  useSequenceOptions,
+} from "@/entities/correlation-rule";
+import { useUpdateCorrelationRule } from "../model/mutations";
 import type {
   CorrelationRuleRequestCreateUpdateType,
   CorrelationRuleType,
-} from "@/types/crules";
+} from "@/entities/correlation-rule";
 
 interface Props {
   correlationId: string;
@@ -50,9 +54,9 @@ function CorrelationRuleEditor({
   rule,
 }: Props & { rule: CorrelationRuleType }) {
   const router = useRouter();
-  const { mutateAsync: updateCrule, isPending: isSaving } = useUpdateCrule();
+  const { mutateAsync: updateCrule, isPending: isSaving } = useUpdateCorrelationRule();
   const { data: sequenceOptions = [], isLoading: isSequenceLoading } =
-    useSeguence();
+    useSequenceOptions();
   const { data: groupByOptions = [], isLoading: isGroupByLoading } =
     useGroupByFields();
   const [form, setForm] = useState<EditableRule>(() => makeFormValues(rule));
@@ -363,13 +367,13 @@ function CorrelationRuleEditor({
   );
 }
 
-export default function CorrelationDetailPage({ correlationId }: Props) {
+export function EditCorrelationRuleForm({ correlationId }: Props) {
   const {
     data: rule,
     isPending,
     isError,
     refetch,
-  } = useCruleDetail(correlationId);
+  } = useCorrelationRule(correlationId);
 
   if (isPending) {
     return (

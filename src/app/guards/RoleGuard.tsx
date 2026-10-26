@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { roleDashboardPaths, routes, type UserRole } from '@/shared/config';
-import { useMe } from '@/services/users/usersQueries';
+import { useMe } from '@/entities/user';
 
 type Props = {
     children: ReactNode;

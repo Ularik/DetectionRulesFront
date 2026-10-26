@@ -8,7 +8,8 @@ import {
   ArrowRight,
   Database,
 } from "lucide-react";
-import type { AuditType } from "@/types/audits";
+import type { AuditType } from "../model/types";
+import { routes } from "@/shared/config";
 import { useRouter } from "next/navigation";
 
 
@@ -135,7 +136,7 @@ export const AuditTable = ({
                 <tr
                   key={item.id}
                   className="hover:bg-gray-50/80 transition-colors"
-                  onClick={() => router.push(`audit/${item.id}`)}
+                  onClick={() => router.push(routes.auditEntry(item.id))}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                     <div className="flex items-center gap-1.5">

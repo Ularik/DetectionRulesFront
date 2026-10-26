@@ -1,9 +1,5 @@
+import { AnalystHomePage } from "@/views/analyst-home";
 
-
-export default function AnalystHome() {
-    return (
-        <>
-        Analyst
-        </>
-    )
-};
+export default function Page() {
+  return <AnalystHomePage />;
+}

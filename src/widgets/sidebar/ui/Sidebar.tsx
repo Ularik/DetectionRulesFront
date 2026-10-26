@@ -3,24 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { LogOut } from "lucide-react";
-import { useLogout } from "@/services/users/usersQueries";
+import { LogoutButton } from "@/features/auth-logout";
 import { routes } from "@/shared/config";
 import { dashboardMenuItems } from "../config/menu";
-import { useRouter } from "next/navigation";
 
 export const Sidebar = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const { mutate, isPending, isError, error } = useLogout();
-
-  const logoutFunc = () => {
-    mutate(undefined, {
-      onSuccess: () => {
-        router.push(routes.login);
-      },
-    });
-  };
 
   return (
     <aside className="hidden w-72 sticky top-0 border-r border-gray-200 bg-white lg:flex lg:flex-col h-dvh">
@@ -69,20 +57,7 @@ export const Sidebar = () => {
               Админ
             </p>
           </div>
-          {isError && (
-            <div className="mb-3 rounded-xl bg-red-50 p-3 text-xs font-medium text-red-600 border border-red-200">
-              {error?.message || "Произошла ошибка при выходе"}
-            </div>
-          )}
-
-          <button
-            onClick={logoutFunc}
-            disabled={isPending}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-red-600 disabled:opacity-60"
-          >
-            <LogOut size={18} />
-            {isPending ? "Выход..." : "Выйти"}
-          </button>
+          <LogoutButton />
         </div>
       </div>
     </aside>

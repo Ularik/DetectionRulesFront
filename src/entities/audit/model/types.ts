@@ -1,5 +1,5 @@
-import type { RuleType } from "@/entities/rule";
-import { UserType } from "./users";
+import type { RuleType } from "@/entities/rule/@x/audit";
+import type { UserType } from "@/entities/user/@x/audit";
 
 
 export interface AuditType {
@@ -25,4 +25,12 @@ export interface AuditDetailType extends AuditType {
 export interface ApiAuditResponseType {
     total: number;
     items: AuditType[]
+}
+
+
+export interface AuditParams {
+    limit: number;
+    offset: number;
+    rule_id?: string;
+    user_id?: string;
 }

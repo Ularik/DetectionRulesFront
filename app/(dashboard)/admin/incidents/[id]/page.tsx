@@ -1,10 +1,10 @@
-"use client";
+import { IncidentDetailPage } from "@/views/incident-detail";
 
-import { useParams } from "next/navigation";
-import IncidentDetail from "@/components/incidents/IncidentDetail";
-
-export default function HuntersIncidentDetailPage() {
-  const params = useParams<{ id: string }>();
-
-  return <IncidentDetail incidentId={params.id} />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <IncidentDetailPage incidentId={id} />;
 }

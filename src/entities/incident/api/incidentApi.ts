@@ -4,15 +4,15 @@ import type {
   IncidentApiResponse,
   IncidentParams,
   IncidentSchema,
-} from "@/types/incidents";
-import type { IncidentEventResponse } from "@/types/incidentEvents";
+} from "../model/types";
+import type { IncidentEventResponse } from "../model/eventsTypes";
 
-export async function getIncidents(params: IncidentParams) {
+export async function fetchIncidents(params: IncidentParams) {
   const res = await axiosApi.get<IncidentApiResponse>("/incidents", { params });
   return res.data;
 }
 
-export async function getIncidentDetail(inc_id: string) {
+export async function fetchIncident(inc_id: string) {
   const res = await axiosApi.get<IncidentSchema>(`/incidents/${inc_id}`);
   return res.data;
 }
@@ -28,9 +28,18 @@ export async function patchIncidentStatus(
   return res.data;
 }
 
-export async function getIncidentEvents({inc_id, page, size}: {inc_id: string, page: number, size: number}) {
-  const res = await axiosApi.get<IncidentEventResponse>(`/incidents/${inc_id}/events`, {
-    params: {page, size}
-  });
+export async function fetchIncidentEvents({
+  inc_id,
+  page,
+  size,
+}: {
+  inc_id: string;
+  page: number;
+  size: number;
+}) {
+  const res = await axiosApi.get<IncidentEventResponse>(
+    `/incidents/${inc_id}/events`,
+    { params: { page, size } },
+  );
   return res.data;
 }

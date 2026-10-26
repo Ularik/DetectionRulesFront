@@ -1,5 +1,5 @@
-import Incidents from "@/components/incidents/Incidents";
+import { IncidentsPage } from "@/views/incidents";
 
-export default function HuntersIncidentsPage() {
-  return <Incidents />;
+export default function Page() {
+  return <IncidentsPage />;
 }

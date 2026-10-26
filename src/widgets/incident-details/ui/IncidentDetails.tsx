@@ -3,50 +3,23 @@
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Button } from "@/shared/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import {
-  useIncidentDetai,
-  useIncidentEvents,
-  usePatchIncidentStatus,
-} from "@/services/incident/incidentQueries";
-import type { ANALYST_STATUS, Incident } from "@/types/incidents";
-import type { WazuhEvent } from "@/entities/event";
+  DetailField,
+  DetailFieldList as FieldList,
+  DetailSection as Section,
+} from "@/shared/ui/detail-fields";
 import { routes } from "@/shared/config";
-
-interface IncidentDetailProps {
-  incidentId: string;
-}
-
-const severityStyles: Record<string, string> = {
-  critical: "border-rose-200 bg-rose-50 text-rose-700",
-  high: "border-orange-200 bg-orange-50 text-orange-700",
-  medium: "border-amber-200 bg-amber-50 text-amber-700",
-  low: "border-sky-200 bg-sky-50 text-sky-700",
-};
-
-const statusLabels: Record<ANALYST_STATUS, string> = {
-  new: "Новый",
-  in_review: "На проверке",
-  confirmed: "Подтвержден",
-  false_positive: "Ложное срабатывание",
-  closed: "Закрыт",
-};
-
-const analystStatuses = Object.keys(statusLabels) as ANALYST_STATUS[];
-
-function isAnalystStatus(value: string): value is ANALYST_STATUS {
-  return value in statusLabels;
-}
+import {
+  INCIDENT_SEVERITY_STYLES,
+  useIncident,
+  useIncidentEvents,
+  type Incident,
+} from "@/entities/incident";
+import type { WazuhEvent } from "@/entities/event";
+import { IncidentStatusSelect } from "@/features/incident-change-status";
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -74,6 +47,7 @@ function display(value: string | number | null | undefined) {
   return value === null || value === undefined || value === "" ? "—" : value;
 }
 
+// Пустая строка в данных инцидента тоже показывается как «—»
 function Field({
   label,
   value,
@@ -81,55 +55,13 @@ function Field({
   label: string;
   value: string | number | null | undefined;
 }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 wrap-break-word text-sm font-medium text-gray-900">
-        {display(value)}
-      </dd>
-    </div>
-  );
-}
-
-function FieldList({
-  label,
-  values,
-}: {
-  label: string;
-  values: Array<string | number> | null | undefined;
-}) {
-  const items = values?.filter((value) => value !== "" && value !== null) ?? [];
-
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 wrap-break-word text-sm font-medium text-gray-900">
-        {items.length ? items.join(", ") : "—"}
-      </dd>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border border-gray-200 bg-white p-5">
-      <h2 className="mb-4 text-base font-semibold text-gray-900">{title}</h2>
-      {children}
-    </section>
-  );
+  return <DetailField label={label} value={display(value)} />;
 }
 
 function IncidentContent({ incident }: { incident: Incident }) {
   const [showEvents, setShowEvents] = useState(false);
   const [eventsPage, setEventsPage] = useState(1);
   const [eventsSize, setEventsSize] = useState(10);
-  const updateStatus = usePatchIncidentStatus();
   const eventsQuery = useIncidentEvents({
     incidentId: incident.incident_id,
     page: eventsPage,
@@ -137,7 +69,7 @@ function IncidentContent({ incident }: { incident: Incident }) {
     enabled: showEvents,
   });
   const severityClass =
-    severityStyles[incident.severity.toLowerCase()] ??
+    INCIDENT_SEVERITY_STYLES[incident.severity.toLowerCase()] ??
     "border-gray-200 bg-gray-50 text-gray-700";
 
   return (
@@ -158,58 +90,7 @@ function IncidentContent({ incident }: { incident: Incident }) {
           >
             {incident.severity || "Не указана"}
           </span>
-          <div className="grid gap-1">
-            <label
-              htmlFor="incident-analyst-status"
-              className="text-xs font-medium text-gray-500"
-            >
-              Статус аналитика
-            </label>
-            <Select
-              value={incident.analyst_status}
-              disabled={updateStatus.isPending}
-              onValueChange={(value) => {
-                if (
-                  !isAnalystStatus(value) ||
-                  value === incident.analyst_status
-                ) {
-                  return;
-                }
-
-                updateStatus.mutate(
-                  {
-                    incidentId: incident.incident_id,
-                    analystStatus: value,
-                  },
-                  {
-                    onSuccess: () =>
-                      toast.success("Статус инцидента обновлен", {
-                        position: "top-center",
-                      }),
-                    onError: () =>
-                      toast.error("Не удалось обновить статус", {
-                        position: "top-center",
-                      }),
-                  },
-                );
-              }}
-            >
-              <SelectTrigger
-                id="incident-analyst-status"
-                className="w-48 bg-white"
-                aria-label="Изменить статус аналитика"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {analystStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {statusLabels[status]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <IncidentStatusSelect incident={incident} />
         </div>
       </header>
 
@@ -583,9 +464,9 @@ function IncidentEventItem({ event }: { event: WazuhEvent }) {
   );
 }
 
-export default function IncidentDetail({ incidentId }: IncidentDetailProps) {
+export function IncidentDetails({ incidentId }: { incidentId: string }) {
   const router = useRouter();
-  const { data, isPending, error, refetch } = useIncidentDetai(incidentId);
+  const { data, isPending, error, refetch } = useIncident(incidentId);
 
   return (
     <main className="mx-auto max-w-7xl">

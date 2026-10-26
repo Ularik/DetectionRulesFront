@@ -8,6 +8,11 @@ export const routes = {
   viewer: "/viewer",
 
   organizations: "/admin/organizations",
+  organizationNew: "/admin/organizations/new",
+  organization: (organizationId: string) =>
+    `/admin/organizations/${encodeURIComponent(organizationId)}`,
+  organizationEdit: (organizationId: string) =>
+    `/admin/organizations/${encodeURIComponent(organizationId)}/edit`,
   rules: "/admin/rules",
   ruleNew: "/admin/rules/new",
   rule: (ruleId: string) => `/admin/rules/${encodeURIComponent(ruleId)}`,

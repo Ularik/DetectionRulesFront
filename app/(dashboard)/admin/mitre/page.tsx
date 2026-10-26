@@ -1,5 +1,5 @@
-import MitreTechniques from "@/components/mitre/MitreTechniques";
+import { MitrePage } from "@/views/mitre";
 
-export default function MitrePage() {
-  return <MitreTechniques />;
+export default function Page() {
+  return <MitrePage />;
 }

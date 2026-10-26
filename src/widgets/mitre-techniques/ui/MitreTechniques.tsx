@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { isAxiosError } from "axios";
-import { RefreshCw, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
   Table,
@@ -12,33 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui/table";
+import { getErrorMessage } from "@/shared/lib/errors";
+import { useMitreTechniques } from "@/entities/mitre-technique";
 import {
-  useMitreTechniques,
+  SyncMitreButton,
+  SyncMitreStatus,
   useSyncMitre,
-} from "@/services/mitre/mitreQueries";
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (isAxiosError(error)) {
-    const responseData: unknown = error.response?.data;
-
-    if (typeof responseData === "string" && responseData.trim()) {
-      return responseData;
-    }
-
-    if (responseData && typeof responseData === "object") {
-      const data = responseData as Record<string, unknown>;
-      for (const key of ["detail", "message", "error"]) {
-        const message = data[key];
-        if (typeof message === "string" && message.trim()) return message;
-      }
-    }
-
-    if (!error.response && error.message) return error.message;
-    return fallback;
-  }
-
-  return error instanceof Error && error.message ? error.message : fallback;
-}
+} from "@/features/mitre-sync";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -47,7 +26,7 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" }).format(date);
 }
 
-export default function MitreTechniques() {
+export function MitreTechniques() {
   const [search, setSearch] = useState("");
   const query = useMitreTechniques();
   const sync = useSyncMitre();
@@ -76,48 +55,10 @@ export default function MitreTechniques() {
             Техники и тактики матрицы MITRE ATT&CK
           </p>
         </div>
-        <Button
-          onClick={() => sync.mutate()}
-          disabled={sync.isPending}
-          aria-label="Синхронизировать MITRE ATT&CK"
-        >
-          <RefreshCw
-            aria-hidden="true"
-            className={`h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`}
-          />
-          {sync.isPending ? "Синхронизация..." : "Синхронизировать"}
-        </Button>
+        <SyncMitreButton sync={sync} />
       </header>
 
-      {sync.isError && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-sm text-red-700" role="alert">
-            {getErrorMessage(
-              sync.error,
-              "Не удалось синхронизировать MITRE ATT&CK.",
-            )}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => sync.mutate()}
-            disabled={sync.isPending}
-          >
-            Повторить
-          </Button>
-        </div>
-      )}
-      {sync.isSuccess && sync.data.success && (
-        <p className="text-sm text-emerald-700" role="status">
-          Синхронизация завершена. Обработано: {sync.data.received}, добавлено в
-          индекс: {sync.data.indexed}.
-        </p>
-      )}
-      {sync.isSuccess && !sync.data.success && (
-        <p className="text-sm text-red-700" role="alert">
-          Сервер сообщил, что синхронизация MITRE ATT&CK не завершилась.
-        </p>
-      )}
+      <SyncMitreStatus sync={sync} />
 
       <label className="relative block max-w-lg">
         <Search

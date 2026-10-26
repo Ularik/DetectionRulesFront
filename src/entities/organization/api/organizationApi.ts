@@ -1,19 +1,19 @@
-import {
+import { axiosApi } from "@/shared/api";
+import type {
   Organization,
   OrganizationListApiResponse,
   OrganizationCreateUpdateType,
   OrganizationCreateUpdateApiResponse,
   AgentType,
-} from "@/types/organizations";
-import { axiosApi } from "@/shared/api";
+} from "../model/types";
 
-export async function getOrganizations(): Promise<OrganizationListApiResponse> {
+export async function fetchOrganizations(): Promise<OrganizationListApiResponse> {
   const res =
     await axiosApi.get<OrganizationListApiResponse>("/organizations/");
   return res.data;
 }
 
-export async function getOrganizationDetail(
+export async function fetchOrganization(
   organizationId: string,
 ): Promise<Organization> {
   const res = await axiosApi.get<Organization>(
@@ -22,12 +22,12 @@ export async function getOrganizationDetail(
   return res.data;
 }
 
-export async function getAgents(): Promise<AgentType[]> {
+export async function fetchAgents(): Promise<AgentType[]> {
   const res = await axiosApi.get<AgentType[]>("/organizations/agents");
   return res.data;
 }
 
-export async function postOrganization(
+export async function createOrganization(
   data: OrganizationCreateUpdateType,
 ): Promise<OrganizationCreateUpdateApiResponse> {
   const res = await axiosApi.post<OrganizationCreateUpdateApiResponse>(
@@ -37,7 +37,7 @@ export async function postOrganization(
   return res.data;
 }
 
-export async function putOrganization(
+export async function updateOrganization(
   organizationId: string,
   data: OrganizationCreateUpdateType,
 ): Promise<OrganizationCreateUpdateApiResponse> {

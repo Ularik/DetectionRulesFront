@@ -18,8 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import { useAttackTypes } from "@/services/attackTypes/attackTypesQueries";
-import { useOrganizations } from "@/services/organizations/orgQueries";
+import { useAttackTypes } from "@/entities/attack-type";
+import { useOrganizations } from "@/entities/organization";
 import { useScenarios } from "@/services/scenarios/scenariosQueries";
 import type { Severity } from "@/types/scenarios";
 

@@ -1,7 +1,7 @@
 import { axiosApi } from "@/shared/api";
-import type { MitreSyncResponse, MitreTechnique } from "@/types/mitre";
+import type { MitreSyncResponse, MitreTechnique } from "../model/types";
 
-export async function getMitreTechniques(): Promise<MitreTechnique[]> {
+export async function fetchMitreTechniques(): Promise<MitreTechnique[]> {
   const response = await axiosApi.get<MitreTechnique[]>("/mitre/mitre");
   return response.data;
 }

@@ -3,6 +3,7 @@ import {
   Building2,
   CircleUser,
   Crosshair,
+  BrainCircuit,
   FolderOpen,
   LayoutDashboard,
   type LucideIcon,
@@ -14,15 +15,15 @@ import {
 } from "lucide-react";
 import type { UserRole } from "@/types/users";
 
-export const isDev = process.env.NODE_ENV === "development";
 
-// На продакшене (в Docker) запросы будут идти на тот же домен, где открыт сайт, в папку /api/
-// В режиме разработки (локально) будет использоваться localhost:8000 (или 8001)
+const isBrowser = typeof window !== "undefined";
+const isDev = process.env.NODE_ENV === "development";
+
 export const apiURL = isDev
   ? "http://localhost:8001/api"
-  : typeof window === "undefined"
-    ? "http://backend:8000/api" // имя сервиса из docker-compose + внутренний порт
-    : "/api";
+  : isBrowser
+    ? "/api"
+    : "http://backend:8000/api"
 
 export type DashboardMenuItem = {
   label: string;
@@ -39,6 +40,12 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   {
     label: "Правила обнаружения",
     href: "/admin/rules",
+    icon: LayoutDashboard,
+  },
+
+  {
+    label: "Инциденты",
+    href: "/admin/incidents",
     icon: LayoutDashboard,
   },
   {
@@ -65,6 +72,11 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     label: "Охотники",
     href: "/admin/hunters",
     icon: Crosshair,
+  },
+  {
+    label: "MITRE ATT&CK",
+    href: "/admin/mitre",
+    icon: BrainCircuit,
   },
 ];
 

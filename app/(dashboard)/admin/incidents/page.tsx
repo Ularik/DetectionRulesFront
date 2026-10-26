@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import Incidents from "@/components/incidents/Incidents";
 
-export default function IncidentsPage() {
-  redirect("/admin/hunters/incidents");
+export default function HuntersIncidentsPage() {
+  return <Incidents />;
 }

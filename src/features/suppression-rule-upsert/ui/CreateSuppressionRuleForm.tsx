@@ -38,7 +38,6 @@ export function CreateSuppressionRuleForm() {
     register,
     control,
     handleSubmit,
-    formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
       enabled: true,
@@ -61,11 +60,6 @@ export function CreateSuppressionRuleForm() {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "activeMatches",
-  });
-
-  const tagsArray = useFieldArray({
-    control,
-    name: "tags" as never,
   });
 
   // Вспомогательный словарь полей для быстрого доступа по key

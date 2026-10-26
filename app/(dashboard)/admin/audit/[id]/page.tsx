@@ -7,7 +7,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import { ChevronLeft, ChevronRight, Loader2, User } from "lucide-react";
-import { RuleDetailTable } from "@/components/rule/RuleDetail/RuleDetail"; // ваш компонент из прошлого сообщения
+import { RuleDetailTable } from "@/entities/rule";
 
 const actionLabels: Record<string, { label: string; className: string }> = {
   created: {

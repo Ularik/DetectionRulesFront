@@ -1,4 +1,4 @@
-import { RuleType } from "./rules";
+import type { RuleType } from "@/entities/rule";
 import { UserType } from "./users";
 
 

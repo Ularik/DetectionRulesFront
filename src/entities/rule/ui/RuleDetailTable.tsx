@@ -11,7 +11,7 @@ import {
 } from "@/shared/ui/table";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { RuleType } from "@/types/rules";
+import type { RuleType } from "../model/types";
 import {
   Trash2,
   Edit2,

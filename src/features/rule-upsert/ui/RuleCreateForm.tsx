@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { Loader2, FlaskConical } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import {
@@ -13,29 +13,27 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 
-import { RuleCreateUpdateType } from "@/types/rules";
-import { useSeverities } from "@/services/severities/severitiesQueries";
-import { useAdminCreateRule } from "@/services/rules/adminRules/ruleQueries";
-import { ArrayField, SectionTitle, FieldError } from "@/shared/ui/form";
+import { type RuleCreateUpdateType, useSeverityHints } from "@/entities/rule";
+import {
+  ArrayField,
+  SectionTitle,
+  FieldError,
+  inputClass,
+  errorClass,
+} from "@/shared/ui/form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useCreateRule } from "../model/useCreateRule";
 
-const inputClass =
-  "w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition " +
-  "focus-visible:border-[#1E2B6D] focus-visible:ring-2 focus-visible:ring-[#1E2B6D]/20";
-
-const errorClass = "border-red-500 focus-visible:ring-red-500";
-
-export default function RuleForm() {
+export function RuleCreateForm() {
   const router = useRouter();
-  const { data = [], isPending: isSeverityLoading } = useSeverities();
+  const { data = [] } = useSeverityHints();
   const isPending = false;
 
   const {
     register,
     handleSubmit,
     control,
-    getValues,
     formState: { errors },
   } = useForm<RuleCreateUpdateType>({
     defaultValues: {
@@ -108,7 +106,7 @@ export default function RuleForm() {
     name: "recommendations" as never,
   });
 
-  const { mutate } = useAdminCreateRule();
+  const { mutate } = useCreateRule();
   const onSubmit = (data: RuleCreateUpdateType) => {
     mutate(data, {
       onSuccess: () => {

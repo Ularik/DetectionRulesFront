@@ -14,10 +14,15 @@ import {
   TableRow,
 } from "@/shared/ui/table";
 import {
-  useScenarioDetail,
+  useScenario,
   useScenarioEvents,
-} from "@/services/scenarios/scenariosQueries";
-import type { ScenarioDetailType } from "@/types/scenarios";
+} from "@/entities/scenario";
+import {
+  DetailField as Field,
+  DetailFieldList as FieldList,
+  DetailSection as Section,
+} from "@/shared/ui/detail-fields";
+import type { ScenarioDetailType } from "@/entities/scenario";
 import type { WazuhEvent } from "@/entities/event";
 import { routes } from "@/shared/config";
 
@@ -189,43 +194,6 @@ function ScenarioEventsTable({
   );
 }
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 break-words text-sm font-medium text-gray-900">
-        {value ?? "—"}
-      </dd>
-    </div>
-  );
-}
-
-function FieldList({
-  label,
-  values,
-}: {
-  label: string;
-  values: Array<string | number> | null | undefined;
-}) {
-  const items = values?.filter((value) => value !== "" && value !== null) ?? [];
-
-  return <Field label={label} value={items.length ? items.join(", ") : "—"} />;
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border border-gray-200 bg-white p-5">
-      <h2 className="mb-4 text-base font-semibold text-gray-900">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 function ScenarioContent({
   scenario,
@@ -239,7 +207,7 @@ function ScenarioContent({
   onToggleEvents,
 }: {
   scenario: ScenarioDetailType;
-  data: NonNullable<ReturnType<typeof useScenarioDetail>["data"]>;
+  data: NonNullable<ReturnType<typeof useScenario>["data"]>;
   eventsVisible: boolean;
   eventsQuery: ReturnType<typeof useScenarioEvents>;
   eventsPage: number;
@@ -252,7 +220,7 @@ function ScenarioContent({
     <>
       <header className="mb-6 border-b border-gray-200 pb-5">
         <Link
-          href="/admin/hunters/scenarios"
+          href={routes.scenarios}
           className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-950"
         >
           <ArrowLeft className="h-4 w-4" />К списку сценариев
@@ -492,11 +460,11 @@ function ScenarioContent({
   );
 }
 
-export default function ScenarioDetail({ scenarioId }: ScenarioDetailProps) {
+export function ScenarioDetails({ scenarioId }: ScenarioDetailProps) {
   const [eventsVisible, setEventsVisible] = useState(false);
   const [eventsPage, setEventsPage] = useState(1);
   const [eventsSize, setEventsSize] = useState(10);
-  const query = useScenarioDetail(scenarioId);
+  const query = useScenario(scenarioId);
   const eventsQuery = useScenarioEvents(
     scenarioId,
     { page: eventsPage, size: eventsSize },

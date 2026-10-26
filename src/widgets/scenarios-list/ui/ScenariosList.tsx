@@ -11,24 +11,9 @@ import {
   TableRow,
 } from "@/shared/ui/table";
 import { PaginationControl } from "@/shared/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useAttackTypes } from "@/entities/attack-type";
-import { useOrganizations } from "@/entities/organization";
-import { useScenarios } from "@/services/scenarios/scenariosQueries";
-import type { Severity } from "@/types/scenarios";
-
-const severityStyles: Record<Severity, string> = {
-  low: "bg-slate-100 text-slate-700",
-  medium: "bg-amber-100 text-amber-800",
-  high: "bg-orange-100 text-orange-800",
-  critical: "bg-red-100 text-red-800",
-};
+import { routes } from "@/shared/config";
+import { SCENARIO_SEVERITY_STYLES, useScenarios } from "@/entities/scenario";
+import { ScenariosFilter } from "@/features/scenarios-filter";
 
 const formatDate = (value: string | null | undefined) => {
   if (!value) return "—";
@@ -41,29 +26,17 @@ const formatDate = (value: string | null | undefined) => {
       }).format(date);
 };
 
-export default function ScenarioList() {
+export function ScenariosList() {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const [organizationId, setOrganizationId] = useState("");
   const [attackType, setAttackType] = useState("");
-  const organizations = useOrganizations();
-  const attackTypes = useAttackTypes();
   const { data, isPending, isError } = useScenarios({
     page,
     size,
     organization_id: organizationId || undefined,
     attack_type: attackType || undefined,
   });
-
-  const handleOrganizationChange = (value: string) => {
-    setOrganizationId(value === "all" ? "" : value);
-    setPage(1);
-  };
-
-  const handleAttackTypeChange = (value: string) => {
-    setAttackType(value === "all" ? "" : value);
-    setPage(1);
-  };
 
   const handleSizeChange = (newSize: number) => {
     setSize(newSize);
@@ -81,75 +54,18 @@ export default function ScenarioList() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label
-            htmlFor="scenario-organization"
-            className="text-sm font-medium"
-          >
-            Организация
-          </label>
-          <Select
-            value={organizationId || "all"}
-            onValueChange={handleOrganizationChange}
-            disabled={organizations.isPending || organizations.isError}
-          >
-            <SelectTrigger
-              id="scenario-organization"
-              className="w-full bg-white"
-            >
-              <SelectValue placeholder="Все организации" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все организации</SelectItem>
-              {organizations.data?.items.map((organization) => (
-                <SelectItem
-                  key={organization.organization_id}
-                  value={organization.organization_id}
-                >
-                  {organization.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {organizations.isError && (
-            <p className="text-xs text-red-700" role="alert">
-              Не удалось загрузить организации
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="scenario-attack-type" className="text-sm font-medium">
-            Тип атаки
-          </label>
-          <Select
-            value={attackType || "all"}
-            onValueChange={handleAttackTypeChange}
-            disabled={attackTypes.isPending || attackTypes.isError}
-          >
-            <SelectTrigger
-              id="scenario-attack-type"
-              className="w-full bg-white"
-            >
-              <SelectValue placeholder="Все типы атак" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все типы атак</SelectItem>
-              {attackTypes.data?.items.map((attack) => (
-                <SelectItem key={attack.value} value={attack.value}>
-                  {attack.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {attackTypes.isError && (
-            <p className="text-xs text-red-700" role="alert">
-              Не удалось загрузить типы атак
-            </p>
-          )}
-        </div>
-      </div>
+      <ScenariosFilter
+        organizationId={organizationId}
+        attackType={attackType}
+        onOrganizationChange={(value) => {
+          setOrganizationId(value);
+          setPage(1);
+        }}
+        onAttackTypeChange={(value) => {
+          setAttackType(value);
+          setPage(1);
+        }}
+      />
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
         {isError ? (
@@ -186,7 +102,7 @@ export default function ScenarioList() {
                     <TableCell className="font-medium">
                       {scenario.scenario_id ? (
                         <Link
-                          href={`/admin/hunters/scenarios/${encodeURIComponent(scenario.scenario_id)}`}
+                          href={routes.scenario(scenario.scenario_id)}
                           className="text-blue-700 hover:text-blue-900 hover:underline"
                         >
                           {scenario.scenario_id}
@@ -198,7 +114,7 @@ export default function ScenarioList() {
                     <TableCell>{scenario.scenario_type}</TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex rounded px-2 py-1 text-xs font-medium capitalize ${scenario.severity ? severityStyles[scenario.severity] : "bg-gray-100 text-gray-600"}`}
+                        className={`inline-flex rounded px-2 py-1 text-xs font-medium capitalize ${scenario.severity ? SCENARIO_SEVERITY_STYLES[scenario.severity] : "bg-gray-100 text-gray-600"}`}
                       >
                         {scenario.severity ?? "—"}
                       </span>

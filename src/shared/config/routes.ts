@@ -29,6 +29,8 @@ export const routes = {
   suppressionRules: "/admin/supers",
   hunters: "/admin/hunters",
   scenarios: "/admin/hunters/scenarios",
+  scenario: (scenarioId: string) =>
+    `/admin/hunters/scenarios/${encodeURIComponent(scenarioId)}`,
   events: "/admin/hunters/events",
   event: (indexName: string, eventId: string) =>
     `/admin/hunters/events/${encodeURIComponent(indexName)}/${encodeURIComponent(eventId)}`,

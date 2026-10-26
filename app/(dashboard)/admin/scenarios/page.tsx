@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
+import { routes } from "@/shared/config";
 
-export default function ScenariosPage() {
-  redirect("/admin/hunters/scenarios");
+export default function Page() {
+  redirect(routes.scenarios);
 }

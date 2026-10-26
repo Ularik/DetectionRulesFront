@@ -225,7 +225,13 @@ feature оборачивает их в `useMutation` и инвалидирует
 
 ### 4.7. Алиасы
 
-`tsconfig.json`: `"@/*": ["./src/*"]`. Импорты: `@/shared/ui`, `@/entities/rule`, `@/features/rule-delete`, `@/widgets/sidebar`, `@/views/rules`, `@/app/providers`.
+Целевой `tsconfig.json`: `"@/*": ["./src/*"]`.
+
+**Сейчас (переходный период)** действуют алиасы на каждый слой: `@/app/*`, `@/views/*`, `@/widgets/*`, `@/features/*`,
+`@/entities/*`, `@/shared/*` → `./src/<слой>/*`, а `@/*` → `./*` для ещё не перенесённых папок (`components/`, `services/`, `types/`).
+TypeScript выбирает самый специфичный паттерн. Когда старых папок не останется, все алиасы заменяются одним `"@/*": ["./src/*"]`.
+
+Импорты: `@/shared/ui`, `@/entities/rule`, `@/features/rule-delete`, `@/widgets/sidebar`, `@/views/rules`, `@/app/providers`.
 
 `components.json` (shadcn) нужно перенастроить, чтобы `npx shadcn add` клал компоненты в shared:
 
@@ -371,27 +377,49 @@ feature оборачивает их в `useMutation` и инвалидирует
 
 Мигрировать нужно **по одному домену**, чтобы после каждого шага работали `npm run build` и `npm run lint`.
 
-### Шаг 0. Каркас
+### Прогресс
+
+| Этап                                   | Статус        |
+| -------------------------------------- | ------------- |
+| Шаг 0. Каркас и переходные алиасы       | ✅ выполнен    |
+| Шаг 1. `shared` и `app`                 | ✅ выполнен    |
+| Домен `rules` (шаги 2–5)                | ✅ выполнен, это **эталон** |
+| Домены `user`/auth, `audit`, `correlation-rule`, `suppression-rule`, `ioc`, `incident`, `scenario`, `event`, `organization`, `mitre-technique`, `attack-type` | ⏳ не начаты |
+| Шаг 6. Очистка                         | ⏳             |
+
+**Эталон для переноса домена** — `rules`:
+- `src/entities/rule`: `model/types.ts`, `api/{ruleApi,queryKeys,queries}.ts`, `config/`, `ui/` (презентационные компоненты, действия передаются через слот `actions`);
+- `src/features/rule-{delete,toggle-status,upsert}`: `model/use*.ts` (мутация, инвалидация через `ruleKeys`, тосты) и `ui/` (кнопка или форма);
+- `src/widgets/{rules-list,rule-details}`: собирают entity и features, держат состояние экрана (пагинация, загрузка, ошибка);
+- `src/views/{rules,rule-detail,rule-create}` и тонкие `app/(dashboard)/admin/rules/**/page.tsx` (`params` — Promise).
+
+Временные зависимости от старого кода: `src/app/guards/RoleGuard.tsx` и `src/widgets/sidebar` импортируют `@/services/users/usersQueries`.
+Их нужно убрать при переносе домена `user`/auth.
+
+### Шаг 0. Каркас ✅
 1. Создать `src/{app,views,widgets,features,entities,shared}`.
-2. В `tsconfig.json` заменить `"@/*": ["./*"]` на `"@/*": ["./src/*"]`. На время миграции временно добавить
-   алиасы старых путей, например `"@/components/*": ["./components/*"]`, а после переноса удалить их.
+2. Переходные алиасы в `tsconfig.json` (раздел 4.7).
 3. Обновить `components.json` (раздел 4.7).
 
-### Шаг 1. `shared` и `app`
+### Шаг 1. `shared` и `app` ✅
 | Было                              | Стало                                       |
 | --------------------------------- | ------------------------------------------- |
-| `lib/axiosAPi.ts`                 | `src/shared/api/base.ts`                    |
+| `lib/axiosAPi.ts`                 | `src/shared/api/base.ts` (`import { axiosApi } from "@/shared/api"`) |
 | `constants/main.ts` (`apiURL`, `isDev`) | `src/shared/config/env.ts`            |
-| `constants/main.ts` (`roleDashboardPaths`) | `src/shared/config/routes.ts`      |
-| `constants/main.ts` (`inputClass`, `theme`) | `src/shared/ui/styles.ts` / CSS-переменные в `globals.css` |
+| `constants/main.ts` (`roleDashboardPaths`) + объект `routes` | `src/shared/config/routes.ts` |
+| `constants/main.ts` (`theme`)     | `src/shared/config/theme.ts`                |
+| `constants/main.ts` (`inputClass`) | `src/shared/ui/form/styles.ts` (+ `errorClass`) |
+| `constants/main.ts` (классы таблиц) | `src/shared/ui/table-styles.ts`           |
+| `constants/main.ts` (`actionAction`, `actionSeverity`, `actionDecision`) | `services/supers/options.ts` (при переносе supers → `entities/suppression-rule/config`) |
 | `constants/main.ts` (`dashboardMenuItems`) | `src/widgets/sidebar/config/menu.ts` |
 | `lib/utils.ts`                    | `src/shared/lib/utils.ts`                   |
 | `components/ui/*`                 | `src/shared/ui/*`                           |
-| `components/pagination/pagination.tsx` | `src/shared/ui/pagination`             |
+| `components/pagination/pagination.tsx` | `src/shared/ui/pagination.tsx`         |
 | `services/utils.tsx` (`FieldError`, `SectionTitle`, `ArrayField`) | `src/shared/ui/form` |
-| `providers/provider.tsx`          | `src/app/providers/QueryProvider.tsx`       |
+| `providers/provider.tsx`          | `src/app/providers/Providers.tsx`           |
 | `middleware/ProtectedLayout.tsx`  | `src/app/guards/RoleGuard.tsx`              |
 | `app/(dashboard)/layout.tsx` (разметка) | `src/app/layouts/DashboardLayout.tsx` |
+| `components/sidebar/SideBar.tsx`  | `src/widgets/sidebar`                       |
 | `app/globals.css`                 | `src/app/styles/globals.css`                |
 
 ### Шаг 2. `entities`
@@ -422,13 +450,14 @@ feature оборачивает их в `useMutation` и инвалидирует
 
 Их исправляют попутно, при переносе соответствующего слайса.
 
-1. **Битые ссылки на `/admin/hunters/incidents`.** Инциденты перенесены в `/admin/incidents` (в рабочей копии `hunters/incidents/*` удалены),
-   но вкладка в `hunters/layout.tsx` и редирект `/admin/hunters` по-прежнему ведут на старый адрес.
-2. **Дубли:** `lib/hooks/severities.ts` повторяет `services/severities/severitiesQueries.ts`. `components/rule/RuleTable.tsx` нигде не используется.
+1. ✅ **Битые ссылки на `/admin/hunters/incidents`** (вкладка охотников, редирект `/admin/hunters`, ссылки в `Incidents`,
+   `IncidentDetail`, `ScenarioDetail`) и на `/dashboard` (логотип сайдбара) заменены на `routes.*`.
+2. ✅ **Дубли:** удалены `lib/hooks/severities.ts` и неиспользуемый `components/rule/RuleTable.tsx`.
 3. **Query-ключи не согласованы:** `["organizations"]` и `["organization", id]`, `["event-detail", ...]`, опечатка `["seguence"]`.
-   Префикс для одной сущности должен быть единым, решается фабриками ключей (4.5).
-4. **Опечатки в именах:** `useIncidentDetai`, `useSeguence`, `axiosAPi.ts`, `IocItemPatchcSchema`, `SuppresionRuleCreateType`, `ViewertHome`.
-5. **`ProtectedLayout`:** в блоке render для `/viewer` нет проверки `return null`, в отличие от `/admin` и `/analyst`, поэтому чужой контент мелькает до редиректа.
+   Префикс для одной сущности должен быть единым, решается фабриками ключей (4.5). ✅ Для `rules` уже сделано (`ruleKeys`).
+4. **Опечатки в именах:** `useIncidentDetai`, `useSeguence`, `IocItemPatchcSchema`, `SuppresionRuleCreateType`, `ViewertHome`
+   (✅ `axiosAPi.ts` убран).
+5. ✅ **Guard:** `RoleGuard` скрывает контент чужого раздела для всех трёх ролей, в том числе `/viewer`.
 6. **Редиректы `/` и `/admin`** сделаны через `useEffect` + `router.push` на клиенте. Лучше использовать `redirect()` в серверном компоненте или `redirects` в `next.config.ts`.
 7. **Env:** `NEXT_BACK_URL` не задана, а `NEXT_API_URL`, `NEXT_IMAGE_URL` и `NEXT_PUBLIC_BACK_API_URL` не используются (раздел 3).
 8. **Разные схемы пагинации** (`limit/offset` и `page/size`). Общие типы ответов вынести в `shared/api/types.ts`.

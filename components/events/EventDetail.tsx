@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { useEventDetail } from "@/services/events/eventQueries";
 import type { WazuhEvent } from "@/types/events";
 

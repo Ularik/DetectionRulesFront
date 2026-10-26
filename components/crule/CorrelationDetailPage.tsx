@@ -5,9 +5,9 @@ import { ArrowLeft, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
 import { useGroupByFields, useSeguence } from "@/services/autoFields/queries";
 import { useCruleDetail, useUpdateCrule } from "@/services/crule/cRuleQueries";
 import type {

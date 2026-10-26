@@ -4,7 +4,7 @@ import CRuleCard from "@/components/crule/CruleCard";
 import { useCrules } from "@/services/crule/cRuleQueries";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { PaginationControl } from "@/shared/ui/pagination";
 import { useState } from "react";
 
 

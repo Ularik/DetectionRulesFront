@@ -1,8 +1,6 @@
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/ui/input";
 import { Plus, Trash2 } from "lucide-react";
-import {
-  UseFormRegister,
-} from "react-hook-form";
+import type { FieldValues, UseFormRegister } from "react-hook-form";
 
 
 export function FieldError({ message }: { message?: string }) {
@@ -18,7 +16,7 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function ArrayField({
+export function ArrayField<T extends FieldValues>({
   label,
   fieldItems,
   inputClass,
@@ -35,7 +33,7 @@ export default function ArrayField({
   fieldItems: { id: string }[];
   inputClass?: string;
   errorClass?: string;
-  register: UseFormRegister<any>;
+  register: UseFormRegister<T>;
   append: (v: string) => void;
   remove: (i: number) => void;
   errors: Array<{ message?: string } | undefined>;

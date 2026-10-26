@@ -1,7 +1,7 @@
 import axios from 'axios';
-import {apiURL} from '@/constants/main';
+import { apiURL } from '@/shared/config';
 
-const axiosApi = axios.create({
+export const axiosApi = axios.create({
   baseURL: apiURL,
   withCredentials: true,
 });
@@ -43,6 +43,4 @@ axiosApi.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-export default axiosApi;
 

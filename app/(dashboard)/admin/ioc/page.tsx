@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { Button } from "@/shared/ui/button";
+import { PaginationControl } from "@/shared/ui/pagination";
 import { IocTable } from "@/components/ioc/IocTable";
 import { useIoc } from "@/services/ioc/iocQueries";
 

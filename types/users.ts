@@ -1,4 +1,6 @@
-export type UserRole = "ADMIN" | "ANALYST" | "VIEWER";
+import type { UserRole } from "@/shared/config";
+
+export type { UserRole };
 
 
 export interface UsersAuthType {

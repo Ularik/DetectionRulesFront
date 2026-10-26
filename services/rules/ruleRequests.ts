@@ -1,4 +1,4 @@
-import axiosApi from "@/lib/axiosAPi";
+import { axiosApi } from "@/shared/api";
 import { QueryFiltersType, RuleApiResponse, RuleType } from "@/types/rules";
 
 

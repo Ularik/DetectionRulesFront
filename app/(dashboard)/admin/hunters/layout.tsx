@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { routes } from "@/shared/config";
 
 const hunterTabs = [
-  { label: "Инциденты", href: "/admin/hunters/incidents" },
+  { label: "Инциденты", href: routes.incidents },
   { label: "Сценарии", href: "/admin/hunters/scenarios" },
   { label: "События", href: "/admin/hunters/events" },
 ];

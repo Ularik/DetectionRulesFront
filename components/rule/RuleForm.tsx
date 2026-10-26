@@ -2,8 +2,8 @@
 
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { Loader2, FlaskConical } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -11,12 +11,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/ui/select";
 
 import { RuleCreateUpdateType } from "@/types/rules";
 import { useSeverities } from "@/services/severities/severitiesQueries";
 import { useAdminCreateRule } from "@/services/rules/adminRules/ruleQueries";
-import ArrayField, { SectionTitle, FieldError } from "@/services/utils";
+import { ArrayField, SectionTitle, FieldError } from "@/shared/ui/form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 

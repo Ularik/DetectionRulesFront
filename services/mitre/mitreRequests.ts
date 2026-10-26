@@ -1,4 +1,4 @@
-import axiosApi from "@/lib/axiosAPi";
+import { axiosApi } from "@/shared/api";
 import type { MitreSyncResponse, MitreTechnique } from "@/types/mitre";
 
 export async function getMitreTechniques(): Promise<MitreTechnique[]> {

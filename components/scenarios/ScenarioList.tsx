@@ -9,15 +9,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { PaginationControl } from "@/components/pagination/pagination";
+} from "@/shared/ui/table";
+import { PaginationControl } from "@/shared/ui/pagination";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/ui/select";
 import { useAttackTypes } from "@/services/attackTypes/attackTypesQueries";
 import { useOrganizations } from "@/services/organizations/orgQueries";
 import { useScenarios } from "@/services/scenarios/scenariosQueries";

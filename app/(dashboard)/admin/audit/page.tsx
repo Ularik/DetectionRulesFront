@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FileText } from "lucide-react";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { PaginationControl } from "@/shared/ui/pagination";
 import { useAudits } from "@/services/audits/auditsQueries";
 import { AuditTable } from "@/components/audit/AuditTable";
 

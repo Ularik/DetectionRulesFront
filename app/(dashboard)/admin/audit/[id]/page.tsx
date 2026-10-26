@@ -2,10 +2,10 @@
 
 import { useAuditDetail } from "@/services/audits/auditsQueries";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { Separator } from "@/shared/ui/separator";
 import { ChevronLeft, ChevronRight, Loader2, User } from "lucide-react";
 import { RuleDetailTable } from "@/components/rule/RuleDetail/RuleDetail"; // ваш компонент из прошлого сообщения
 

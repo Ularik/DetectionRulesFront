@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, Lock, User, LogIn, Loader2 } from "lucide-react";
 import { useRegister } from "@/services/users/usersQueries";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/ui/input";
 import type { UsersAuthType } from "@/types/users";
 
 const RegisterPage = () => {

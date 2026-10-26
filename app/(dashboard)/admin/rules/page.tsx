@@ -4,7 +4,7 @@ import RuleCard from "@/components/rule/RuleCard";
 import { useRules } from "@/services/rules/ruleQueries";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { PaginationControl } from "@/shared/ui/pagination";
 import { useState } from "react";
 
 

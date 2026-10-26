@@ -6,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/ui/table";
 import { RuleType } from "@/types/rules";
 import { Trash2 } from "lucide-react";
 import { useDeleteRule } from "@/services/rules/adminRules/ruleQueries";

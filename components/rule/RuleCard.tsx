@@ -6,7 +6,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/shared/ui/card";
 import {
   useDeleteRule,
   useAdminSetStatusRule,
@@ -15,7 +15,7 @@ import { RuleType } from "@/types/rules";
 import axios from "axios";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/ui/badge";
 import Link from "next/link";
 
 interface Props {

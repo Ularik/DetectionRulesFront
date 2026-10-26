@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { isAxiosError } from "axios";
 import { RefreshCw, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/ui/table";
 import {
   useMitreTechniques,
   useSyncMitre,

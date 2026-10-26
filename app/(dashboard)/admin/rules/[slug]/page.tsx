@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 import { RuleDetailTable } from "@/components/rule/RuleDetail/RuleDetail";

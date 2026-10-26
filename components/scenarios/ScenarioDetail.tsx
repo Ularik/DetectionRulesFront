@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { Button } from "@/shared/ui/button";
+import { PaginationControl } from "@/shared/ui/pagination";
 import {
   Table,
   TableBody,
@@ -12,13 +12,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/ui/table";
 import {
   useScenarioDetail,
   useScenarioEvents,
 } from "@/services/scenarios/scenariosQueries";
 import type { ScenarioDetailType } from "@/types/scenarios";
 import type { WazuhEvent } from "@/types/events";
+import { routes } from "@/shared/config";
 
 interface ScenarioDetailProps {
   scenarioId: string;
@@ -466,7 +467,7 @@ function ScenarioContent({
                 >
                   <div>
                     <Link
-                      href={`/admin/hunters/incidents/${encodeURIComponent(incident.incident_id)}`}
+                      href={routes.incident(incident.incident_id)}
                       className="font-mono text-sm font-semibold text-blue-700 hover:text-blue-900 hover:underline"
                     >
                       {incident.incident_id}

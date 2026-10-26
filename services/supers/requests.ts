@@ -1,4 +1,4 @@
-import axiosApi from "@/lib/axiosAPi";
+import { axiosApi } from "@/shared/api";
 import type { MatchFieldResponseType, SuppresionRuleCreateType, SuppressionRuleTypes, SuppressionRuleUpdateType } from "@/types/supers";
 
 export async function getSupers() {

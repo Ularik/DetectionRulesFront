@@ -5,7 +5,7 @@ import {
   OrganizationCreateUpdateApiResponse,
   AgentType,
 } from "@/types/organizations";
-import axiosApi from "@/lib/axiosAPi";
+import { axiosApi } from "@/shared/api";
 
 export async function getOrganizations(): Promise<OrganizationListApiResponse> {
   const res =

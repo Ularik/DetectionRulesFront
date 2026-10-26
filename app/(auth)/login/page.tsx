@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 
-import { inputClass } from "@/constants/main";
+import { inputClass } from "@/shared/ui/form";
 import type { UserLoginType } from "@/types/users";
 import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/ui/input";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useLogin } from "@/services/users/usersQueries";

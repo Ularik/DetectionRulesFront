@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { LogOut } from "lucide-react";
 import { useLogout } from "@/services/users/usersQueries";
-import { dashboardMenuItems } from "@/constants/main";
+import { routes } from "@/shared/config";
+import { dashboardMenuItems } from "../config/menu";
 import { useRouter } from "next/navigation";
 
-const Sidebar = () => {
+export const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { mutate, isPending, isError, error } = useLogout();
@@ -16,7 +17,7 @@ const Sidebar = () => {
   const logoutFunc = () => {
     mutate(undefined, {
       onSuccess: () => {
-        router.push("/login");
+        router.push(routes.login);
       },
     });
   };
@@ -24,7 +25,7 @@ const Sidebar = () => {
   return (
     <aside className="hidden w-72 sticky top-0 border-r border-gray-200 bg-white lg:flex lg:flex-col h-dvh">
       <div className="border-b border-gray-200 px-6 py-5">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href={routes.admin} className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1E2B6D] text-xl font-bold text-white">
             R
           </div>
@@ -87,5 +88,3 @@ const Sidebar = () => {
     </aside>
   );
 };
-
-export default Sidebar;

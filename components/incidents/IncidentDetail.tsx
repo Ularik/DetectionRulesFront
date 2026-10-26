@@ -5,15 +5,15 @@ import { ArrowLeft, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { PaginationControl } from "@/components/pagination/pagination";
-import { Button } from "@/components/ui/button";
+import { PaginationControl } from "@/shared/ui/pagination";
+import { Button } from "@/shared/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/ui/select";
 import {
   useIncidentDetai,
   useIncidentEvents,
@@ -21,6 +21,7 @@ import {
 } from "@/services/incident/incidentQueries";
 import type { ANALYST_STATUS, Incident } from "@/types/incidents";
 import type { WazuhEvent } from "@/types/events";
+import { routes } from "@/shared/config";
 
 interface IncidentDetailProps {
   incidentId: string;
@@ -590,7 +591,7 @@ export default function IncidentDetail({ incidentId }: IncidentDetailProps) {
     <main className="mx-auto max-w-7xl">
       <Button
         variant="ghost"
-        onClick={() => router.push("/admin/hunters/incidents")}
+        onClick={() => router.push(routes.incidents)}
         className="mb-4 -ml-3"
       >
         <ArrowLeft /> К списку инцидентов

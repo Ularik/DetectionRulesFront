@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSupers } from "@/services/supers/queries";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { PaginationControl } from "@/shared/ui/pagination";
 // Импортируйте вашу карточку для SuperRules (если она есть) или используйте нужный компонент
 import SuperRuleCard from "@/components/super/SuperRulesCard";
 

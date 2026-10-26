@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { PaginationControl } from "@/components/pagination/pagination";
+import { Button } from "@/shared/ui/button";
+import { PaginationControl } from "@/shared/ui/pagination";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/ui/table";
 import { useEvents } from "@/services/events/eventQueries";
 import type { WazuhEvent } from "@/types/events";
 

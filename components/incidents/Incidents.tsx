@@ -8,11 +8,12 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { PaginationControl } from "@/components/pagination/pagination";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PaginationControl } from "@/shared/ui/pagination";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import { useIncidents } from "@/services/incident/incidentQueries";
 import type { ANALYST_STATUS, IncidentParams } from "@/types/incidents";
+import { routes } from "@/shared/config";
 
 type IncidentFilterParams = Omit<IncidentParams, "page" | "size">;
 type FilterKey = keyof IncidentFilterParams;
@@ -415,7 +416,7 @@ export default function Incidents() {
                       >
                         <td className="max-w-[220px] px-4 py-4">
                           <Link
-                            href={`/admin/hunters/incidents/${encodeURIComponent(incident.incident_id)}`}
+                            href={routes.incident(incident.incident_id)}
                             className="truncate font-mono text-xs font-semibold text-gray-900"
                             title={`Открыть инцидент ${incident.incident_id}`}
                           >

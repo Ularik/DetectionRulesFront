@@ -1,9 +1,5 @@
+import { TestRulePage } from "@/views/test-rule";
 
-
-export default function TestRulePage() {
-    return (
-        <>
-        Test Rule
-        </>
-    )
+export default function Page() {
+  return <TestRulePage />;
 }

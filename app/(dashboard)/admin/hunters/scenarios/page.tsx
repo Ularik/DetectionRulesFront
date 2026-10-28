@@ -1,5 +1,5 @@
-import ScenarioList from "@/components/scenarios/ScenarioList";
+import { ScenariosPage } from "@/views/scenarios";
 
-export default function HuntersScenariosPage() {
-  return <ScenarioList />;
+export default function Page() {
+  return <ScenariosPage />;
 }

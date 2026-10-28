@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
+import { IncidentDetailPage } from "@/views/incident-detail";
 
-export default async function IncidentDetailPage({
+export default async function Page({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirect(`/admin/hunters/incidents/${encodeURIComponent(id)}`);
+  return <IncidentDetailPage incidentId={id} />;
 }

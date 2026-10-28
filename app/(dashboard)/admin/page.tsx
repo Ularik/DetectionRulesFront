@@ -1,12 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
+import { routes } from "@/shared/config";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-
-export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.push("/admin/organizations");
-  }, [router]);
+export default function Page() {
+  redirect(routes.organizations);
 }

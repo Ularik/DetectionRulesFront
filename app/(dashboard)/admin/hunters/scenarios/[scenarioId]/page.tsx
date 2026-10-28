@@ -1,10 +1,10 @@
-"use client";
+import { ScenarioDetailPage } from "@/views/scenario-detail";
 
-import { useParams } from "next/navigation";
-import ScenarioDetail from "@/components/scenarios/ScenarioDetail";
-
-export default function HuntersScenarioDetailPage() {
-  const params = useParams<{ scenarioId: string }>();
-
-  return <ScenarioDetail scenarioId={params.scenarioId} />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ scenarioId: string }>;
+}) {
+  const { scenarioId } = await params;
+  return <ScenarioDetailPage scenarioId={scenarioId} />;
 }

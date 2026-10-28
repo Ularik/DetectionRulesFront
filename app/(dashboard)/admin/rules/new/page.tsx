@@ -1,8 +1,5 @@
-import RuleForm from "@/components/rule/RuleForm";
+import { RuleCreatePage } from "@/views/rule-create";
 
-export default function AddRules () {
-
-  return (
-    <RuleForm/>
-  );
-};
+export default function Page() {
+  return <RuleCreatePage />;
+}

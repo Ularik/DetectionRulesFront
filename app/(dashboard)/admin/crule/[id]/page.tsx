@@ -1,10 +1,10 @@
-"use client";
+import { CorrelationRuleDetailPage } from "@/views/correlation-rule-detail";
 
-import { useParams } from "next/navigation";
-import CorrelationDetailPage from "@/components/crule/CorrelationDetailPage";
-
-export default function CruleDetail() {
-  const params = useParams<{ id: string }>();
-
-  return <CorrelationDetailPage correlationId={params.id} />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <CorrelationRuleDetailPage correlationId={id} />;
 }

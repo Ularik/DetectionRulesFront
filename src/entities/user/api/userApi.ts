@@ -1,0 +1,21 @@
+import { axiosApi } from "@/shared/api";
+import type { UserLoginType, UserType, UsersAuthType } from "../model/types";
+
+export async function fetchMe(): Promise<UserType> {
+  const result = await axiosApi.get<UserType>("/users/me");
+  return result.data;
+}
+
+export async function login(data: UserLoginType) {
+  const result = await axiosApi.post("/users/login", data);
+  return result.data;
+}
+
+export async function logout() {
+  await axiosApi.delete("/users/logout");
+}
+
+export async function register(data: UsersAuthType) {
+  const result = await axiosApi.post("/users/", data);
+  return result.data;
+}

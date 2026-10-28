@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { IncidentsPage } from "@/views/incidents";
 
-export default function IncidentsPage() {
-  redirect("/admin/hunters/incidents");
+export default function Page() {
+  return <IncidentsPage />;
 }

@@ -1,5 +1,5 @@
-import Events from "@/components/events/Events";
+import { EventsPage } from "@/views/events";
 
-export default function HuntersEventsPage() {
-  return <Events />;
+export default function Page() {
+  return <EventsPage />;
 }

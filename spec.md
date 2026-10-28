@@ -155,8 +155,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 │  ├─ (auth)/login, (auth)/auth  # → @/views/login, @/views/register
 │  └─ (dashboard)/
 │     ├─ layout.tsx              # → @/app/layouts (DashboardLayout)
-│     ├─ admin/page.tsx          # redirect(routes.organizations)
-│     ├─ admin/hunters/layout.tsx  # → @/widgets/hunters-tabs
+│     ├─ admin/page.tsx          # → @/views/home («Главная»)
+│     ├─ admin/(administration)/ # «Администрирование»: rules, crule, supers, audit; layout → @/widgets/section-tabs
 │     └─ admin/**/page.tsx       # → @/views/*
 ├─ steiger.config.ts             # конфиг линтера FSD
 └─ src/
@@ -166,7 +166,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ layouts/                # DashboardLayout (RoleGuard + Sidebar + main)
    │  └─ styles/globals.css
    ├─ views/
-   │  ├─ login/  register/  analyst-home/  viewer-home/  test-rule/
+   │  ├─ login/  register/  home/  analyst-home/  viewer-home/  test-rule/
    │  ├─ organizations/  organization-detail/  organization-create/  organization-edit/
    │  ├─ rules/  rule-detail/  rule-create/
    │  ├─ correlation-rules/  correlation-rule-detail/  correlation-rule-create/
@@ -175,7 +175,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ incidents/  incident-detail/  scenarios/  scenario-detail/  events/  event-detail/
    │  └─ audit/  audit-detail/  mitre/
    ├─ widgets/
-   │  ├─ sidebar/  hunters-tabs/
+   │  ├─ sidebar/  section-tabs/
    │  ├─ rules-list/  rule-details/  correlation-rules-list/
    │  ├─ suppression-rules-list/  suppression-rule-details/
    │  ├─ ioc-list/  ioc-details/  audit-list/  audit-details/
@@ -367,7 +367,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 
 | Роль      | Домашняя страница | Доступ          |
 | --------- | ----------------- | --------------- |
-| `ADMIN`   | `/admin` → `/admin/organizations` | весь `/admin/*` |
+| `ADMIN`   | `/admin` («Главная») | весь `/admin/*` |
 | `ANALYST` | `/analyst`        | заглушка        |
 | `VIEWER`  | `/viewer`         | заглушка        |
 
@@ -378,21 +378,24 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/`                                          | —                              | `redirect(routes.login)` |
 | `/login`                                     | `views/login`                  | |
 | `/auth`                                      | `views/register`               | регистрация |
-| `/admin`                                     | —                              | `redirect(routes.organizations)` |
-| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | id декодируется в route-файле |
-| `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | правила обнаружения |
-| `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | правила корреляции; `/[id]` — форма редактирования |
-| `/admin/supers`, `/new`, `/[slug]`, `/[slug]/edit` | `views/suppression-rule*` | правила подавления |
-| `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | |
-| `/admin/audit`, `/[id]`                      | `views/audit*`                 | |
-| `/admin/mitre`                               | `views/mitre`                  | |
-| `/admin/incidents`, `/[id]`                  | `views/incident*`              | вкладка «Инциденты» в `widgets/hunters-tabs` ведёт сюда |
-| `/admin/hunters`                             | —                              | `redirect(routes.incidents)` |
-| `/admin/hunters/scenarios`, `/[scenarioId]`  | `views/scenario*`              | layout с `widgets/hunters-tabs` |
-| `/admin/hunters/events`, `/[index_name]/[event_id]` | `views/event*`          | параметры декодируются в route-файле |
-| `/admin/scenarios`, `/[scenarioId]`          | —                              | редирект на `/admin/hunters/scenarios[/id]` |
+| `/admin`                                    | `views/home`                   | «Главная», заглушка |
+| `/admin/incidents`, `/[id]`                  | `views/incident*`              | «Инциденты» |
+| `/admin/scenarios`, `/[scenarioId]`          | `views/scenario*`              | «Сценарии» |
+| `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | «Threat Intelligence» |
+| `/admin/mitre`                               | `views/mitre`                  | «MITRE ATT&CK» |
+| `/admin/events`, `/[index_name]/[event_id]`  | `views/event*`                 | «Источники»; параметры декодируются в route-файле |
+| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Кампании» (на backend — organizations); id декодируется в route-файле |
+| `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | «Администрирование» → правила обнаружения |
+| `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | «Администрирование» → правила корреляции; `/[id]` — форма редактирования |
+| `/admin/supers`, `/new`, `/[slug]`, `/[slug]/edit` | `views/suppression-rule*` | «Администрирование» → правила подавления |
+| `/admin/audit`, `/[id]`                      | `views/audit*`                 | «Администрирование» → аудит |
 | `/admin/testRule`                            | `views/test-rule`              | заглушка |
 | `/analyst`, `/viewer`                        | `views/analyst-home`, `views/viewer-home` | заглушки |
+
+Навигация повторяет макет CERT-KG SIEM (Figma): пункты сайдбара — `widgets/sidebar/config/menu.ts`
+(«Администрирование» закреплён внизу), вкладки «Администрирования» — `widgets/section-tabs/config/tabs.ts`.
+Раздел с вкладками собран в route group `(administration)`, поэтому имя группы не попадает в URL.
+«Кампании» в UI — это сущность `organization` (backend `/organizations`).
 
 Константы путей хранятся в `shared/config/routes.ts` (`routes.rule(id)`, `routes.organizationEdit(id)` и т. д.).
 Строки URL в компонентах не хардкодятся.
@@ -460,6 +463,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 7. **Цвета захардкожены** (`#1E2B6D` и др.) в классах Tailwind на страницах, ещё не переведённых на макет CERT-KG SIEM. Палитра макета уже лежит в `@theme` в `globals.css` (`bg-brand`, `text-ink`, `border-line`…) — используйте её.
 8. **Защита маршрутов только на клиенте** (раздел 6). Для server-side проверок — `proxy.ts`.
 9. **Тестов нет.**
+10. **«Главная» — заглушка**, макета для неё пока нет.
 
 ---
 

@@ -7,6 +7,8 @@ export const routes = {
   analyst: "/analyst",
   viewer: "/viewer",
 
+  home: "/admin",
+
   organizations: "/admin/organizations",
   organizationNew: "/admin/organizations/new",
   organization: (organizationId: string) =>
@@ -33,13 +35,12 @@ export const routes = {
   suppressionRule: (suppressionId: string) => `/admin/supers/${suppressionId}`,
   suppressionRuleEdit: (suppressionId: string) =>
     `/admin/supers/${suppressionId}/edit`,
-  hunters: "/admin/hunters",
-  scenarios: "/admin/hunters/scenarios",
+  scenarios: "/admin/scenarios",
   scenario: (scenarioId: string) =>
-    `/admin/hunters/scenarios/${encodeURIComponent(scenarioId)}`,
-  events: "/admin/hunters/events",
+    `/admin/scenarios/${encodeURIComponent(scenarioId)}`,
+  events: "/admin/events",
   event: (indexName: string, eventId: string) =>
-    `/admin/hunters/events/${encodeURIComponent(indexName)}/${encodeURIComponent(eventId)}`,
+    `/admin/events/${encodeURIComponent(indexName)}/${encodeURIComponent(eventId)}`,
   mitre: "/admin/mitre",
 } as const;
 

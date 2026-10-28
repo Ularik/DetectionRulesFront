@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { routes } from "@/shared/config";
+import { ScenarioDetailPage } from "@/views/scenario-detail";
 
 export default async function Page({
   params,
@@ -7,6 +6,5 @@ export default async function Page({
   params: Promise<{ scenarioId: string }>;
 }) {
   const { scenarioId } = await params;
-  // params уже URL-кодированы: декодируем, чтобы routes.scenario не закодировал дважды
-  redirect(routes.scenario(decodeURIComponent(scenarioId)));
+  return <ScenarioDetailPage scenarioId={scenarioId} />;
 }

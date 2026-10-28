@@ -20,6 +20,7 @@ import {
 } from "@/entities/incident";
 import type { WazuhEvent } from "@/entities/event";
 import { IncidentStatusSelect } from "@/features/incident-change-status";
+import { IncidentModalContent } from "./IncidentModalContent";
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -464,20 +465,19 @@ function IncidentEventItem({ event }: { event: WazuhEvent }) {
   );
 }
 
-export function IncidentDetails({ incidentId }: { incidentId: string }) {
-  const router = useRouter();
+// Загрузка, ошибка и содержимое инцидента — без навигации, чтобы переиспользовать в модалке.
+// variant="modal" — вёрстка модального окна по макету, "page" — полная страница
+export function IncidentDetailsBody({
+  incidentId,
+  variant = "page",
+}: {
+  incidentId: string;
+  variant?: "page" | "modal";
+}) {
   const { data, isPending, error, refetch } = useIncident(incidentId);
 
   return (
-    <main className="mx-auto max-w-7xl">
-      <Button
-        variant="ghost"
-        onClick={() => router.push(routes.incidents)}
-        className="mb-4 -ml-3"
-      >
-        <ArrowLeft /> К списку инцидентов
-      </Button>
-
+    <div className={variant === "modal" && (isPending || error || !data?.incident) ? "p-6" : undefined}>
       {isPending ? (
         <div className="space-y-5" aria-label="Загрузка инцидента">
           <div className="h-24 animate-pulse rounded-lg bg-gray-200" />
@@ -505,12 +505,34 @@ export function IncidentDetails({ incidentId }: { incidentId: string }) {
           </Button>
         </div>
       ) : data?.incident ? (
-        <IncidentContent incident={data.incident} />
+        variant === "modal" ? (
+          <IncidentModalContent data={data} />
+        ) : (
+          <IncidentContent incident={data.incident} />
+        )
       ) : (
         <div className="rounded-lg border border-gray-200 bg-white px-6 py-16 text-center text-sm text-gray-500">
           Инцидент не найден
         </div>
       )}
+    </div>
+  );
+}
+
+export function IncidentDetails({ incidentId }: { incidentId: string }) {
+  const router = useRouter();
+
+  return (
+    <main className="mx-auto max-w-7xl">
+      <Button
+        variant="ghost"
+        onClick={() => router.push(routes.incidents)}
+        className="mb-4 -ml-3"
+      >
+        <ArrowLeft /> К списку инцидентов
+      </Button>
+
+      <IncidentDetailsBody incidentId={incidentId} />
     </main>
   );
 }

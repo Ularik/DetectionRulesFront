@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { HuntersTabs } from "@/widgets/hunters-tabs";
+import { SectionTabs } from "@/widgets/section-tabs";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div>
-      <HuntersTabs />
+      <SectionTabs section="administration" />
       {children}
     </div>
   );

@@ -251,3 +251,13 @@ export interface IncidentSchema {
 }
 
 
+
+export interface DailyIncidentCountParams {
+  from_time?: string;
+  to_time?: string;
+}
+
+export interface DailyIncidentCount {
+  date: string;
+  count: number;
+}

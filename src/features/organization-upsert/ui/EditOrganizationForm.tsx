@@ -19,8 +19,8 @@ export function EditOrganizationForm({
 
   if (isOrganizationPending) {
     return (
-      <div className="py-20 text-center text-gray-500">
-        Загрузка организации...
+      <div className="py-20 text-center text-ink-muted">
+        Загрузка кампании...
       </div>
     );
   }
@@ -28,18 +28,18 @@ export function EditOrganizationForm({
   if (!organization) {
     return (
       <div className="rounded-lg border border-red-200 bg-white p-6 text-center text-red-700">
-        Организация не найдена
+        Кампания не найдена
       </div>
     );
   }
 
   return (
     <OrganizationForm
-      // Перемонтируем форму при смене организации, чтобы подхватить начальные значения
+      // Перемонтируем форму при смене кампании, чтобы подхватить начальные значения
       key={organization.organization_id}
-      title="Редактирование организации"
+      title="Редактирование кампании"
       backHref={routes.organization(organizationId)}
-      backLabel="К деталям организации"
+      backLabel="К деталям кампании"
       submitLabel="Сохранить"
       pendingLabel="Сохранение..."
       isPending={updateOrganization.isPending}
@@ -55,13 +55,13 @@ export function EditOrganizationForm({
           { organizationId, data: payload },
           {
             onSuccess: () => {
-              toast.success("Организация обновлена", {
+              toast.success("Кампания обновлена", {
                 position: "top-center",
               });
               router.push(routes.organization(organizationId));
             },
             onError: () => {
-              toast.error("Не удалось обновить организацию", {
+              toast.error("Не удалось обновить кампанию", {
                 position: "top-center",
               });
             },

@@ -7,7 +7,20 @@
 @custom-variant dark (&:is(.dark *));
 
 body {
-  font-family: var(--font-montserrat), sans-serif;
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* Палитра макета CERT-KG SIEM (Figma): bg-brand, text-ink, border-line и т. д. */
+@theme {
+  --color-brand: #013871;
+  --color-brand-light: #2165aa;
+  --color-brand-soft: #c3d7ec;
+  --color-surface: #f4f7fb;
+  --color-surface-muted: #f8fafc;
+  --color-line: #d7e3f0;
+  --color-line-muted: #e2e8f0;
+  --color-ink: #0f172a;
+  --color-ink-muted: #64748b;
 }
 
 @theme inline {

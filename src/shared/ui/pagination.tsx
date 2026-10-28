@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 import {
   Select,
   SelectContent,
@@ -25,7 +25,25 @@ export interface PaginationControlProps {
   isLoading?: boolean;
   /** Доступные варианты выбора количества элементов */
   pageSizeOptions?: number[];
+  /** Подпись к счётчику: «1–8 из 8 {itemsLabel}» */
+  itemsLabel?: string;
+  className?: string;
 }
+
+// Сколько номеров страниц показывать одновременно
+const VISIBLE_PAGES = 5;
+
+function getVisiblePages(page: number, totalPages: number) {
+  const count = Math.min(VISIBLE_PAGES, totalPages);
+  const start = Math.min(
+    Math.max(1, page - Math.floor(VISIBLE_PAGES / 2)),
+    totalPages - count + 1,
+  );
+  return Array.from({ length: count }, (_, index) => start + index);
+}
+
+const pageButtonClass =
+  "flex size-8 items-center justify-center rounded-[10px] border text-[13px] transition-colors disabled:pointer-events-none disabled:opacity-50";
 
 export function PaginationControl({
   page,
@@ -35,6 +53,8 @@ export function PaginationControl({
   onLimitChange,
   isLoading = false,
   pageSizeOptions = [5, 10, 20, 50],
+  itemsLabel,
+  className,
 }: PaginationControlProps) {
   // Расчет общего количества страниц
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -51,9 +71,14 @@ export function PaginationControl({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-zinc-200">
+    <div
+      className={cn(
+        "flex flex-col items-center justify-between gap-4 border-t border-line-muted pt-4 sm:flex-row",
+        className,
+      )}
+    >
       {/* Левая часть: Выбор количества элементов и счетчик */}
-      <div className="flex items-center gap-2 text-xs text-zinc-500">
+      <div className="flex items-center gap-2 text-[13px] text-ink-muted">
         {onLimitChange && (
           <>
             <span>Показывать по:</span>
@@ -62,7 +87,7 @@ export function PaginationControl({
               onValueChange={handleLimitSelect}
               disabled={isLoading}
             >
-              <SelectTrigger className="h-8 w-18 text-xs border-zinc-200">
+              <SelectTrigger className="h-8 w-18 border-line bg-white text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -76,38 +101,51 @@ export function PaginationControl({
           </>
         )}
         <span>
-          ({startItem}–{endItem} из {total})
+          {startItem}–{endItem} из {total}
+          {itemsLabel && ` ${itemsLabel}`}
         </span>
       </div>
 
       {/* Правая часть: Переключение страниц */}
-      <div className="flex items-center gap-1.5">
-        <Button
-          variant="outline"
-          size="sm"
+      <nav aria-label="Страницы" className="flex items-center gap-2">
+        <button
+          type="button"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1 || isLoading}
-          className="h-8 px-2 sm:px-3 text-xs"
+          aria-label="Предыдущая страница"
+          className={cn(pageButtonClass, "border-line bg-white text-ink hover:bg-surface-muted")}
         >
-          <ChevronLeft className="h-4 w-4 sm:mr-1" />
-          <span className="hidden sm:inline">Назад</span>
-        </Button>
+          <ChevronLeft className="size-4" />
+        </button>
 
-        <span className="text-xs font-medium px-2 text-zinc-600">
-          {page} из {totalPages}
-        </span>
+        {getVisiblePages(page, totalPages).map((pageNumber) => (
+          <button
+            key={pageNumber}
+            type="button"
+            onClick={() => onPageChange(pageNumber)}
+            disabled={isLoading}
+            aria-current={pageNumber === page ? "page" : undefined}
+            className={cn(
+              pageButtonClass,
+              pageNumber === page
+                ? "border-brand bg-brand font-semibold text-white"
+                : "border-line bg-white text-ink-muted hover:bg-surface-muted",
+            )}
+          >
+            {pageNumber}
+          </button>
+        ))}
 
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages || isLoading}
-          className="h-8 px-2 sm:px-3 text-xs"
+          aria-label="Следующая страница"
+          className={cn(pageButtonClass, "border-line bg-white text-ink hover:bg-surface-muted")}
         >
-          <span className="hidden sm:inline">Вперед</span>
-          <ChevronRight className="h-4 w-4 sm:ml-1" />
-        </Button>
-      </div>
+          <ChevronRight className="size-4" />
+        </button>
+      </nav>
     </div>
   );
 }

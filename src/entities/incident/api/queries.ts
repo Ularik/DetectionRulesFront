@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import type { IncidentParams } from "../model/types";
+import type { DailyIncidentCountParams, IncidentParams } from "../model/types";
 import {
+  fetchDailyIncidentCount,
   fetchIncident,
   fetchIncidentEvents,
   fetchIncidents,
@@ -36,5 +37,12 @@ export const useIncidentEvents = ({
     queryKey: incidentKeys.events(incidentId, page, size),
     queryFn: () => fetchIncidentEvents({ inc_id: incidentId, page, size }),
     enabled,
+  });
+};
+
+export const useDailyIncidentCount = (params: DailyIncidentCountParams) => {
+  return useQuery({
+    queryKey: incidentKeys.dailyCount(params),
+    queryFn: () => fetchDailyIncidentCount(params),
   });
 };

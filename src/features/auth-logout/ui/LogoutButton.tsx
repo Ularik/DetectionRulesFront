@@ -2,10 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { routes } from "@/shared/config";
 import { useLogout } from "../model/useLogout";
 
-export function LogoutButton() {
+type Props = {
+  /** `icon` — компактная иконка для верхней панели */
+  variant?: "button" | "icon";
+};
+
+export function LogoutButton({ variant = "button" }: Props) {
   const router = useRouter();
   const { mutate, isPending, isError, error } = useLogout();
 
@@ -14,8 +20,28 @@ export function LogoutButton() {
       onSuccess: () => {
         router.push(routes.login);
       },
+      onError: (logoutError) => {
+        if (variant === "icon") {
+          toast.error(logoutError.message || "Произошла ошибка при выходе");
+        }
+      },
     });
   };
+
+  if (variant === "icon") {
+    return (
+      <button
+        type="button"
+        onClick={logoutFunc}
+        disabled={isPending}
+        aria-label="Выйти"
+        title="Выйти"
+        className="rounded-md text-ink transition-colors hover:text-brand-light disabled:opacity-60"
+      >
+        <LogOut className="size-6" />
+      </button>
+    );
+  }
 
   return (
     <>

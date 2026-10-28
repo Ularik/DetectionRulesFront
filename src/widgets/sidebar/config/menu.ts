@@ -1,11 +1,12 @@
 import {
-  Building2,
+  Bell,
   CircleUser,
   Crosshair,
   BrainCircuit,
   LayoutDashboard,
   type LucideIcon,
   Plane,
+  ShieldAlert,
   Star,
   Tags,
 } from "lucide-react";
@@ -19,9 +20,9 @@ export type DashboardMenuItem = {
 
 export const dashboardMenuItems: DashboardMenuItem[] = [
   {
-    label: "Организации",
+    label: "Кампании",
     href: routes.organizations,
-    icon: Building2,
+    icon: Bell,
   },
   {
     label: "Правила обнаружения",
@@ -31,7 +32,7 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   {
     label: "Инциденты",
     href: routes.incidents,
-    icon: LayoutDashboard,
+    icon: ShieldAlert,
   },
   {
     label: "Аудит",

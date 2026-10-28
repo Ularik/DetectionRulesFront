@@ -33,7 +33,7 @@ type Props = {
   onSubmit: (payload: OrganizationCreateUpdateType) => void;
 };
 
-// Общая форма создания и редактирования организации
+// Общая форма создания и редактирования кампании
 export function OrganizationForm({
   title,
   backHref,
@@ -84,7 +84,7 @@ export function OrganizationForm({
     };
 
     if (!payload.name) {
-      toast.error("Введите название организации", { position: "top-center" });
+      toast.error("Введите название кампании", { position: "top-center" });
       return;
     }
 
@@ -93,26 +93,26 @@ export function OrganizationForm({
 
   return (
     <div className="space-y-6">
-      <header className="border-b border-gray-200 pb-4">
+      <header className="border-b border-line pb-4">
         <Link
           href={backHref}
-          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-950"
+          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-ink-muted hover:text-brand-light"
         >
           <ArrowLeft className="h-4 w-4" />
           {backLabel}
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">
           {title}
         </h1>
       </header>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm"
+        className="space-y-6 rounded-2xl border border-line bg-white p-6"
       >
         <div className="grid gap-5 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-gray-700">Название</span>
+            <span className="text-sm font-medium text-ink">Название</span>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -123,7 +123,7 @@ export function OrganizationForm({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-ink">
               Псевдонимы
             </span>
             <input
@@ -136,7 +136,7 @@ export function OrganizationForm({
         </div>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-gray-700">Хосты</span>
+          <span className="text-sm font-medium text-ink">Хосты</span>
           <input
             value={hostnames}
             onChange={(event) => setHostnames(event.target.value)}
@@ -147,14 +147,14 @@ export function OrganizationForm({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-gray-700">Агенты</span>
-            <span className="text-xs text-gray-500">
+            <span className="text-sm font-medium text-ink">Агенты</span>
+            <span className="text-xs text-ink-muted">
               {selectedAgentIds.length} выбрано
             </span>
           </div>
 
           {isAgentsLoading ? (
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+            <div className="rounded-2xl border border-line bg-surface-muted px-4 py-3 text-sm text-ink-muted">
               Загрузка агентов...
             </div>
           ) : isAgentsError ? (
@@ -174,15 +174,15 @@ export function OrganizationForm({
                     className={[
                       "flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition",
                       selected
-                        ? "border-[#1E2B6D] bg-[#EEF2FF] text-[#1E2B6D]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300",
+                        ? "border-brand-light bg-brand-soft/40 text-brand"
+                        : "border-line bg-white text-ink hover:border-brand-soft",
                     ].join(" ")}
                   >
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold">
                         {agent.agent_name || agent.agent_id}
                       </div>
-                      <div className="mt-1 truncate text-xs text-gray-500">
+                      <div className="mt-1 truncate text-xs text-ink-muted">
                         {agent.agent_id}
                       </div>
                     </div>
@@ -190,8 +190,8 @@ export function OrganizationForm({
                       className={[
                         "flex h-5 w-5 items-center justify-center rounded-md border",
                         selected
-                          ? "border-[#1E2B6D] bg-[#1E2B6D] text-white"
-                          : "border-gray-300 bg-white text-transparent",
+                          ? "border-brand bg-brand text-white"
+                          : "border-line bg-white text-transparent",
                       ].join(" ")}
                     >
                       <Check className="h-3.5 w-3.5" />
@@ -201,21 +201,21 @@ export function OrganizationForm({
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+            <div className="rounded-2xl border border-line bg-surface-muted px-4 py-3 text-sm text-ink-muted">
               Агентов пока нет.
             </div>
           )}
         </div>
 
-        <label className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+        <label className="flex items-center gap-3 rounded-2xl border border-line bg-surface-muted px-4 py-3">
           <input
             type="checkbox"
             checked={enabled}
             onChange={(event) => setEnabled(event.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-[#1E2B6D] focus:ring-[#1E2B6D]"
+            className="h-4 w-4 rounded border-line text-brand focus:ring-brand"
           />
-          <span className="text-sm font-medium text-gray-700">
-            Организация активна
+          <span className="text-sm font-medium text-ink">
+            Кампания активна
           </span>
         </label>
 

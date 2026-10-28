@@ -12,21 +12,21 @@ export function CreateOrganizationForm() {
 
   return (
     <OrganizationForm
-      title="Создание организации"
+      title="Создание кампании"
       backHref={routes.organizations}
-      backLabel="К списку организаций"
-      submitLabel="Создать организацию"
+      backLabel="К списку кампаний"
+      submitLabel="Создать кампанию"
       pendingLabel="Создание..."
       isPending={createOrganization.isPending}
       blockWhileAgentsLoading
       onSubmit={(payload) =>
         createOrganization.mutate(payload, {
           onSuccess: () => {
-            toast.success("Организация создана", { position: "top-center" });
+            toast.success("Кампания создана", { position: "top-center" });
             router.push(routes.organizations);
           },
           onError: () => {
-            toast.error("Не удалось создать организацию", {
+            toast.error("Не удалось создать кампанию", {
               position: "top-center",
             });
           },

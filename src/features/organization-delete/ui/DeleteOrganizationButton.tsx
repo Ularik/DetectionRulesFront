@@ -17,18 +17,18 @@ export function DeleteOrganizationButton({
 
   const handleDelete = () => {
     const confirmed = window.confirm(
-      `Удалить организацию "${organization.name}"?`,
+      `Удалить кампанию "${organization.name}"?`,
     );
 
     if (!confirmed) return;
 
     deleteOrganization.mutate(organization.organization_id, {
       onSuccess: () => {
-        toast.success("Организация удалена", { position: "top-center" });
+        toast.success("Кампания удалена", { position: "top-center" });
         router.push(routes.organizations);
       },
       onError: () => {
-        toast.error("Не удалось удалить организацию", {
+        toast.error("Не удалось удалить кампанию", {
           position: "top-center",
         });
       },

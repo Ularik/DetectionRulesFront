@@ -1,200 +1,289 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldAlert } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, CircleDashed, ShieldAlert, SquarePlus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
-  INCIDENT_SEVERITY_STYLES,
-  INCIDENT_STATUS_LABELS,
+  INCIDENT_SEVERITY_COLORS,
+  useDailyIncidentCount,
   useIncidents,
+  type IncidentLite,
 } from "@/entities/incident";
 import {
+  IncidentsDateRange,
   IncidentsFilter,
+  formatPeriod,
   type IncidentFilterParams,
 } from "@/features/incidents-filter";
+import { IncidentsActivityChart } from "./IncidentsActivityChart";
+
+const PAGE_SIZE = 10;
+
+// "2026-10-01 06:53:42" по местному времени
+const dateTimeFormatter = new Intl.DateTimeFormat("sv-SE", {
+  dateStyle: "short",
+  timeStyle: "medium",
+});
 
 const formatDate = (value: string | null) => {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return dateTimeFormatter.format(date);
 };
 
+const SEVERITY_RANK: Record<string, number> = { low: 1, medium: 2, high: 3, critical: 4 };
+
+type SortKey =
+  | "incident_id"
+  | "organization_id"
+  | "severity"
+  | "source_ip"
+  | "destination_ip"
+  | "end_time"
+  | "start_time";
+
+const columns: Array<{ key: SortKey; label: string; width: string }> = [
+  { key: "incident_id", label: "ID инцидента", width: "w-[164px]" },
+  { key: "organization_id", label: "Организация", width: "w-[128px]" },
+  { key: "severity", label: "Критичность", width: "w-[128px]" },
+  { key: "source_ip", label: "Source IP", width: "w-[144px]" },
+  { key: "destination_ip", label: "Destination IP", width: "w-[144px]" },
+  { key: "end_time", label: "Время", width: "w-[184px]" },
+  { key: "start_time", label: "Начало инцидента", width: "w-[184px]" },
+];
+
+function getSortValue(incident: IncidentLite, key: SortKey) {
+  if (key === "severity") return SEVERITY_RANK[incident.severity] ?? 0;
+  if (key === "end_time" || key === "start_time") {
+    return incident[key] ? new Date(incident[key]).getTime() : 0;
+  }
+  return incident[key] ?? "";
+}
+
+// Сортировка в пределах загруженной страницы
+function sortIncidents(
+  items: IncidentLite[],
+  sort: { key: SortKey; direction: "asc" | "desc" } | null,
+) {
+  if (!sort) return items;
+  const factor = sort.direction === "asc" ? 1 : -1;
+  return [...items].sort((a, b) => {
+    const left = getSortValue(a, sort.key);
+    const right = getSortValue(b, sort.key);
+    if (typeof left === "number" && typeof right === "number") {
+      return (left - right) * factor;
+    }
+    return String(left).localeCompare(String(right), "ru", { numeric: true }) * factor;
+  });
+}
+
+const cellClass = "px-1.5 py-3 text-sm text-ink";
+
 export function IncidentsTable() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
-  const [size, setSize] = useState(10);
-  const [activeFilters, setActiveFilters] = useState<IncidentFilterParams>({});
+  const [filters, setFilters] = useState<IncidentFilterParams>({});
+  const [isChartVisible, setIsChartVisible] = useState(true);
+  const [sort, setSort] = useState<{ key: SortKey; direction: "asc" | "desc" } | null>(null);
   const { data, isPending, error, refetch } = useIncidents({
     page,
-    size,
-    ...activeFilters,
+    size: PAGE_SIZE,
+    ...filters,
   });
-  const items = data?.items ?? [];
+  const { data: dailyCounts, isPending: isDailyPending } = useDailyIncidentCount({
+    from_time: filters.from_time,
+    to_time: filters.to_time,
+  });
+  const items = sortIncidents(data?.items ?? [], sort);
   const total = data?.total ?? 0;
-  const activeFilterCount = Object.keys(activeFilters).length;
+  const periodLabel = formatPeriod(filters.from_time, filters.to_time);
+
+  const handleFiltersChange = (nextFilters: IncidentFilterParams) => {
+    setFilters(nextFilters);
+    setPage(1);
+  };
+
+  const toggleSort = (key: SortKey) => {
+    setSort((current) =>
+      current?.key === key && current.direction === "desc"
+        ? { key, direction: "asc" }
+        : { key, direction: "desc" },
+    );
+  };
 
   return (
-    <section>
-      <div className="mb-5 border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Инциденты</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Обнаруженные события и результаты их анализа
-        </p>
+    <section className="flex flex-col gap-[18px]">
+      <h1 className="sr-only">Инциденты</h1>
+
+      <IncidentsFilter filters={filters} onChange={handleFiltersChange} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-[13px] text-ink">
+          <CircleDashed className="size-6 text-[#0088ff]" />
+          {periodLabel}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsChartVisible((visible) => !visible)}
+            aria-pressed={!isChartVisible}
+            className="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink transition-colors hover:bg-surface-muted"
+          >
+            {isChartVisible ? <Eye className="size-6" /> : <EyeOff className="size-6" />}
+            {isChartVisible ? "Скрыть диаграмму" : "Показать диаграмму"}
+          </button>
+          <IncidentsDateRange filters={filters} onChange={handleFiltersChange} />
+        </div>
       </div>
 
-      <IncidentsFilter
-        isPending={isPending}
-        activeFilterCount={activeFilterCount}
-        onApply={(filters) => {
-          setActiveFilters(filters);
-          setPage(1);
-        }}
-        onClear={() => {
-          setActiveFilters({});
-          setPage(1);
-        }}
-      />
+      {isChartVisible && !error && (
+        <IncidentsActivityChart
+          dailyCounts={dailyCounts ?? []}
+          periodLabel={periodLabel}
+          isPending={isDailyPending}
+        />
+      )}
 
       {error ? (
-        <div className="space-y-3 py-16 text-center">
-          <p className="font-semibold text-gray-900">
-            Не удалось загрузить инциденты
-          </p>
+        <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
+          <p className="font-semibold text-ink">Не удалось загрузить инциденты</p>
           <Button variant="outline" onClick={() => refetch()}>
             Повторить попытку
           </Button>
         </div>
       ) : (
-        // ТАБЛИЦА ИНЦИДЕНТОВ
-        <>
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1050px] text-left text-sm text-gray-600">
-                <thead className="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-                  <tr>
-                    <th className="px-4 py-3">ID Инцидента</th>
-                    <th className="px-4 py-3">Начало</th>
-                    <th className="px-4 py-3">Критичность</th>
-                    <th className="px-4 py-3">Risk score</th>
-                    <th className="px-4 py-3">Статус</th>
-                    <th className="px-4 py-3">Тип атаки</th>
-                    <th className="px-4 py-3">Источник</th>
-                    <th className="px-4 py-3">Назначение</th>
-                    <th className="px-4 py-3">События</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {isPending ? (
-                    Array.from({ length: size }).map((_, rowIndex) => (
-                      <tr key={rowIndex} className="animate-pulse">
-                        {Array.from({ length: 9 }).map((__, cellIndex) => (
-                          <td className="px-4 py-4" key={cellIndex}>
-                            <div className="h-4 w-20 rounded bg-gray-200" />
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  ) : items.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={9}
-                        className="px-4 py-14 text-center text-gray-400"
+        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1180px] text-left">
+              <thead className="border-b border-line-muted bg-surface-muted">
+                <tr>
+                  <th className="w-10 py-3.5 pr-1.5 pl-4">
+                    <span className="sr-only">Открыть</span>
+                  </th>
+                  {columns.map((column) => {
+                    const isSorted = sort?.key === column.key;
+                    return (
+                      <th
+                        key={column.key}
+                        className={cn("px-1.5 py-3.5", column.width)}
+                        aria-sort={
+                          isSorted
+                            ? sort.direction === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : undefined
+                        }
                       >
-                        <ShieldAlert className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-                        Инциденты не найдены
-                      </td>
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(column.key)}
+                          className="flex items-center gap-1.5 text-[13px] font-semibold whitespace-nowrap text-ink"
+                        >
+                          {column.label}
+                          <ChevronDown
+                            className={cn(
+                              "size-3.5 transition-transform",
+                              isSorted ? "text-brand-light" : "text-ink-muted",
+                              isSorted && sort.direction === "asc" && "rotate-180",
+                            )}
+                          />
+                        </button>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line-muted">
+                {isPending ? (
+                  Array.from({ length: PAGE_SIZE }).map((_, rowIndex) => (
+                    <tr key={rowIndex} className="animate-pulse">
+                      {Array.from({ length: columns.length + 1 }).map((__, cellIndex) => (
+                        <td className="px-4 py-4" key={cellIndex}>
+                          <div className="h-4 w-20 rounded bg-line-muted" />
+                        </td>
+                      ))}
                     </tr>
-                  ) : (
-                    items.map((incident) => (
+                  ))
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={columns.length + 1}
+                      className="px-4 py-14 text-center text-sm text-ink-muted"
+                    >
+                      <ShieldAlert className="mx-auto mb-2 h-8 w-8 text-line" />
+                      Инциденты не найдены
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((incident) => {
+                    const severity = INCIDENT_SEVERITY_COLORS[incident.severity];
+                    return (
                       <tr
                         key={incident.incident_id}
-                        className="transition-colors hover:bg-gray-50"
+                        onClick={() => router.push(routes.incident(incident.incident_id))}
+                        className="cursor-pointer transition-colors hover:bg-surface-muted"
                       >
-                        <td className="max-w-[220px] px-4 py-4">
+                        <td className="py-3 pr-1.5 pl-4">
                           <Link
                             href={routes.incident(incident.incident_id)}
-                            className="truncate font-mono text-xs font-semibold text-gray-900"
-                            title={`Открыть инцидент ${incident.incident_id}`}
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Открыть инцидент ${incident.incident_id}`}
+                            className="flex justify-center text-[#595555] hover:text-brand-light"
                           >
-                            {incident.incident_id}
+                            <SquarePlus className="size-[18px]" />
                           </Link>
-                          <div className="mt-1 truncate text-xs text-gray-400">
-                            {incident.organization_id}
-                          </div>
                         </td>
-                        <td className="whitespace-nowrap px-4 py-4 text-gray-500">
-                          {formatDate(incident.start_time)}
+                        <td className={cn(cellClass, "max-w-[164px] truncate")} title={incident.incident_id}>
+                          {incident.incident_id}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-4">
-                          <span
-                            className={`rounded-md border px-2 py-1 text-xs font-semibold ${
-                              INCIDENT_SEVERITY_STYLES[incident.severity] ??
-                              "border-gray-200 bg-gray-50 text-gray-700"
-                            }`}
-                          >
+                        <td className={cn(cellClass, "max-w-[128px] truncate")} title={incident.organization_id}>
+                          {incident.organization_id || "—"}
+                        </td>
+                        <td className={cellClass}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={cn("size-2 shrink-0 rounded-full bg-ink-muted", severity?.dot)}
+                            />
                             {incident.severity}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-700">
-                          {incident.risk_score}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-4">
-                          {INCIDENT_STATUS_LABELS[incident.analyst_status]}
-                        </td>
-                        <td
-                          className="max-w-[180px] truncate px-4 py-4"
-                          title={incident.attack_type}
-                        >
-                          {incident.attack_type || "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-4">
+                        <td className={cn(cellClass, "whitespace-nowrap")}>
                           {incident.source_ip ?? incident.source_user ?? "—"}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-4">
-                          {incident.destination_ip ??
-                            incident.destination_host ??
-                            "—"}
+                        <td className={cn(cellClass, "whitespace-nowrap")}>
+                          {incident.destination_ip ?? incident.destination_host ?? "—"}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-4">
-                          <span className="font-medium text-gray-700">
-                            {incident.event_count}
-                          </span>
-                          <span className="ml-1 text-xs text-gray-400">
-                            ({incident.scenario_count} сценариев)
-                          </span>
+                        <td className={cn(cellClass, "whitespace-nowrap")}>
+                          {formatDate(incident.end_time)}
+                        </td>
+                        <td className={cn(cellClass, "whitespace-nowrap pr-4")}>
+                          {formatDate(incident.start_time)}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
 
-          <div className="mt-4">
-            <PaginationControl
-              page={page}
-              limit={size}
-              total={total}
-              onPageChange={setPage}
-              onLimitChange={(newSize) => {
-                setSize(newSize);
-                setPage(1);
-              }}
-              isLoading={isPending}
-            />
-          </div>
-        </>
+          <PaginationControl
+            page={page}
+            limit={PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+            isLoading={isPending}
+            itemsLabel="инцидентов"
+            className="bg-surface-muted px-4 py-3"
+          />
+        </div>
       )}
     </section>
   );

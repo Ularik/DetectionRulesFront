@@ -27,7 +27,7 @@
 | Формы           | react-hook-form                                                                    |
 | Уведомления     | sonner                                                                             |
 | Утилиты стилей  | `clsx` + `tailwind-merge` (`cn`), `class-variance-authority`                        |
-| Шрифты          | `next/font/google`: Montserrat (latin + cyrillic), Geist                           |
+| Шрифты          | `next/font/google`: Inter (latin + cyrillic), Geist                               |
 | Линт            | ESLint 9 (flat config, `eslint-config-next`), Steiger (правила FSD)                |
 | Тесты           | не настроены                                                                       |
 
@@ -457,7 +457,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 4. **`features/ioc-edit`** содержит только хук `useUpdateIoc` — UI редактирования IoC нет.
 5. **Env:** `NEXT_BACK_URL` не задана, а `NEXT_API_URL`, `NEXT_IMAGE_URL` и `NEXT_PUBLIC_BACK_API_URL` не используются (раздел 3).
 6. **Разные схемы пагинации** (`limit/offset` и `page/size`). Общие типы ответов можно вынести в `shared/api/types.ts`.
-7. **Цвета захардкожены** (`#1E2B6D`, `#F7F8F4` и др.) в классах Tailwind. Перенести в CSS-переменные темы в `globals.css`.
+7. **Цвета захардкожены** (`#1E2B6D` и др.) в классах Tailwind на страницах, ещё не переведённых на макет CERT-KG SIEM. Палитра макета уже лежит в `@theme` в `globals.css` (`bg-brand`, `text-ink`, `border-line`…) — используйте её.
 8. **Защита маршрутов только на клиенте** (раздел 6). Для server-side проверок — `proxy.ts`.
 9. **Тестов нет.**
 

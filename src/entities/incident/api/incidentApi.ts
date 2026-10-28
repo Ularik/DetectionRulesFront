@@ -1,6 +1,8 @@
 import { axiosApi } from "@/shared/api";
 import type {
   ANALYST_STATUS,
+  DailyIncidentCount,
+  DailyIncidentCountParams,
   IncidentApiResponse,
   IncidentParams,
   IncidentSchema,
@@ -40,6 +42,14 @@ export async function fetchIncidentEvents({
   const res = await axiosApi.get<IncidentEventResponse>(
     `/incidents/${inc_id}/events`,
     { params: { page, size } },
+  );
+  return res.data;
+}
+
+export async function fetchDailyIncidentCount(params: DailyIncidentCountParams) {
+  const res = await axiosApi.get<DailyIncidentCount[]>(
+    "/incidents/daily_count_incidents",
+    { params },
   );
   return res.data;
 }

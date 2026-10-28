@@ -49,7 +49,7 @@ export async function fetchSequenceOptions() {
 // CorrelationGroupByFieldsType — похоже на опечатку, нужно сверить с backend
 export async function fetchGroupByFields() {
   const res = await axiosApi.get<CorrelationGroupByFieldsType[]>(
-    "/correlation-rules/sequence",
+    "/correlation-rules/group-by-fields",
   );
   return res.data;
 }

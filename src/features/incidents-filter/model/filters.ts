@@ -1,97 +1,54 @@
 import {
   ANALYST_STATUSES,
+  INCIDENT_STATUS_LABELS,
   isAnalystStatus,
-  type ANALYST_STATUS,
   type IncidentParams,
 } from "@/entities/incident";
 
 export type IncidentFilterParams = Omit<IncidentParams, "page" | "size">;
 export type FilterKey = keyof IncidentFilterParams;
-export type FilterValues = Omit<Record<FilterKey, string>, "analyst_status"> & {
-  analyst_status: ANALYST_STATUS | "";
-};
 
-export const emptyFilterValues: FilterValues = {
-  organization_id: "",
-  from_time: "",
-  to_time: "",
-  source_ip: "",
-  destination_ip: "",
-  host: "",
-  user: "",
-  attack_type: "",
-  severity: "",
-  analyst_status: "",
-  decision: "",
-  action: "",
-  priority: "",
-  suppressed: "",
-  mitre_id: "",
-  campaign_id: "",
-  incident_id: "",
-  risk_score_min: "",
-  risk_score_max: "",
-  detection_category: "",
-  source_id: "",
-  text: "",
-};
-
-const textFilterKeys = [
-  "organization_id",
-  "source_ip",
-  "destination_ip",
-  "host",
-  "user",
-  "attack_type",
-  "severity",
-  "decision",
-  "action",
-  "mitre_id",
-  "campaign_id",
-  "incident_id",
-  "detection_category",
-  "source_id",
-  "text",
-] as const satisfies readonly FilterKey[];
+/** Поля, которые добавляются через меню «Добавить фильтр» (поиск и период задаются отдельно) */
+export type ChipFilterKey = Exclude<FilterKey, "text" | "from_time" | "to_time">;
 
 export type FilterFieldConfig = {
-  name: FilterKey;
+  name: ChipFilterKey;
   label: string;
-  type?: "text" | "number" | "datetime-local";
+  type?: "text" | "number";
   options?: Array<{ value: string; label: string }>;
+  /** Цвет значения в чипе активного фильтра */
+  valueClassName?: string;
 };
 
-export const advancedFilters: FilterFieldConfig[] = [
+// Порядок первых полей — как в выпадающем списке макета
+export const filterFields: FilterFieldConfig[] = [
+  { name: "destination_ip", label: "Destination IP" },
+  { name: "source_ip", label: "Source IP" },
+  { name: "host", label: "Host" },
+  { name: "user", label: "User" },
   { name: "incident_id", label: "ID инцидента" },
-  { name: "organization_id", label: "Организация" },
-  { name: "from_time", label: "Начало периода", type: "datetime-local" },
-  { name: "to_time", label: "Конец периода", type: "datetime-local" },
-  { name: "source_ip", label: "IP источника" },
-  { name: "destination_ip", label: "IP назначения" },
-  { name: "host", label: "Хост" },
-  { name: "user", label: "Пользователь" },
   { name: "attack_type", label: "Тип атаки" },
+  { name: "mitre_id", label: "Mitre ID" },
+  {
+    name: "analyst_status",
+    label: "Статус",
+    options: ANALYST_STATUSES.map((status) => ({
+      value: status,
+      label: INCIDENT_STATUS_LABELS[status],
+    })),
+  },
+  { name: "source_id", label: "Источник", valueClassName: "text-[#ae46d8]" },
   {
     name: "severity",
     label: "Критичность",
     options: [
-      { value: "critical", label: "Критическая" },
-      { value: "high", label: "Высокая" },
-      { value: "medium", label: "Средняя" },
-      { value: "low", label: "Низкая" },
+      { value: "critical", label: "Critical" },
+      { value: "high", label: "High" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
     ],
   },
-  {
-    name: "analyst_status",
-    label: "Статус аналитика",
-    options: [
-      { value: ANALYST_STATUSES[0], label: "Новый" },
-      { value: ANALYST_STATUSES[1], label: "На проверке" },
-      { value: ANALYST_STATUSES[2], label: "Подтвержден" },
-      { value: ANALYST_STATUSES[3], label: "Ложное срабатывание" },
-      { value: ANALYST_STATUSES[4], label: "Закрыт" },
-    ],
-  },
+  { name: "organization_id", label: "Организация" },
   { name: "decision", label: "Решение" },
   {
     name: "action",
@@ -111,46 +68,90 @@ export const advancedFilters: FilterFieldConfig[] = [
       { value: "false", label: "Не подавлен" },
     ],
   },
-  { name: "mitre_id", label: "MITRE ID" },
   { name: "campaign_id", label: "ID кампании" },
   { name: "risk_score_min", label: "Risk score от", type: "number" },
   { name: "risk_score_max", label: "Risk score до", type: "number" },
   { name: "detection_category", label: "Категория детекции" },
-  { name: "source_id", label: "ID источника" },
 ];
 
-// Превращает строковые значения формы в типизированные параметры запроса
-export function buildIncidentFilters(
-  filterValues: FilterValues,
+export function getFilterField(name: ChipFilterKey) {
+  return filterFields.find((field) => field.name === name);
+}
+
+// Превращает строку из поля ввода в типизированные параметры запроса; null — значение некорректно
+export function applyFilterValue(
+  filters: IncidentFilterParams,
+  key: ChipFilterKey,
+  rawValue: string,
+): IncidentFilterParams | null {
+  const value = rawValue.trim();
+  if (!value) return null;
+
+  switch (key) {
+    case "analyst_status":
+      return isAnalystStatus(value) ? { ...filters, analyst_status: value } : null;
+    case "suppressed":
+      return { ...filters, suppressed: value === "true" };
+    case "priority":
+    case "risk_score_min":
+    case "risk_score_max": {
+      const number = Number(value);
+      return Number.isFinite(number) ? { ...filters, [key]: number } : null;
+    }
+    default:
+      return { ...filters, [key]: value };
+  }
+}
+
+export function removeFilter(
+  filters: IncidentFilterParams,
+  key: FilterKey,
 ): IncidentFilterParams {
-  const nextFilters: IncidentFilterParams = {};
+  const next = { ...filters };
+  delete next[key];
+  return next;
+}
 
-  for (const key of textFilterKeys) {
-    const value = filterValues[key].trim();
-    if (value) nextFilters[key] = value;
-  }
+/** Применённые фильтры, которые показываются чипами */
+export function getActiveChips(filters: IncidentFilterParams) {
+  return filterFields.flatMap((field) => {
+    const value = filters[field.name];
+    if (value === undefined || value === "") return [];
+    const option = field.options?.find((item) => item.value === String(value));
+    return [{ field, value: option?.label ?? String(value) }];
+  });
+}
 
-  if (isAnalystStatus(filterValues.analyst_status)) {
-    nextFilters.analyst_status = filterValues.analyst_status;
-  }
+// "2024-09-01" → ISO начала или конца дня по местному времени
+export function dateInputToIso(value: string, edge: "start" | "end") {
+  if (!value) return undefined;
+  const date = new Date(`${value}T${edge === "start" ? "00:00:00" : "23:59:59.999"}`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
 
-  for (const key of ["from_time", "to_time"] as const) {
-    const value = filterValues[key];
-    if (!value) continue;
-    const date = new Date(value);
-    if (!Number.isNaN(date.getTime())) nextFilters[key] = date.toISOString();
-  }
+// ISO → "2024-09-01" для <input type="date">
+export function isoToDateInput(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
-  for (const key of ["priority", "risk_score_min", "risk_score_max"] as const) {
-    const value = filterValues[key];
-    if (value === "") continue;
-    const number = Number(value);
-    if (Number.isFinite(number)) nextFilters[key] = number;
-  }
+const monthFormatter = new Intl.DateTimeFormat("ru-RU", {
+  month: "long",
+  year: "numeric",
+});
 
-  if (filterValues.suppressed !== "") {
-    nextFilters.suppressed = filterValues.suppressed === "true";
-  }
+function formatMonth(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "…";
+  const label = monthFormatter.format(date).replace(/\s*г\.$/, "");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
-  return nextFilters;
+/** «Сентябрь 2024 — Сентябрь 2026» */
+export function formatPeriod(from?: string, to?: string) {
+  if (!from && !to) return "За всё время";
+  return `${from ? formatMonth(from) : "…"} — ${to ? formatMonth(to) : "сейчас"}`;
 }

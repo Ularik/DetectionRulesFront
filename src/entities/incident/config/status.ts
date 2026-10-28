@@ -26,3 +26,11 @@ export const INCIDENT_SEVERITY_STYLES: Record<string, string> = {
   medium: "border-amber-200 bg-amber-50 text-amber-700",
   low: "border-sky-200 bg-sky-50 text-sky-700",
 };
+
+// Цвет точки и текста критичности (макет CERT-KG SIEM)
+export const INCIDENT_SEVERITY_COLORS: Record<string, { dot: string; text: string }> = {
+  critical: { dot: "bg-[#b50000]", text: "text-[#8a0404]" },
+  high: { dot: "bg-[#ff8024]", text: "text-[#c25400]" },
+  medium: { dot: "bg-[#0965c5]", text: "text-[#0965c5]" },
+  low: { dot: "bg-[#0ac053]", text: "text-[#078a3b]" },
+};

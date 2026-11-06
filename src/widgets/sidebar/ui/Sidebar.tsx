@@ -42,33 +42,47 @@ export const Sidebar = () => {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-[#0a4f8c] bg-linear-to-b from-brand to-brand-light px-5 pt-5 pb-6 lg:flex">
-      <Link href={routes.home} className="flex items-center">
-        <Image
-          src={certKgLogo}
-          alt="CERT-KG"
-          width={118}
-          height={132}
-          priority
-          className="h-[132px] w-[118px] shrink-0"
-        />
-        <div className="flex flex-col gap-0.5 whitespace-nowrap text-[#ccdae7]">
-          <span className="text-lg font-bold">CERT-KG</span>
-          <span className="text-base">SIEM</span>
-        </div>
-      </Link>
+    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 overflow-hidden border-r border-[#0a4f8c] bg-brand bg-[url(/videos/sidebar-poster.png)] bg-cover bg-center lg:block">
+      {/* Живой фон по макету. Статичный кадр (фон aside) виден до загрузки видео и при prefers-reduced-motion. */}
+      <video
+        src="/videos/siem_wave_no_sidebar.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 size-full object-cover motion-reduce:hidden"
+      />
 
-      <div className="h-px w-full shrink-0 bg-white/20" />
-
-      <nav className="flex flex-col gap-2 py-4">
-        {dashboardMenuItems.map((item) => (
-          <MenuLink key={item.href} item={item} pathname={pathname} />
-        ))}
-      </nav>
-
-      <nav className="mt-auto flex flex-col">
-        <MenuLink item={administrationMenuItem} pathname={pathname} />
-      </nav>
+      <div className="relative flex h-full flex-col gap-4 overflow-y-auto px-5 pt-5 pb-6">
+        <Link href={routes.home} className="flex items-center">
+          <Image
+            src={certKgLogo}
+            alt="CERT-KG"
+            width={118}
+            height={132}
+            priority
+            className="h-[132px] w-[118px] shrink-0"
+          />
+          <div className="flex flex-col gap-0.5 whitespace-nowrap text-[#ccdae7]">
+            <span className="text-lg font-bold">CERT-KG</span>
+            <span className="text-base">SIEM</span>
+          </div>
+        </Link>
+  
+        <div className="h-px w-full shrink-0 bg-white/20" />
+  
+        <nav className="flex flex-col gap-2 py-4">
+          {dashboardMenuItems.map((item) => (
+            <MenuLink key={item.href} item={item} pathname={pathname} />
+          ))}
+        </nav>
+  
+        <nav className="mt-auto flex flex-col">
+          <MenuLink item={administrationMenuItem} pathname={pathname} />
+        </nav>
+      </div>
     </aside>
   );
 };

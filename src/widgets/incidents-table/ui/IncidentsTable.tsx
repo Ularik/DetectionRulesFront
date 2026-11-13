@@ -85,6 +85,13 @@ function sortIncidents(
 
 const cellClass = "px-1.5 py-3 text-sm text-ink";
 
+// Сначала таблица всех инцидентов этого source_ip, из неё — детальная карточка.
+// Без source_ip группировать нечего, поэтому сразу детальная карточка
+const getIncidentHref = (incident: IncidentLite) =>
+  incident.source_ip
+    ? routes.sourceIpIncidents(incident.source_ip)
+    : routes.incident(incident.incident_id);
+
 export function IncidentsTable() {
   const router = useRouter();
   const [page, setPage] = useState(1);
@@ -227,12 +234,12 @@ export function IncidentsTable() {
                     return (
                       <tr
                         key={incident.incident_id}
-                        onClick={() => router.push(routes.incident(incident.incident_id))}
+                        onClick={() => router.push(getIncidentHref(incident))}
                         className="cursor-pointer transition-colors hover:bg-surface-muted"
                       >
                         <td className="py-3 pr-1.5 pl-4">
                           <Link
-                            href={routes.incident(incident.incident_id)}
+                            href={getIncidentHref(incident)}
                             onClick={(event) => event.stopPropagation()}
                             aria-label={`Открыть инцидент ${incident.incident_id}`}
                             className="flex justify-center text-[#595555] hover:text-brand-light"

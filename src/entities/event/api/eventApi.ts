@@ -21,6 +21,6 @@ export async function fetchEvent({
   index_name: string;
   event_id: string;
 }): Promise<WazuhEvent> {
-  const res = await axiosApi.get<WazuhEvent>(`/events/${index_name}/${event_id}`);
+  const res = await axiosApi.get<WazuhEvent>(`/events/${encodeURIComponent(index_name)}/${encodeURIComponent(event_id)}`);
   return res.data;
 }

@@ -1,7 +1,7 @@
 import {
   Bell,
   Crosshair,
-  FileCode,
+  Database,
   House,
   type LucideIcon,
   Radar,
@@ -35,6 +35,11 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     icon: Bell,
   },
   {
+    label: "Raw data",
+    href: routes.events,
+    icon: Database,
+  },
+  {
     label: "Инциденты",
     href: routes.incidents,
     icon: ShieldAlert,
@@ -53,11 +58,6 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     label: "MITRE ATT&CK",
     href: routes.mitre,
     icon: Crosshair,
-  },
-  {
-    label: "Источники",
-    href: routes.events,
-    icon: FileCode,
   },
 ];
 

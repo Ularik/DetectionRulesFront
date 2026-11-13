@@ -21,6 +21,8 @@ export const routes = {
   incidents: "/admin/incidents",
   incident: (incidentId: string) =>
     `/admin/incidents/${encodeURIComponent(incidentId)}`,
+  sourceIpIncidents: (sourceIp: string) =>
+    `/admin/incidents/ip/${encodeURIComponent(sourceIp)}`,
   audit: "/admin/audit",
   auditEntry: (auditId: string) =>
     `/admin/audit/${encodeURIComponent(auditId)}`,

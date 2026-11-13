@@ -172,7 +172,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ correlation-rules/  correlation-rule-detail/  correlation-rule-create/
    │  ├─ suppression-rules/  suppression-rule-detail/  suppression-rule-create/  suppression-rule-edit/
    │  ├─ ioc/  ioc-detail/  ioc-create/
-   │  ├─ incidents/  incident-detail/  scenarios/  scenario-detail/  events/  event-detail/
+   │  ├─ incidents/  incident-detail/  incident-modal/  source-ip-incidents/  source-ip-incidents-modal/
+│  ├─ scenarios/  scenario-detail/  events/  event-detail/
    │  └─ audit/  audit-detail/  mitre/
    ├─ widgets/
    │  ├─ sidebar/  section-tabs/
@@ -197,7 +198,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    └─ shared/
       ├─ api/                    # axiosApi + interceptor 401
       ├─ config/                 # env (apiURL), routes, roleDashboardPaths, UserRole, theme
-      ├─ ui/                     # shadcn, pagination, form (ArrayField, inputClass…), detail-fields, table-styles
+      ├─ ui/                     # shadcn, pagination, form (ArrayField, inputClass…), detail-fields, table-styles,
+      │                          # filter-bar (поиск, «Добавить фильтр», чипы — для инцидентов и сценариев)
       └─ lib/                    # utils (cn), errors (getErrorMessage)
 ```
 
@@ -292,7 +294,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
 | `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
 | `mitre-technique` | `useMitreTechniques` (`mitreKeys`)                               | `MitreTechnique`, `MitreSyncResponse`, `MitreType`            | нет (массив)     |
-| `attack-type`     | `useAttackTypes` (`attackTypeKeys`)                              | `AttackTypes`                                                 | —                |
+| `attack-type`     | `useAttackTypes`, `useAttackGroups` (`attackTypeKeys`)           | `AttackTypes`, `AttackGroupsResponseSchema`, `HuntingIpIncidentSchema` | `page/size`; total = `summary.incident_count` |
 
 Связи между сущностями оформлены через `@x`:
 `audit → rule, user`; `scenario → incident, event, ioc, mitre-technique`; `incident → event`.
@@ -346,6 +348,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | GET    | `/mitre/mitre`                                 | техники MITRE ATT&CK                      | entities/mitre-technique |
 | POST   | `/mitre/sync-mitre`                            | синхронизация MITRE                       | features/mitre-sync   |
 | GET    | `/attack-types/`                               | справочник типов атак                     | entities/attack-type  |
+| GET    | `/attack-types/attach-group`                   | инциденты одного `source_ip` + группировка по типам атак (page/size) | entities/attack-type  |
 
 > Все пути в `entities/*/api` начинаются с `/`.
 >
@@ -379,11 +382,12 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/login`                                     | `views/login`                  | |
 | `/auth`                                      | `views/register`               | регистрация |
 | `/admin`                                    | `views/home`                   | «Главная», заглушка |
-| `/admin/incidents`, `/[id]`                  | `views/incident*`              | «Инциденты» |
-| `/admin/scenarios`, `/[scenarioId]`          | `views/scenario*`              | «Сценарии» |
+| `/admin/incidents`, `/[id]`                  | `views/incident*`              | «Инциденты»; клик по строке списка → `/ip/[sourceIp]` (или сразу `/[id]`, если source_ip нет) |
+| `/admin/incidents/ip/[sourceIp]`             | `views/source-ip-incidents*`   | все инциденты source_ip; из списка открывается модалкой (`@modal/(.)incidents/ip`), строка → `/[id]`; параметр декодируется в route-файле |
+| `/admin/scenarios`, `/[scenarioId]`          | `views/scenario*`              | «Сценарии»: строка списка раскрывается (карточки сценария + связанные инциденты из `/scenarios/{id}`); клик по связанному инциденту → `/admin/incidents/ip/[sourceIp]` |
 | `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | «Threat Intelligence» |
 | `/admin/mitre`                               | `views/mitre`                  | «MITRE ATT&CK» |
-| `/admin/events`, `/[index_name]/[event_id]`  | `views/event*`                 | «Источники»; параметры декодируются в route-файле |
+| `/admin/events`, `/[index_name]/[event_id]`  | `views/event*`, `views/event-modal` | «Raw data»; карточка события из списка открывается модалкой (`@modal/(.)events/...`); параметры декодируются в route-файле |
 | `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Кампании» (на backend — organizations); id декодируется в route-файле |
 | `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | «Администрирование» → правила обнаружения |
 | `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | «Администрирование» → правила корреляции; `/[id]` — форма редактирования |
@@ -464,6 +468,9 @@ Steiger знает только стандартное имя слоя `pages`, 
 8. **Защита маршрутов только на клиенте** (раздел 6). Для server-side проверок — `proxy.ts`.
 9. **Тестов нет.**
 10. **«Главная» — заглушка**, макета для неё пока нет.
+11. **«Источники» из макета** не реализованы: отдельного API источников нет (есть только `source_context` в событиях), пункт убран из меню.
+12. **Kibana и статус в карточке события:** в макете есть «Открыть в Kibana» и «Статус», но URL Kibana не настроен, а статуса у событий на backend нет — в UI их нет.
+13. **Период в «Сценариях»:** в макете есть выбор дат, но `GET /scenarios/` не принимает `from_time/to_time` — в UI его нет, пока backend не добавит параметры.
 
 ---
 

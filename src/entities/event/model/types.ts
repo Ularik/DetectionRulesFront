@@ -9,6 +9,37 @@ export interface WazuhAgent {
 
 export interface WazuhDecoder {
   name?: string | null;
+  parent?: string | null;
+}
+
+// Поля, которые декодер Wazuh извлёк из журнала (набор зависит от декодера)
+export interface WazuhEventData {
+  srcip?: string | null;
+  dstip?: string | null;
+  srcport?: string | number | null;
+  dstport?: string | number | null;
+  protocol?: string | null;
+  srcuser?: string | null;
+  dstuser?: string | null;
+  [key: string]: unknown;
+}
+
+export interface EcsEndpoint {
+  ip?: string | null;
+  port?: string | number | null;
+}
+
+// Источник данных, к которому backend привязал событие
+export interface EventSourceContext {
+  source_id?: string | null;
+  source_type?: string | null;
+  source_name?: string | null;
+  organization_id?: string | null;
+}
+
+export interface EventRef {
+  index?: string | null;
+  id?: string | null;
 }
 
 export interface WazuhEcs {
@@ -79,6 +110,13 @@ export interface WazuhEvent {
 
   predecoder?: WazuhPredecoder | null;
   input?: WazuhInput | null;
+
+  data?: WazuhEventData | null;
+  source?: EcsEndpoint | null;
+  destination?: EcsEndpoint | null;
+  source_context?: EventSourceContext | null;
+  event_ref?: EventRef | null;
+  links?: { detail?: string | null } | null;
 
   _elastic_index?: string | null;
   _elastic_id?: string | null;

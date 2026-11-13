@@ -11,10 +11,13 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "./dialog";
 export function RouteModal({
   title,
   className,
+  closeClassName,
   children,
 }: {
   title: string;
   className?: string;
+  /** Позиция крестика, если у содержимого своя шапка (по умолчанию top-6 right-5) */
+  closeClassName?: string;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -31,11 +34,15 @@ export function RouteModal({
         <DialogTitle className="sr-only">{title}</DialogTitle>
         {children}
         {/* Крестик по макету CERT-KG SIEM: тёмно-синий квадрат 20px */}
-        <DialogClose className="absolute top-6 right-5 flex size-5 items-center justify-center rounded-[5px] border border-white bg-brand text-white hover:bg-brand-light focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:outline-hidden">
+        <DialogClose
+          className={cn(
+            "absolute top-6 right-5 flex size-5 items-center justify-center rounded-[5px] border border-white bg-brand text-white hover:bg-brand-light focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:outline-hidden",
+            closeClassName,
+          )}
+        >
           <XIcon className="size-3.5" strokeWidth={2.5} />
           <span className="sr-only">Закрыть</span>
         </DialogClose>
-
       </DialogContent>
     </Dialog>
   );

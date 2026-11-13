@@ -1,175 +1,300 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
-
+import { ArrowLeft, Copy, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
-import { useEvent, type WazuhEvent } from "@/entities/event";
+import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
+import {
+  getEventDestinationIp,
+  getEventSourceIp,
+  getEventTimestamp,
+  useEvent,
+  type WazuhEvent,
+} from "@/entities/event";
 
-interface EventDetailProps {
-  indexName: string;
-  eventId: string;
-}
+// Вёрстка по фрейму «modal» раздела Raw data макета CERT-KG SIEM (Figma 536:5720)
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
+type Value = string | number | boolean | null | undefined;
+
+const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return null;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("ru-RU", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return Number.isNaN(date.getTime()) ? value : dateTimeFormatter.format(date);
 }
 
-function display(value: string | number | boolean | null | undefined) {
-  if (value === null || value === undefined || value === "") return "—";
-  return value;
+function isEmpty(value: Value | Value[]) {
+  if (Array.isArray(value)) return value.length === 0;
+  return value === null || value === undefined || value === "";
 }
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+// Строка «ключ — значение» с колонкой ключа 220px, как в макете
+function Row({ label, value, mono }: { label: string; value: Value | Value[]; mono?: boolean }) {
   return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 break-words text-sm font-medium text-gray-900">
-        {value ?? "—"}
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+      <dt className="shrink-0 text-xs font-medium text-[#6b7280] sm:w-[220px]">{label}</dt>
+      <dd
+        className={cn(
+          "min-w-0 flex-1 text-[13px] break-words text-[#111827]",
+          mono && "font-mono",
+        )}
+      >
+        {isEmpty(value) ? (
+          "—"
+        ) : Array.isArray(value) ? (
+          value.map((item, index) => <div key={index}>{String(item)}</div>)
+        ) : (
+          String(value)
+        )}
       </dd>
     </div>
   );
 }
 
-function EventContent({ event }: { event: WazuhEvent }) {
+function Card({
+  title,
+  children,
+  muted,
+}: {
+  title: string;
+  children: ReactNode;
+  muted?: boolean;
+}) {
   return (
-    <div className="space-y-6">
-      <header className="border-b border-gray-200 pb-5">
-        <Link
-          href={routes.events}
-          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-950"
-        >
-          <ArrowLeft className="h-4 w-4" />К списку событий
-        </Link>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="mb-2 text-sm text-gray-500">Детали события</p>
-            <h1 className="break-all font-mono text-xl font-bold text-gray-950">
-              {event.id ?? event._elastic_id ?? "Неизвестный ID"}
-            </h1>
-          </div>
-          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700">
-            {event._elastic_index ?? "—"}
-          </div>
-        </div>
-      </header>
+    <section
+      className={cn(
+        "flex flex-col gap-3 rounded-[10px] border border-[#e5e7eb] p-4",
+        muted ? "bg-[#f8fafc]" : "bg-white",
+      )}
+    >
+      <h2 className="rounded-[10px] bg-[#f2f9ff] text-sm font-semibold text-[#111827]">{title}</h2>
+      <dl className="flex flex-col gap-2.5">{children}</dl>
+    </section>
+  );
+}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium text-gray-500">Время</p>
-          <p className="mt-1 text-lg font-semibold text-gray-900">
-            {formatDate(event["@timestamp"] ?? event.timestamp)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium text-gray-500">Агент</p>
-          <p className="mt-1 text-lg font-semibold text-gray-900">
-            {display(event.agent?.name ?? event.agent?.id ?? "—")}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium text-gray-500">Хост</p>
-          <p className="mt-1 text-lg font-semibold text-gray-900">
-            {display(event.host?.name ?? event.host?.hostname ?? "—")}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium text-gray-500">Декодер</p>
-          <p className="mt-1 text-lg font-semibold text-gray-900">
-            {display(event.decoder?.name ?? "—")}
-          </p>
-        </div>
-      </div>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-gray-900">
-          Основные данные
-        </h2>
-        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
-          <Field
-            label="ID события"
-            value={display(event.id ?? event._elastic_id)}
-          />
-          <Field label="Elastic index" value={display(event._elastic_index)} />
-          <Field label="Источник журнала" value={display(event.location)} />
-          <Field
-            label="Программа"
-            value={display(event.predecoder?.program_name)}
-          />
-          <Field label="Менеджер" value={display(event.manager?.name)} />
-          <Field label="IP агента" value={display(event.agent?.ip)} />
-          <Field label="IP хоста" value={display(event.host?.ip?.join(", "))} />
-          <Field label="Имя хоста" value={display(event.host?.hostname)} />
-          <Field label="Тип входа" value={display(event.input?.type)} />
-        </dl>
-      </section>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-gray-900">
-          Полный текст
-        </h2>
-        <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-50 p-4 text-xs text-gray-700">
-          {event.full_log ?? "Текст события отсутствует"}
-        </pre>
-      </section>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-gray-900">
-          JSON события
-        </h2>
-        <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-50 p-4 text-xs text-gray-700">
-          {JSON.stringify(event, null, 2)}
-        </pre>
-      </section>
+function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="shrink-0 text-xs font-semibold text-[#6b7280]">{label}</span>
+      <span className="min-w-0 text-right text-sm break-all text-[#111827]">{children}</span>
     </div>
   );
 }
 
-export function EventDetails({ indexName, eventId }: EventDetailProps) {
-  const query = useEvent({
-    index_name: indexName,
-    event_id: eventId,
-  });
+function EventContent({ event, indexName, eventId }: { event: WazuhEvent; indexName: string; eventId: string }) {
+  const source = event.source_context;
+  const title = event.id || eventId;
+  const index = event._elastic_index ?? indexName;
+  const elasticId = event._elastic_id ?? eventId;
 
-  if (query.isPending) {
+  const copyId = () => {
+    navigator.clipboard
+      .writeText(title)
+      .then(() => toast.success("ID события скопирован"))
+      .catch(() => toast.error("Не удалось скопировать ID"));
+  };
+
+  return (
+    <div className="flex flex-col gap-6 px-[26px] py-6">
+      <header className="flex flex-col gap-4 pr-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <h1 className="text-2xl font-semibold break-all text-[#111827] sm:text-[32px]">
+            Событие {title}
+          </h1>
+          <button
+            type="button"
+            onClick={copyId}
+            aria-label="Скопировать ID события"
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-[#d9ebfc] bg-[#f2f9ff] text-[#0965c5] hover:bg-[#e6f4ff]"
+          >
+            <Copy className="size-4" />
+          </button>
+        </div>
+        <p className="text-lg font-medium break-all text-[#6b7280] sm:text-xl">Индекс: {index}</p>
+
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex w-full max-w-[288px] flex-col gap-2.5 rounded-[10px] border border-[#e5e7eb] bg-[#f8fafc] p-3.5">
+            <SummaryRow label="Источник">
+              {source?.source_name ? (
+                <span className="inline-flex rounded-full bg-[#e6f4ff] px-2 py-1 text-xs font-semibold text-[#0965c5]">
+                  {source.source_name}
+                </span>
+              ) : (
+                "—"
+              )}
+            </SummaryRow>
+            <SummaryRow label="Тип">
+              <span className="font-mono font-semibold capitalize">{source?.source_type || "—"}</span>
+            </SummaryRow>
+            <SummaryRow label="Организация">
+              <span className="font-mono font-semibold">{source?.organization_id || "—"}</span>
+            </SummaryRow>
+            <SummaryRow label="ID источника">
+              <span className="font-semibold">{source?.source_id || "—"}</span>
+            </SummaryRow>
+          </div>
+
+          <div className="flex w-full max-w-[581px] flex-col gap-2.5 rounded-[10px] border border-[#e5e7eb] bg-[#f8fafc] p-3.5">
+            <div className="grid gap-1 sm:grid-cols-[1fr_305px]">
+              <span className="text-xs font-semibold text-[#6b7280]">Elasticsearch Index</span>
+              <span className="text-xs break-all text-black">{index}</span>
+            </div>
+            <div className="grid gap-1 sm:grid-cols-[1fr_305px]">
+              <span className="text-xs font-semibold text-[#6b7280]">Elasticsearch ID</span>
+              <span className="font-mono text-sm break-all text-[#111827]">{elasticId}</span>
+            </div>
+            <div className="grid gap-1 sm:grid-cols-[1fr_305px]">
+              <span className="text-xs font-semibold text-[#6b7280]">Event Reference</span>
+              <span className="font-mono text-sm break-all text-[#111827]">
+                {`{"index": "${event.event_ref?.index ?? index}"}`}
+                <br />
+                {`{"id": "${event.event_ref?.id ?? elasticId}"}`}
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
+          <Card title="Основная информация">
+            <Row label="event_id" value={event.id} mono />
+            <Row label="timestamp" value={formatDateTime(event.timestamp)} />
+            <Row label="program" value={event.predecoder?.program_name} />
+            <Row label="@timestamp" value={formatDateTime(getEventTimestamp(event))} />
+            <Row label="Location" value={event.location} />
+          </Card>
+
+          <Card title="Агент" muted>
+            <Row label="Agent ID" value={event.agent?.id} />
+            <Row label="Agent Name" value={event.agent?.name} />
+            <Row label="Agent Type" value={event.agent?.type} />
+            <Row label="Agent Version" value={event.agent?.version} />
+            <Row label="Agent IP" value={event.agent?.ip} />
+            <Row label="Ephemeral ID" value={event.agent?.ephemeral_id} />
+          </Card>
+
+          <Card title="Decoder and log">
+            <Row label="Decoder Name" value={event.decoder?.name} mono />
+            <Row label="Parent Decoder" value={event.decoder?.parent} mono />
+            <Row label="Predecoder Hostname" value={event.predecoder?.hostname} mono />
+            <Row label="Predecoder Program" value={event.predecoder?.program_name} mono />
+            <Row label="Predecoder Time" value={event.predecoder?.timestamp} />
+            <Row label="Manager" value={event.manager?.name} />
+            <Row label="Input Type" value={event.input?.type} mono />
+            <Row label="File Path" value={event.log?.file?.path} mono />
+            <Row label="File Offset" value={event.log?.offset} mono />
+            <Row label="Device ID" value={event.log?.file?.device_id} />
+            <Row label="Inode" value={event.log?.file?.inode} />
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <Card title="Сетевая информация">
+            <Row label="Source IP" value={getEventSourceIp(event)} />
+            <Row label="Source Port" value={event.data?.srcport ?? event.source?.port} />
+            <Row label="Destination IP" value={getEventDestinationIp(event)} />
+            <Row label="Destination Port" value={event.data?.dstport ?? event.destination?.port} />
+            <Row label="Protocol" value={event.data?.protocol} />
+            <Row label="Agent IP" value={event.agent?.ip} />
+            <Row label="Host IP" value={event.host?.ip} />
+          </Card>
+
+          <Card title="Пользователь">
+            <Row label="Source User" value={event.data?.srcuser} />
+            <Row label="Destination User" value={event.data?.dstuser} />
+          </Card>
+
+          <Card title="Host / OS">
+            <Row label="Host Name" value={event.host?.name ?? event.host?.hostname} />
+            <Row label="Host ID" value={event.host?.id} />
+            <Row label="MAC" value={event.host?.mac} />
+            <Row label="Architecture" value={event.host?.architecture} />
+            <Row label="OS Name" value={event.host?.os?.name} />
+            <Row label="OS Version" value={event.host?.os?.version} />
+            <Row label="OS Family" value={event.host?.os?.family} />
+            <Row label="OS Platform" value={event.host?.os?.platform} />
+            <Row label="OS Type" value={event.host?.os?.type} />
+            <Row label="OS Codename" value={event.host?.os?.codename} />
+            <Row label="Kernel" value={event.host?.os?.kernel} />
+            <Row
+              label="Containerized"
+              value={event.host?.containerized === undefined ? null : event.host?.containerized}
+            />
+          </Card>
+        </div>
+      </div>
+
+      {event.full_log && (
+        <section className="flex flex-col gap-3 rounded-[10px] border border-[#e5e7eb] bg-white p-4">
+          <h2 className="rounded-[10px] bg-[#f2f9ff] text-sm font-semibold text-[#111827]">Full log</h2>
+          <pre className="max-h-64 overflow-auto rounded-md bg-[#f8fafc] p-3 font-mono text-xs whitespace-pre-wrap break-words text-[#111827]">
+            {event.full_log}
+          </pre>
+        </section>
+      )}
+    </div>
+  );
+}
+
+// Загрузка, ошибка и содержимое события — без навигации, чтобы переиспользовать в модалке
+export function EventDetailsBody({ indexName, eventId }: { indexName: string; eventId: string }) {
+  const { data, isPending, error, refetch } = useEvent({ index_name: indexName, event_id: eventId });
+
+  if (isPending) {
     return (
-      <div className="space-y-4" aria-label="Загрузка события">
-        <div className="h-24 animate-pulse rounded-lg bg-gray-100" />
-        <div className="h-40 animate-pulse rounded-lg bg-gray-100" />
-        <div className="h-64 animate-pulse rounded-lg bg-gray-100" />
+      <div className="space-y-5 p-6" aria-label="Загрузка события">
+        <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="h-72 animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-72 animate-pulse rounded-lg bg-gray-200" />
+        </div>
       </div>
     );
   }
 
-  if (query.isError || !query.data) {
+  if (error || !data) {
     return (
-      <section className="rounded-lg border border-red-200 bg-white p-6 text-center">
-        <div className="mb-3 flex justify-center text-red-600">
-          <ShieldAlert className="h-6 w-6" />
-        </div>
-        <p className="text-sm text-red-700">
-          Не удалось загрузить событие. Возможно, оно было удалено или
-          недоступно.
+      <div className="px-6 py-16 text-center">
+        <ShieldAlert className="mx-auto mb-3 h-8 w-8 text-rose-500" />
+        <p className="font-semibold text-gray-900">
+          {error ? "Не удалось загрузить событие" : "Событие не найдено"}
         </p>
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-4"
-          onClick={() => query.refetch()}
-        >
-          Повторить попытку
-        </Button>
-      </section>
+        {error && (
+          <Button variant="outline" onClick={() => refetch()} className="mt-4">
+            Повторить попытку
+          </Button>
+        )}
+      </div>
     );
   }
 
-  return <EventContent event={query.data} />;
+  return <EventContent event={data} indexName={indexName} eventId={eventId} />;
+}
+
+export function EventDetails({ indexName, eventId }: { indexName: string; eventId: string }) {
+  return (
+    <main className="mx-auto max-w-[1431px]">
+      <Button variant="ghost" asChild className="mb-4 -ml-3">
+        <Link href={routes.events}>
+          <ArrowLeft /> К Raw data
+        </Link>
+      </Button>
+      <div className="rounded-[10px] border border-[#e5e7eb] bg-white shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
+        <EventDetailsBody indexName={indexName} eventId={eventId} />
+      </div>
+    </main>
+  );
 }

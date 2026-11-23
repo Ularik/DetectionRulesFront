@@ -178,19 +178,15 @@ export function ScenariosList() {
                     return (
                       <Fragment key={scenarioId}>
                         <tr
-                          onClick={() => toggleRow(scenarioId)}
                           className={cn(
-                            "cursor-pointer border-b border-line-muted transition-colors hover:bg-surface-muted",
+                            "border-b border-line-muted transition-colors hover:bg-surface-muted",
                             isExpanded && "bg-surface-muted",
                           )}
                         >
                           <td className="py-2 pl-2">
                             <button
                               type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleRow(scenarioId);
-                              }}
+                              onClick={() => toggleRow(scenarioId)}
                               aria-expanded={isExpanded}
                               aria-label={`${isExpanded ? "Свернуть" : "Развернуть"} сценарий ${scenario.scenario_id ?? ""}`}
                               className="flex size-6 items-center justify-center text-[#595555] hover:text-brand-light"
@@ -207,7 +203,6 @@ export function ScenariosList() {
                             {scenario.scenario_id ? (
                               <Link
                                 href={routes.scenario(scenario.scenario_id)}
-                                onClick={(event) => event.stopPropagation()}
                                 title="Открыть страницу сценария"
                                 className="hover:text-brand-light hover:underline"
                               >

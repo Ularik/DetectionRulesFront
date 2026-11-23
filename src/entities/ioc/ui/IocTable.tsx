@@ -1,115 +1,127 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, ShieldAlert } from "lucide-react";
-import type { IocType } from "../model/types";
+import { ShieldAlert } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
+import { CopyButton } from "@/shared/ui/copy-button";
+import type { IocType } from "../model/types";
+import { IocSeverityBadge } from "./IocSeverityBadge";
 
 interface IocTableProps {
   items: IocType[];
   isLoading?: boolean;
   limit?: number;
+  /** ioc_id открытого IOC: строка подсвечивается, таблица становится компактной */
+  selectedId?: string | null;
 }
 
-const severityStyles: Record<string, string> = {
-  critical: "bg-rose-50 text-rose-700 border-rose-200",
-  high: "bg-orange-50 text-orange-700 border-orange-200",
-  medium: "bg-amber-50 text-amber-700 border-amber-200",
-  low: "bg-sky-50 text-sky-700 border-sky-200",
-};
+const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value || "—" : dateFormatter.format(date);
+}
 
-export function IocTable({ items, isLoading = false, limit = 10 }: IocTableProps) {
+const headClass = "px-2 py-3 text-[13px] font-semibold whitespace-nowrap text-ink";
+const cellClass = "px-2 py-2 text-sm font-normal text-ink";
+
+// Стиль строк — как в таблице MITRE ATT&CK (Figma 608:9871); карточка IOC открывается справа
+export function IocTable({ items, isLoading = false, limit = 10, selectedId }: IocTableProps) {
+  const compact = Boolean(selectedId);
+  const columnCount = compact ? 4 : 6;
+
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-left text-sm text-gray-600">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-            <tr>
-              <th className="px-6 py-4">IOC</th>
-              <th className="px-6 py-4">Тип</th>
-              <th className="px-6 py-4">Угроза</th>
-              <th className="px-6 py-4">Критичность</th>
-              <th className="px-6 py-4">Источник</th>
-              <th className="px-6 py-4">Последнее обнаружение</th>
-              <th className="px-6 py-4 text-right"> </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {isLoading ? (
-              Array.from({ length: limit }).map((_, index) => (
-                <tr key={index} className="animate-pulse">
-                  {Array.from({ length: 7 }).map((__, cellIndex) => (
-                    <td className="px-6 py-5" key={cellIndex}>
-                      <div className="h-4 w-24 rounded bg-gray-200" />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-14 text-center text-gray-400">
-                  <ShieldAlert className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-                  IOC не найдены
-                </td>
+    <div className="overflow-x-auto">
+      <table className={cn("w-full text-left", compact ? "min-w-[520px]" : "min-w-[900px]")}>
+        <thead className="border-b border-line-muted bg-surface-muted">
+          <tr>
+            <th className={cn(headClass, "pl-4")}>IOC</th>
+            <th className={headClass}>Тип</th>
+            <th className={headClass}>Угроза</th>
+            <th className={cn(headClass, compact && "pr-4")}>Критичность</th>
+            {!compact && <th className={headClass}>Источник</th>}
+            {!compact && <th className={cn(headClass, "pr-4")}>Последнее обнаружение</th>}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line-muted">
+          {isLoading ? (
+            Array.from({ length: limit }).map((_, index) => (
+              <tr key={index} className="animate-pulse">
+                {Array.from({ length: columnCount }).map((__, cellIndex) => (
+                  <td className="px-4 py-3" key={cellIndex}>
+                    <div className="h-4 w-20 rounded bg-line-muted" />
+                  </td>
+                ))}
               </tr>
-            ) : (
-              items.map((item) => (
-                <tr key={item.ioc_id} className="transition-colors hover:bg-gray-50/80">
-                  <td className="max-w-[280px] px-6 py-4">
-                    <Link
-                      href={routes.iocEntry(item.ioc_id)}
-                      className="block truncate font-mono text-xs font-semibold text-[#1E2B6D] hover:underline"
-                      title={item.value}
-                    >
-                      {item.value}
-                    </Link>
-                    <div className="mt-1 truncate text-xs text-gray-400">{item.ioc_id}</div>
+            ))
+          ) : items.length === 0 ? (
+            <tr>
+              <td colSpan={columnCount} className="px-4 py-14 text-center text-sm text-ink-muted">
+                <ShieldAlert className="mx-auto mb-2 h-8 w-8 text-line" />
+                IOC не найдены
+              </td>
+            </tr>
+          ) : (
+            items.map((item) => {
+              const isSelected = item.ioc_id === selectedId;
+              return (
+                <tr
+                  key={item.ioc_id}
+                  aria-selected={isSelected || undefined}
+                  className={cn(
+                    "transition-colors",
+                    isSelected ? "bg-brand-soft/40" : "hover:bg-surface-muted",
+                  )}
+                >
+                  <td className={cn(cellClass, "max-w-[320px] py-1 pl-4")}>
+                    <div className="flex items-center gap-1">
+                      <Link
+                        href={routes.iocEntry(item.ioc_id)}
+                        scroll={false}
+                        aria-current={isSelected ? "page" : undefined}
+                        title={item.value}
+                        className="min-w-0 truncate text-sm font-semibold text-[#1067c2] hover:underline"
+                      >
+                        {item.value}
+                      </Link>
+                      <CopyButton
+                        value={item.value}
+                        label={`Копировать ${item.ioc_type}`}
+                        successMessage="IOC скопирован"
+                      />
+                    </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-700">
-                    {item.ioc_type}
+                  <td className={cn(cellClass, "whitespace-nowrap")}>{item.ioc_type}</td>
+                  <td className={cn(cellClass, "whitespace-nowrap")}>{item.threat_type}</td>
+                  <td className={cn(cellClass, "whitespace-nowrap", compact && "pr-4")}>
+                    <IocSeverityBadge severity={item.severity} />
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">{item.threat_type}</td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span
-                      className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
-                        severityStyles[item.severity.toLowerCase()] ??
-                        "border-gray-200 bg-gray-50 text-gray-700"
-                      }`}
-                    >
-                      {item.severity}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="font-medium text-gray-700">{item.source}</div>
-                    {item.source_org && <div className="text-xs text-gray-400">{item.source_org}</div>}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-gray-500">
-                    {formatDate(item.last_seen_at)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link
-                      href={routes.iocEntry(item.ioc_id)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E2B6D] hover:underline"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Открыть
-                    </Link>
-                  </td>
+                  {!compact && (
+                    <td className={cn(cellClass, "whitespace-nowrap")}>
+                      {item.source}
+                      {item.source_org && (
+                        <span> · {item.source_org}</span>
+                      )}
+                    </td>
+                  )}
+                  {!compact && (
+                    <td className={cn(cellClass, "pr-4 whitespace-nowrap")}>
+                      {formatDate(item.last_seen_at)}
+                    </td>
+                  )}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              );
+            })
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

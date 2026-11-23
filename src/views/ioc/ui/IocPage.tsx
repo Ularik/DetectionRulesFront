@@ -1,5 +1,4 @@
-import { IocList } from "@/widgets/ioc-list";
-
+// Таблица IOC рендерится в IocLayout; у самого списка своей разметки нет
 export function IocPage() {
-  return <IocList />;
+  return null;
 }

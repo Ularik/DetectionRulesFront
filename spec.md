@@ -174,7 +174,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ ioc/  ioc-detail/  ioc-create/
    │  ├─ incidents/  incident-detail/  incident-modal/  source-ip-incidents/  source-ip-incidents-modal/
 │  ├─ scenarios/  scenario-detail/  events/  event-detail/
-   │  └─ audit/  audit-detail/  mitre/
+   │  └─ audit/  audit-detail/  mitre/  mitre-detail/
    ├─ widgets/
    │  ├─ sidebar/  section-tabs/
    │  ├─ rules-list/  rule-details/  correlation-rules-list/
@@ -182,12 +182,12 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ ioc-list/  ioc-details/  audit-list/  audit-details/
    │  ├─ incidents-table/  incident-details/  scenarios-list/  scenario-details/
    │  ├─ events-table/  event-details/
-   │  └─ organizations-list/  organization-details/  mitre-techniques/
+   │  └─ organizations-list/  organization-details/  mitre-techniques/ (список + карточка техники)
    ├─ features/
    │  ├─ auth-login/  auth-logout/  auth-register/
    │  ├─ rule-upsert/  rule-delete/  rule-toggle-status/
    │  ├─ correlation-rule-upsert/  suppression-rule-upsert/
-   │  ├─ ioc-create/  ioc-edit/
+   │  ├─ ioc-create/  ioc-mark-viewed/
    │  ├─ incident-change-status/  incidents-filter/  scenarios-filter/
    │  ├─ organization-upsert/  organization-delete/
    │  └─ mitre-sync/
@@ -287,13 +287,13 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `rule`            | `useRules`, `useRule`, `useSeverityHints` (`ruleKeys`)           | `RuleType`, `RuleCreateUpdateType`, `QueryFiltersType`        | `limit/offset` → `{total, has_next, items}` |
 | `correlation-rule`| `useCorrelationRules`, `useCorrelationRule`, `useSequenceOptions`, `useGroupByFields` (`correlationRuleKeys`) | `CorrelationRuleType`, `SequenceValueType`, `CorrelationGroupByFieldsType` | нет (массив) |
 | `suppression-rule`| `useSuppressionRules`, `useSuppressionRule`, `useSuppressionMatchFields` (`suppressionRuleKeys`) | `SuppressionRuleTypes`, `SuppressionRuleCreateType`, `MatchFieldResponseType` | нет (массив) |
-| `ioc`             | `useIocs`, `useIoc` (`iocKeys`)                                  | `IocType`, `IocCreateType`, `IocPatchType`                    | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
+| `ioc`             | `useIocs`, `useIoc` (`iocKeys`)                                  | `IocType`, `IocCreateType`, `IocPatchResponse`                | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
 | `incident`        | `useIncidents`, `useIncident`, `useIncidentEvents` (`incidentKeys`) | `IncidentSchema`, `Incident`, `IncidentParams`, `ANALYST_STATUS` | `page/size` |
 | `scenario`        | `useScenarios`, `useScenario`, `useScenarioEvents` (`scenarioKeys`) | `SecurityScenario`, `ScenarioAggregateSchema`, `ScenarioQueryParams` | `page/size` |
 | `event`           | `useEvents`, `useEvent` (`eventKeys`)                            | `WazuhEvent`, `WazuhEventApiResponse`, `RawEventsQueryParamsSchema` | `page/size` |
 | `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
 | `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
-| `mitre-technique` | `useMitreTechniques` (`mitreKeys`)                               | `MitreTechnique`, `MitreSyncResponse`, `MitreType`            | нет (массив)     |
+| `mitre-technique` | `useMitreTechniques`, `useMitreTechnique` (`mitreKeys`)          | `MitreTechnique`, `MitreSyncResponse`, `MitreType`; `getMitreTechniqueStatus`, `MitreStatusBadge` | нет (массив)     |
 | `attack-type`     | `useAttackTypes`, `useAttackGroups` (`attackTypeKeys`)           | `AttackTypes`, `AttackGroupsResponseSchema`, `HuntingIpIncidentSchema` | `page/size`; total = `summary.incident_count` |
 
 Связи между сущностями оформлены через `@x`:
@@ -327,7 +327,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | GET    | `/ioc/`                                        | список IoC                                | entities/ioc          |
 | GET    | `/ioc/{id}`                                    | IoC                                       | entities/ioc          |
 | POST   | `/ioc/`                                        | создать                                   | features/ioc-create   |
-| PATCH  | `/ioc/{id}`                                    | изменить                                  | features/ioc-edit     |
+| PATCH  | `/ioc/{id}` (без тела)                         | отметить просмотренным                    | features/ioc-mark-viewed |
 | GET    | `/incidents`                                   | список инцидентов (`IncidentParams`)      | entities/incident     |
 | GET    | `/incidents/{id}`                              | инцидент                                  | entities/incident     |
 | GET    | `/incidents/{id}/events`                       | события инцидента (page/size)             | entities/incident     |
@@ -346,6 +346,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | GET    | `/audits/`                                     | журнал аудита                             | entities/audit        |
 | GET    | `/audits/{id}`                                 | запись аудита (с правилом)                | entities/audit        |
 | GET    | `/mitre/mitre`                                 | техники MITRE ATT&CK                      | entities/mitre-technique |
+| GET    | `/mitre/{mitre_id}`                            | техника MITRE (та же схема `MitreTechnique`) | entities/mitre-technique |
 | POST   | `/mitre/sync-mitre`                            | синхронизация MITRE                       | features/mitre-sync   |
 | GET    | `/attack-types/`                               | справочник типов атак                     | entities/attack-type  |
 | GET    | `/attack-types/attach-group`                   | инциденты одного `source_ip` + группировка по типам атак (page/size) | entities/attack-type  |
@@ -382,13 +383,13 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/login`                                     | `views/login`                  | |
 | `/auth`                                      | `views/register`               | регистрация |
 | `/admin`                                    | `views/home`                   | «Главная», заглушка |
-| `/admin/incidents`, `/[id]`                  | `views/incident*`              | «Инциденты»; клик по строке списка → `/ip/[sourceIp]` (или сразу `/[id]`, если source_ip нет) |
-| `/admin/incidents/ip/[sourceIp]`             | `views/source-ip-incidents*`   | все инциденты source_ip; из списка открывается модалкой (`@modal/(.)incidents/ip`), строка → `/[id]`; параметр декодируется в route-файле |
-| `/admin/scenarios`, `/[scenarioId]`          | `views/scenario*`              | «Сценарии»: строка списка раскрывается (карточки сценария + связанные инциденты из `/scenarios/{id}`); клик по связанному инциденту → `/admin/incidents/ip/[sourceIp]` |
-| `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | «Threat Intelligence» |
-| `/admin/mitre`                               | `views/mitre`                  | «MITRE ATT&CK» |
+| `/admin/incidents`, `/[id]`                  | `views/incident*`              | «Инциденты»; плюсик в строке списка (вся строка не кликабельна) → `/ip/[sourceIp]` (или сразу `/[id]`, если source_ip нет) |
+| `/admin/incidents/ip/[sourceIp]`             | `views/source-ip-incidents*`   | все инциденты source_ip; из списка открывается модалкой (`@modal/(.)incidents/ip`); при прямом заходе/F5 полная страница рисует список инцидентов подложкой и ту же модалку (закрытие → `replace` на список), стрелка в строке → `/[id]`; параметр декодируется в route-файле |
+| `/admin/scenarios`, `/[scenarioId]`          | `views/scenario*`              | «Сценарии»: строка списка раскрывается только по плюсику (карточки сценария + связанные инциденты из `/scenarios/{id}`); клик по id связанного инцидента → `/admin/incidents/ip/[sourceIp]` |
+| `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | «Threat Intelligence»; как в MITRE: таблица в `app/(dashboard)/admin/ioc/layout.tsx` → `IocLayout`, карточка IOC открывается справа по клику на значение (`/new` рендерится без таблицы); id декодируется в route-файле |
+| `/admin/mitre`, `/[mitreId]`                 | `views/mitre`, `views/mitre-detail` | «MITRE ATT&CK»; таблица живёт в `app/(dashboard)/admin/mitre/layout.tsx` → `MitreLayout` (поиск и страница не сбрасываются), карточка техники открывается справа, таблица при этом компактная; id декодируется в route-файле |
 | `/admin/events`, `/[index_name]/[event_id]`  | `views/event*`, `views/event-modal` | «Raw data»; карточка события из списка открывается модалкой (`@modal/(.)events/...`); параметры декодируются в route-файле |
-| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Кампании» (на backend — organizations); id декодируется в route-файле |
+| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Организации» (раньше «Кампании»); как в MITRE: таблица в `app/(dashboard)/admin/organizations/layout.tsx` → `OrganizationsLayout`, карточка организации открывается справа по клику на строку; `/new` и `/[id]/edit` рендерятся без таблицы; id декодируется в route-файле |
 | `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | «Администрирование» → правила обнаружения |
 | `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | «Администрирование» → правила корреляции; `/[id]` — форма редактирования |
 | `/admin/supers`, `/new`, `/[slug]`, `/[slug]/edit` | `views/suppression-rule*` | «Администрирование» → правила подавления |
@@ -399,7 +400,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 Навигация повторяет макет CERT-KG SIEM (Figma): пункты сайдбара — `widgets/sidebar/config/menu.ts`
 («Администрирование» закреплён внизу), вкладки «Администрирования» — `widgets/section-tabs/config/tabs.ts`.
 Раздел с вкладками собран в route group `(administration)`, поэтому имя группы не попадает в URL.
-«Кампании» в UI — это сущность `organization` (backend `/organizations`).
+«Организации» (раньше «Кампании») в UI — это сущность `organization` (backend `/organizations`).
 
 Константы путей хранятся в `shared/config/routes.ts` (`routes.rule(id)`, `routes.organizationEdit(id)` и т. д.).
 Строки URL в компонентах не хардкодятся.
@@ -461,7 +462,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 2. **Заглушки в правилах корреляции:** кнопка удаления на карточке делает `console.log("delete")` (эндпоинта удаления нет);
    форма создания пишет данные в консоль и показывает тост «Заглушка: …» до ответа сервера.
 3. **Пагинация правил подавления** — `PaginationControl` отображается, но список не режется (backend отдаёт массив целиком).
-4. **`features/ioc-edit`** содержит только хук `useUpdateIoc` — UI редактирования IoC нет.
+4. **Редактирования IoC в UI нет:** `PATCH /ioc/{id}` вызывается без тела и только отмечает IoC просмотренным (`features/ioc-mark-viewed`).
 5. **Env:** `NEXT_BACK_URL` не задана, а `NEXT_API_URL`, `NEXT_IMAGE_URL` и `NEXT_PUBLIC_BACK_API_URL` не используются (раздел 3).
 6. **Разные схемы пагинации** (`limit/offset` и `page/size`). Общие типы ответов можно вынести в `shared/api/types.ts`.
 7. **Цвета захардкожены** (`#1E2B6D` и др.) в классах Tailwind на страницах, ещё не переведённых на макет CERT-KG SIEM. Палитра макета уже лежит в `@theme` в `globals.css` (`bg-brand`, `text-ink`, `border-line`…) — используйте её.

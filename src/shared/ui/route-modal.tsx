@@ -12,18 +12,25 @@ export function RouteModal({
   title,
   className,
   closeClassName,
+  closeHref,
   children,
 }: {
   title: string;
   className?: string;
   /** Позиция крестика, если у содержимого своя шапка (по умолчанию top-6 right-5) */
   closeClassName?: string;
+  /**
+   * Куда уйти при закрытии вместо шага назад. Нужен, когда модалка открыта прямым заходом/F5:
+   * тогда в истории может не быть страницы-подложки, и back() увёл бы из приложения
+   */
+  closeHref?: string;
   children: ReactNode;
 }) {
   const router = useRouter();
+  const close = () => (closeHref ? router.replace(closeHref) : router.back());
 
   return (
-    <Dialog defaultOpen onOpenChange={(open) => !open && router.back()}>
+    <Dialog defaultOpen onOpenChange={(open) => !open && close()}>
       <DialogContent
         showCloseButton={false}
         className={cn(

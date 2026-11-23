@@ -3,7 +3,6 @@ import type {
   IocCreateType,
   IocPaginatedResponse,
   IocPatchResponse,
-  IocPatchType,
   IocQueryParams,
   IocType,
 } from "../model/types";
@@ -23,14 +22,12 @@ export async function fetchIocs(
 }
 
 export async function fetchIoc(iocId: string): Promise<IocType> {
-  const result = await axiosApi.get<IocType>(`/ioc/${iocId}`);
+  const result = await axiosApi.get<IocType>(`/ioc/${encodeURIComponent(iocId)}`);
   return result.data;
 }
 
-export async function patchIoc(
-  iocId: string,
-  data: IocPatchType,
-): Promise<IocPatchResponse> {
-  const result = await axiosApi.patch<IocPatchResponse>(`/ioc/${iocId}`, data);
+// Тело не отправляется: PATCH отмечает IOC просмотренным текущим пользователем
+export async function patchIoc(iocId: string): Promise<IocPatchResponse> {
+  const result = await axiosApi.patch<IocPatchResponse>(`/ioc/${encodeURIComponent(iocId)}`);
   return result.data;
 }

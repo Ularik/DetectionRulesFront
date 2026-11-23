@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ChevronDown, FileSearch, SquarePlus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { DateRangeFilter, PeriodBadge } from "@/shared/ui/filter-bar";
 import { Button } from "@/shared/ui/button";
@@ -76,7 +75,6 @@ function sortEvents(items: WazuhEvent[], sort: { key: SortKey; direction: "asc" 
 const cellClass = "px-1.5 py-3 text-sm text-ink";
 
 export function EventsTable() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(PAGE_SIZE);
   const [filters, setFilters] = useState<EventFilterParams>({});
@@ -194,17 +192,12 @@ export function EventsTable() {
                     return (
                       <tr
                         key={ref ? `${ref.index}/${ref.id}` : index}
-                        onClick={href ? () => router.push(href) : undefined}
-                        className={cn(
-                          "transition-colors hover:bg-surface-muted",
-                          href && "cursor-pointer",
-                        )}
+                        className="transition-colors hover:bg-surface-muted"
                       >
                         <td className="py-3 pr-1.5 pl-4">
                           {href && (
                             <Link
                               href={href}
-                              onClick={(clickEvent) => clickEvent.stopPropagation()}
                               aria-label={`Открыть событие ${event.id ?? ref?.id ?? ""}`}
                               className="flex justify-center text-[#595555] hover:text-brand-light"
                             >

@@ -31,7 +31,7 @@ export const routes = {
   correlationRule: (correlationId: string) => `/admin/crule/${correlationId}`,
   ioc: "/admin/ioc",
   iocNew: "/admin/ioc/new",
-  iocEntry: (iocId: string) => `/admin/ioc/${iocId}`,
+  iocEntry: (iocId: string) => `/admin/ioc/${encodeURIComponent(iocId)}`,
   suppressionRules: "/admin/supers",
   suppressionRuleNew: "/admin/supers/new",
   suppressionRule: (suppressionId: string) => `/admin/supers/${suppressionId}`,
@@ -44,6 +44,8 @@ export const routes = {
   event: (indexName: string, eventId: string) =>
     `/admin/events/${encodeURIComponent(indexName)}/${encodeURIComponent(eventId)}`,
   mitre: "/admin/mitre",
+  mitreTechnique: (mitreId: string) =>
+    `/admin/mitre/${encodeURIComponent(mitreId)}`,
 } as const;
 
 export const roleDashboardPaths: Record<UserRole, string> = {

@@ -30,7 +30,7 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     exact: true,
   },
   {
-    label: "Кампании",
+    label: "Организации",
     href: routes.organizations,
     icon: Bell,
   },

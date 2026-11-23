@@ -27,10 +27,6 @@ export interface IocType {
   viewed_by?: string | null;
 }
 
-export type IocPatchType = Partial<
-  Omit<IocType, "ioc_id" | "last_seen_at" | "received_at">
->;
-
 export interface IocPatchResponse {
   success: boolean;
   ioc: IocType;

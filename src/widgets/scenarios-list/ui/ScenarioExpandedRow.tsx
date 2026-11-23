@@ -3,7 +3,6 @@
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronDown, SquareMinus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -92,7 +91,7 @@ function ScenarioInfoCards({
   const assetCriticality = scenario.asset_criticality?.toLowerCase();
 
   return (
-    <div className="grid gap-0.5 md:grid-cols-2 xl:grid-cols-[353fr_237fr_375fr_262fr]">
+    <div className="grid gap-0.5 md:grid-cols-2 xl:grid-cols-[minmax(0,353fr)_minmax(0,237fr)_minmax(0,375fr)_minmax(0,262fr)]">
       <section className={cn(cardClass, "pl-3")}>
         <div className="mb-3 flex items-center gap-[15px] px-5">
           <button
@@ -257,7 +256,6 @@ const getIncidentHref = (incident: RelatedIncident) =>
     : routes.incident(incident.incident_id);
 
 function RelatedIncidents({ scenarioId }: { scenarioId: string }) {
-  const router = useRouter();
   const [sort, setSort] = useState<SortState<IncidentSortKey>>(null);
   const { data, isPending, error, refetch } = useScenario(scenarioId);
   const incidents = sortItems(data?.related_incidents ?? [], sort, getIncidentSortValue);
@@ -365,13 +363,11 @@ function RelatedIncidents({ scenarioId }: { scenarioId: string }) {
                   return (
                     <tr
                       key={incident.incident_id}
-                      onClick={() => router.push(getIncidentHref(incident))}
-                      className="cursor-pointer transition-colors hover:bg-white"
+                      className="transition-colors hover:bg-white"
                     >
                       <td className="py-3 pr-0.5 pl-4 break-all">
                         <Link
                           href={getIncidentHref(incident)}
-                          onClick={(event) => event.stopPropagation()}
                           className="text-brand hover:underline"
                         >
                           {incident.incident_id}
@@ -421,7 +417,9 @@ export function ScenarioExpandedRow({
   onCollapse: () => void;
 }) {
   return (
-    <div className="bg-surface">
+    // w-0 + min-w-full: содержимое заполняет ячейку, но не влияет на ширину колонок общей таблицы,
+    // иначе при раскрытии строки таблица расширяется и колонки сдвигаются
+    <div className="w-0 min-w-full bg-surface">
       <ScenarioInfoCards scenario={scenario} onCollapse={onCollapse} />
       <RelatedIncidents scenarioId={scenarioId} />
     </div>

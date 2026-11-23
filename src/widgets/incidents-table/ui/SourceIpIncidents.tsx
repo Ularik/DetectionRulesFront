@@ -195,13 +195,11 @@ export function SourceIpIncidents({
                   items.map((incident) => (
                     <tr
                       key={incident.incident_id}
-                      onClick={() => router.push(routes.incident(incident.incident_id))}
-                      className="cursor-pointer transition-colors hover:bg-surface-muted"
+                      className="transition-colors hover:bg-surface-muted"
                     >
                       <td className="py-3 pl-5">
                         <Link
                           href={routes.incident(incident.incident_id)}
-                          onClick={(event) => event.stopPropagation()}
                           aria-label={`Открыть инцидент ${incident.incident_id}`}
                           className="flex text-black hover:text-brand-light"
                         >

@@ -1,174 +1,201 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { Badge } from "@/shared/ui/badge";
+import { Building2, FileText, Info, Monitor, MonitorCheck, SquarePen, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { routes } from "@/shared/config";
-import { useOrganization } from "@/entities/organization";
-import { DeleteOrganizationButton } from "@/features/organization-delete";
+import {
+  OrganizationStatusBadge,
+  OrganizationTag,
+  useOrganization,
+  type Organization,
+} from "@/entities/organization";
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+// Панель организации справа от таблицы — фрейм «ORG Detail» макета CERT-KG SIEM (Figma 648:12495)
+
+function Card({
+  icon,
+  title,
+  children,
+  inline = false,
+}: {
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+  /** заголовок и содержимое в одну строку (блок «Псевдонимы») */
+  inline?: boolean;
+}) {
   return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-ink-muted">{label}</dt>
-      <dd className="mt-1 break-words text-sm font-medium text-ink">
-        {value ?? "—"}
-      </dd>
+    <section
+      className={
+        inline
+          ? "flex flex-wrap items-center gap-x-5 gap-y-2 rounded-[10px] border border-[#e5e7eb] bg-white px-4 py-1.5"
+          : "flex flex-col gap-3 rounded-[10px] border border-[#e5e7eb] bg-white px-4 pt-2 pb-4"
+      }
+    >
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+        {icon}
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function Row({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex gap-4 text-[11px]">
+      <dt className="w-[45%] shrink-0 font-medium text-[#6b7280]">{label}</dt>
+      <dd className="min-w-0 flex-1 font-mono break-words text-ink">{children}</dd>
     </div>
   );
 }
 
-export function OrganizationDetails({
-  organizationId,
-}: {
-  organizationId: string;
-}) {
-  const { data, isPending, isError, refetch } =
-    useOrganization(organizationId);
+const iconClass = "size-[18px] shrink-0 text-[#111827]";
+
+function Empty() {
+  return <p className="text-sm text-ink-muted">—</p>;
+}
+
+function OrganizationContent({ organization }: { organization: Organization }) {
+  const agentNames = organization.agent_names ?? [];
+  const agentIds = organization.agent_ids ?? [];
+  const agentCount = Math.max(agentNames.length, agentIds.length);
+
+  return (
+    <div className="rounded-[10px] border border-line bg-surface px-[5px] py-2.5">
+      <div className="flex flex-col gap-9 bg-white">
+        <header className="flex min-h-11 items-center gap-3 rounded-[10px] border border-[#e5e7eb] bg-white py-2 pr-4 pl-3.5">
+          <span className="flex size-[27px] shrink-0 items-center justify-center rounded-md bg-[#8fcdf1]/60 text-[#1067c2]">
+            <Building2 className="size-[18px]" aria-hidden />
+          </span>
+          <h1 className="min-w-0 flex-1 text-base font-semibold break-words text-ink">
+            {organization.name}
+          </h1>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Link
+              href={routes.organizationEdit(organization.organization_id)}
+              aria-label="Редактировать организацию"
+              title="Редактировать"
+              className="flex size-6 items-center justify-center rounded-md text-[#111827] hover:bg-surface-muted"
+            >
+              <SquarePen className="size-[18px]" />
+            </Link>
+            <Link
+              href={routes.organizations}
+              scroll={false}
+              aria-label="Закрыть карточку организации"
+              title="Закрыть"
+              className="flex size-6 items-center justify-center rounded-md text-[#111827] hover:bg-surface-muted"
+            >
+              <X className="size-[18px]" />
+            </Link>
+          </div>
+        </header>
+
+        <Card icon={<Info className="size-4 shrink-0 text-[#111827]" />} title="Основная информация">
+          <dl className="flex flex-col gap-2.5">
+            <Row label="ID организации">{organization.organization_id}</Row>
+            <Row label="Наименование">{organization.name}</Row>
+            <Row label="Статус">
+              <OrganizationStatusBadge
+                enabled={organization.enabled}
+                className="w-auto px-1.5 font-sans text-[11px] leading-[13px]"
+              />
+            </Row>
+          </dl>
+        </Card>
+
+        <Card icon={<FileText className={iconClass} />} title="Псевдонимы" inline>
+          {organization.aliases?.length ? (
+            <div className="flex flex-wrap gap-2.5">
+              {organization.aliases.map((alias) => (
+                <OrganizationTag key={alias} className="min-w-[93px]">
+                  {alias}
+                </OrganizationTag>
+              ))}
+            </div>
+          ) : (
+            <Empty />
+          )}
+        </Card>
+
+        <Card icon={<MonitorCheck className={iconClass} />} title="Агенты">
+          {agentCount ? (
+            <ul className="flex flex-col gap-3">
+              {Array.from({ length: agentCount }).map((_, index) => (
+                <li
+                  key={agentIds[index] ?? agentNames[index] ?? index}
+                  className="flex items-center justify-between gap-3 rounded-[10px] border border-[#6b7280]/40 bg-white py-0.5 pr-[3px] pl-2.5"
+                >
+                  <span className="min-w-0 truncate text-sm text-ink">
+                    {agentNames[index] ?? "—"}
+                  </span>
+                  {agentIds[index] && (
+                    <OrganizationTag className="shrink-0 font-medium text-black">
+                      ID: {agentIds[index]}
+                    </OrganizationTag>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty />
+          )}
+        </Card>
+
+        <Card icon={<Monitor className={iconClass} />} title="Хосты">
+          {organization.hostnames?.length ? (
+            <div className="flex flex-wrap gap-2.5">
+              {organization.hostnames.map((hostname) => (
+                <OrganizationTag key={hostname} className="min-w-[93px]">
+                  {hostname}
+                </OrganizationTag>
+              ))}
+            </div>
+          ) : (
+            <Empty />
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+export function OrganizationDetails({ organizationId }: { organizationId: string }) {
+  const { data, isPending, isError, refetch } = useOrganization(organizationId);
 
   if (isPending) {
     return (
-      <div className="py-20 text-center text-ink-muted">
-        Загрузка кампании...
+      <div className="flex animate-pulse flex-col gap-6" aria-busy="true">
+        <div className="h-11 rounded-[10px] bg-line-muted" />
+        <div className="h-28 rounded-[10px] bg-line-muted" />
+        <div className="h-10 rounded-[10px] bg-line-muted" />
+        <div className="h-32 rounded-[10px] bg-line-muted" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="space-y-4 py-20 text-center">
-        <p className="font-semibold text-ink">
-          Не удалось загрузить кампанию
+      <div className="space-y-3 rounded-[10px] border border-[#e5e7eb] bg-white px-4 py-16 text-center">
+        <p className="font-semibold text-ink" role="alert">
+          {isError ? "Не удалось загрузить организацию" : "Организация не найдена"}
         </p>
-        <Button variant="outline" onClick={() => refetch()}>
-          Повторить попытку
-        </Button>
+        <div className="flex justify-center gap-2">
+          {isError && (
+            <Button variant="outline" onClick={() => refetch()}>
+              Повторить попытку
+            </Button>
+          )}
+          <Button variant="ghost" asChild>
+            <Link href={routes.organizations}>К списку организаций</Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <Link
-        href={routes.organizations}
-        className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-brand-light"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Все кампании
-      </Link>
-
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
-        <header>
-          <p className="mb-2 text-sm text-ink-muted">Детали кампании</p>
-          <h1 className="text-3xl font-bold tracking-tight text-ink">
-            {data.name}
-          </h1>
-          <p className="mt-2 font-mono text-sm text-ink-muted">
-            {data.organization_id}
-          </p>
-        </header>
-
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={routes.organizationEdit(data.organization_id)}
-            className="inline-flex items-center rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-light"
-          >
-            Редактировать
-          </Link>
-          <DeleteOrganizationButton organization={data} />
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-line bg-white px-4 py-3">
-          <p className="text-xs font-medium text-ink-muted">Статус</p>
-          <p className="mt-1 text-lg font-semibold text-ink">
-            {data.enabled ? "Активна" : "Отключена"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-line bg-white px-4 py-3">
-          <p className="text-xs font-medium text-ink-muted">
-            Количество агентов
-          </p>
-          <p className="mt-1 text-lg font-semibold text-ink">
-            {data.agent_ids?.length ?? 0}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-line bg-white px-4 py-3">
-          <p className="text-xs font-medium text-ink-muted">Псевдонимы</p>
-          <p className="mt-1 text-lg font-semibold text-ink">
-            {data.aliases?.length ?? 0}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-line bg-white px-4 py-3">
-          <p className="text-xs font-medium text-ink-muted">Хосты</p>
-          <p className="mt-1 text-lg font-semibold text-ink">
-            {data.hostnames?.length ?? 0}
-          </p>
-        </div>
-      </div>
-
-      <section className="rounded-2xl border border-line bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-ink">
-          Основные данные
-        </h2>
-        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
-          <Field label="Название" value={data.name} />
-          <Field label="ID" value={data.organization_id} />
-          <Field
-            label="Статус"
-            value={data.enabled ? "Активна" : "Отключена"}
-          />
-        </dl>
-      </section>
-
-      <section className="rounded-2xl border border-line bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-ink">
-          Псевдонимы
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {data.aliases?.length ? (
-            data.aliases.map((alias) => (
-              <Badge key={alias} variant="outline">
-                {alias}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-sm text-ink-muted">Псевдонимы не указаны</span>
-          )}
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-line bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-ink">Агенты</h2>
-        <div className="flex flex-wrap gap-2">
-          {data.agent_ids?.length ? (
-            data.agent_ids.map((agentId) => (
-              <Badge key={agentId} variant="secondary">
-                {agentId}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-sm text-ink-muted">Агенты не назначены</span>
-          )}
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-line bg-white p-5">
-        <h2 className="mb-4 text-base font-semibold text-ink">Хосты</h2>
-        <div className="flex flex-wrap gap-2">
-          {data.hostnames?.length ? (
-            data.hostnames.map((hostname) => (
-              <Badge key={hostname} variant="outline">
-                {hostname}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-sm text-ink-muted">Хосты не указаны</span>
-          )}
-        </div>
-      </section>
-    </div>
-  );
+  return <OrganizationContent organization={data} />;
 }

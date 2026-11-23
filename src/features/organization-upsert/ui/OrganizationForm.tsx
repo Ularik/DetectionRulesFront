@@ -33,7 +33,7 @@ type Props = {
   onSubmit: (payload: OrganizationCreateUpdateType) => void;
 };
 
-// Общая форма создания и редактирования кампании
+// Общая форма создания и редактирования организации
 export function OrganizationForm({
   title,
   backHref,
@@ -84,7 +84,7 @@ export function OrganizationForm({
     };
 
     if (!payload.name) {
-      toast.error("Введите название кампании", { position: "top-center" });
+      toast.error("Введите название организации", { position: "top-center" });
       return;
     }
 
@@ -215,7 +215,7 @@ export function OrganizationForm({
             className="h-4 w-4 rounded border-line text-brand focus:ring-brand"
           />
           <span className="text-sm font-medium text-ink">
-            Кампания активна
+            Организация активна
           </span>
         </label>
 

@@ -1,5 +1,4 @@
-import { OrganizationsList } from "@/widgets/organizations-list";
-
+// Таблица организаций рендерится в OrganizationsLayout; у самого списка своей разметки нет
 export function OrganizationsPage() {
-  return <OrganizationsList />;
+  return null;
 }

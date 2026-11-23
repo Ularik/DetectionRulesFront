@@ -1,7 +1,6 @@
 export type {
   IocCreateType,
   IocType,
-  IocPatchType,
   IocPatchResponse,
   IocPaginatedResponse,
   IocQueryParams,
@@ -11,3 +10,4 @@ export { createIoc, fetchIocs, fetchIoc, patchIoc } from "./api/iocApi";
 export { iocKeys } from "./api/queryKeys";
 export { useIocs, useIoc } from "./api/queries";
 export { IocTable } from "./ui/IocTable";
+export { IocSeverityBadge } from "./ui/IocSeverityBadge";

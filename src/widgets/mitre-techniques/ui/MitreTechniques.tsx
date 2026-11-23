@@ -1,197 +1,255 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, FileSearch, Search } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { PaginationControl } from "@/shared/ui/pagination";
+import { cn } from "@/shared/lib/utils";
 import { getErrorMessage } from "@/shared/lib/errors";
-import { useMitreTechniques } from "@/entities/mitre-technique";
+import { routes } from "@/shared/config";
+import {
+  getMitreTechniqueStatus,
+  MitreStatusBadge,
+  useMitreTechniques,
+  type MitreTechnique,
+} from "@/entities/mitre-technique";
 import {
   SyncMitreButton,
   SyncMitreStatus,
   useSyncMitre,
 } from "@/features/mitre-sync";
 
+// Вёрстка по фреймам «MITRE ATTACK» (Figma 608:9871) и «Mirte detail» (617:11041):
+// при открытой технике таблица сужается и скрывает колонку «Изменение»
+
+const PAGE_SIZE = 15;
+const VISIBLE_PLATFORMS = 3;
+
+const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
 function formatDate(value: string) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value || "—";
-
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" }).format(date);
+  return Number.isNaN(date.getTime()) ? value || "—" : dateFormatter.format(date);
 }
 
-export function MitreTechniques() {
+function formatPlatforms(platforms: string[]) {
+  if (!platforms.length) return "—";
+  const visible = platforms.slice(0, VISIBLE_PLATFORMS).join(", ");
+  const rest = platforms.length - VISIBLE_PLATFORMS;
+  return rest > 0 ? `${visible}, +${rest}` : visible;
+}
+
+function matchesSearch(technique: MitreTechnique, search: string) {
+  if (!search) return true;
+  return [
+    technique.mitre_id,
+    technique.name,
+    technique.description,
+    ...technique.tactics,
+    ...technique.platforms,
+  ]
+    .join(" ")
+    .toLocaleLowerCase("ru-RU")
+    .includes(search);
+}
+
+const headClass = "px-1.5 py-3.5 text-[13px] font-semibold whitespace-nowrap text-ink";
+const cellClass = "px-1.5 py-3 text-sm text-ink";
+
+type Props = {
+  /** mitre_id открытой техники: строка подсвечивается, таблица становится компактной */
+  selectedId?: string | null;
+};
+
+export function MitreTechniques({ selectedId }: Props) {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(PAGE_SIZE);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
   const query = useMitreTechniques();
   const sync = useSyncMitre();
+  const compact = Boolean(selectedId);
+
   const normalizedSearch = search.trim().toLocaleLowerCase("ru-RU");
-  const techniques = (query.data ?? []).filter((technique) =>
-    [
-      technique.mitre_id,
-      technique.name,
-      technique.description,
-      ...technique.tactics,
-      ...technique.platforms,
-    ]
-      .join(" ")
-      .toLocaleLowerCase("ru-RU")
-      .includes(normalizedSearch),
+  const filtered = (query.data ?? []).filter((technique) =>
+    matchesSearch(technique, normalizedSearch),
   );
+  const sorted = sortDirection
+    ? [...filtered].sort(
+        (a, b) =>
+          a.mitre_id.localeCompare(b.mitre_id, "en", { numeric: true }) *
+          (sortDirection === "asc" ? 1 : -1),
+      )
+    : filtered;
+  const totalPages = Math.max(1, Math.ceil(sorted.length / size));
+  const currentPage = Math.min(page, totalPages);
+  const techniques = sorted.slice((currentPage - 1) * size, currentPage * size);
+  const columnCount = compact ? 5 : 6;
 
   return (
-    <section className="space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            MITRE ATT&CK
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Техники и тактики матрицы MITRE ATT&CK
-          </p>
-        </div>
-        <SyncMitreButton sync={sync} />
-      </header>
+    <section className="flex min-w-0 flex-col gap-[18px]">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="relative block min-w-0 flex-1">
+          <Search
+            aria-hidden="true"
+            className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Поиск по ID, названию или описанию"
+            aria-label="Поиск техник MITRE"
+            className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
+          />
+        </label>
+        {!compact && <SyncMitreButton sync={sync} />}
+      </div>
 
       <SyncMitreStatus sync={sync} />
 
-      <label className="relative block max-w-lg">
-        <Search
-          aria-hidden="true"
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-        />
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Поиск по ID, названию, тактике или платформе"
-          aria-label="Поиск техник MITRE"
-          className="h-10 w-full rounded-md border border-gray-300 bg-white pl-9 pr-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-        />
-      </label>
-
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        {query.isError ? (
-          <div className="p-6 text-center">
-            <p className="text-sm text-red-700" role="alert">
-              {getErrorMessage(
-                query.error,
-                "Не удалось загрузить техники MITRE ATT&CK.",
-              )}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => query.refetch()}
-            >
-              Повторить попытку
-            </Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead>ID</TableHead>
-                <TableHead>Техника</TableHead>
-                <TableHead>Тактики</TableHead>
-                <TableHead>Платформы</TableHead>
-                <TableHead>Домен</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Изменена</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {query.isPending ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-24 text-center text-gray-500"
+      {query.isError ? (
+        <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
+          <p className="font-semibold text-ink" role="alert">
+            {getErrorMessage(query.error, "Не удалось загрузить техники MITRE ATT&CK.")}
+          </p>
+          <Button variant="outline" onClick={() => query.refetch()}>
+            Повторить попытку
+          </Button>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
+          <div className="overflow-x-auto">
+            <table className={cn("w-full text-left", compact ? "min-w-[520px]" : "min-w-[900px]")}>
+              <thead className="border-b border-line-muted bg-surface-muted">
+                <tr>
+                  <th
+                    className={cn(headClass, "w-[84px] pl-4")}
+                    aria-sort={
+                      sortDirection === "asc"
+                        ? "ascending"
+                        : sortDirection === "desc"
+                          ? "descending"
+                          : undefined
+                    }
                   >
-                    Загрузка техник...
-                  </TableCell>
-                </TableRow>
-              ) : techniques.length ? (
-                techniques.map((technique) => {
-                  const status = technique.revoked
-                    ? "Отозвана"
-                    : technique.deprecated
-                      ? "Устарела"
-                      : "Активна";
-
-                  return (
-                    <TableRow key={technique.mitre_id}>
-                      <TableCell className="whitespace-nowrap font-mono text-xs font-semibold text-indigo-700">
-                        {technique.mitre_id}
-                      </TableCell>
-                      <TableCell className="min-w-64 whitespace-normal">
-                        <div className="font-medium text-gray-900">
+                    <button
+                      type="button"
+                      onClick={() => setSortDirection((current) => (current === "asc" ? "desc" : "asc"))}
+                      className="flex items-center gap-1.5"
+                    >
+                      ID
+                      <ChevronDown
+                        className={cn(
+                          "size-3.5 transition-transform",
+                          sortDirection ? "text-brand-light" : "text-ink-muted",
+                          sortDirection === "asc" && "rotate-180",
+                        )}
+                      />
+                    </button>
+                  </th>
+                  <th className={cn(headClass, "text-center")}>Название техники</th>
+                  <th className={cn(headClass, "text-center")}>Тактика</th>
+                  <th className={cn(headClass, "text-center")}>Платформы</th>
+                  <th className={cn(headClass, "w-[110px] text-center", compact && "pr-4")}>Статус</th>
+                  {!compact && <th className={cn(headClass, "w-[120px] pr-4 text-center")}>Изменение</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line-muted">
+                {query.isPending ? (
+                  Array.from({ length: 8 }).map((_, rowIndex) => (
+                    <tr key={rowIndex} className="animate-pulse">
+                      {Array.from({ length: columnCount }).map((__, cellIndex) => (
+                        <td className="px-4 py-4" key={cellIndex}>
+                          <div className="h-4 w-16 rounded bg-line-muted" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : techniques.length === 0 ? (
+                  <tr>
+                    <td colSpan={columnCount} className="px-4 py-14 text-center text-sm text-ink-muted">
+                      <FileSearch className="mx-auto mb-2 h-8 w-8 text-line" />
+                      {normalizedSearch ? "По запросу ничего не найдено" : "Техники MITRE не найдены"}
+                    </td>
+                  </tr>
+                ) : (
+                  techniques.map((technique) => {
+                    const isSelected = technique.mitre_id === selectedId;
+                    return (
+                      <tr
+                        key={technique.mitre_id}
+                        aria-selected={isSelected || undefined}
+                        className={cn(
+                          "align-top transition-colors",
+                          isSelected ? "bg-brand-soft/40" : "hover:bg-surface-muted",
+                        )}
+                      >
+                        <td className={cn(cellClass, "pl-4 whitespace-nowrap")}>
+                          <Link
+                            href={routes.mitreTechnique(technique.mitre_id)}
+                            scroll={false}
+                            aria-current={isSelected ? "page" : undefined}
+                            className="font-semibold text-[#1067c2] hover:underline"
+                          >
+                            {technique.mitre_id}
+                          </Link>
+                        </td>
+                        <td className={cn(cellClass, "text-center")}>
                           {technique.name}
                           {technique.is_subtechnique && (
-                            <span className="ml-2 text-xs font-normal text-gray-500">
-                              Подтехника
-                            </span>
+                            <span className="block text-xs text-ink-muted">Подтехника</span>
                           )}
-                        </div>
-                        {technique.description && (
-                          <p className="mt-1 line-clamp-2 text-xs text-gray-500">
-                            {technique.description}
-                          </p>
+                        </td>
+                        <td className={cn(cellClass, "text-center")}>
+                          {technique.tactics.length ? technique.tactics.join(", ") : "—"}
+                        </td>
+                        <td className={cn(cellClass, "text-center")}>
+                          {formatPlatforms(technique.platforms)}
+                        </td>
+                        <td className={cn(cellClass, "text-center", compact && "pr-4")}>
+                          <MitreStatusBadge status={getMitreTechniqueStatus(technique)} />
+                        </td>
+                        {!compact && (
+                          <td className={cn(cellClass, "pr-4 text-center whitespace-nowrap")}>
+                            {formatDate(technique.modified)}
+                          </td>
                         )}
-                      </TableCell>
-                      <TableCell className="min-w-48 whitespace-normal">
-                        {technique.tactics.length
-                          ? technique.tactics.join(", ")
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="min-w-40 whitespace-normal">
-                        {technique.platforms.length
-                          ? technique.platforms.join(", ")
-                          : "—"}
-                      </TableCell>
-                      <TableCell>{technique.domain || "—"}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex rounded-md border px-2 py-1 text-xs font-medium ${
-                            technique.revoked || technique.deprecated
-                              ? "border-amber-200 bg-amber-50 text-amber-800"
-                              : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                          }`}
-                        >
-                          {status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatDate(technique.modified)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-24 text-center text-gray-500"
-                  >
-                    {search
-                      ? "По запросу ничего не найдено"
-                      : "Техники MITRE не найдены"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-      {!query.isPending && !query.isError && (
-        <p className="text-xs text-gray-500">
-          Показано: {techniques.length} из {query.data?.length ?? 0}
-        </p>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <PaginationControl
+            page={currentPage}
+            limit={size}
+            total={sorted.length}
+            onPageChange={setPage}
+            onLimitChange={
+              compact
+                ? undefined
+                : (nextSize) => {
+                    setSize(nextSize);
+                    setPage(1);
+                  }
+            }
+            pageSizeOptions={[15, 30, 50, 100]}
+            isLoading={query.isPending}
+            itemsLabel="техник"
+            className="bg-surface-muted px-4 py-3"
+          />
+        </div>
       )}
     </section>
   );

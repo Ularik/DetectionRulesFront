@@ -4,31 +4,35 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { routes } from "@/shared/config";
+import { cn } from "@/shared/lib/utils";
 import type { Organization } from "@/entities/organization";
 import { useDeleteOrganization } from "../model/useDeleteOrganization";
 
 export function DeleteOrganizationButton({
   organization,
+  variant = "button",
 }: {
   organization: Pick<Organization, "organization_id" | "name">;
+  /** menu — строка выпадающего меню действий в таблице организаций */
+  variant?: "button" | "menu";
 }) {
   const router = useRouter();
   const deleteOrganization = useDeleteOrganization();
 
   const handleDelete = () => {
     const confirmed = window.confirm(
-      `Удалить кампанию "${organization.name}"?`,
+      `Удалить организацию "${organization.name}"?`,
     );
 
     if (!confirmed) return;
 
     deleteOrganization.mutate(organization.organization_id, {
       onSuccess: () => {
-        toast.success("Кампания удалена", { position: "top-center" });
+        toast.success("Организация удалена", { position: "top-center" });
         router.push(routes.organizations);
       },
       onError: () => {
-        toast.error("Не удалось удалить кампанию", {
+        toast.error("Не удалось удалить организацию", {
           position: "top-center",
         });
       },
@@ -40,7 +44,12 @@ export function DeleteOrganizationButton({
       type="button"
       onClick={handleDelete}
       disabled={deleteOrganization.isPending}
-      className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-60"
+      className={cn(
+        "inline-flex items-center gap-2 text-sm text-red-600 transition-colors disabled:opacity-60",
+        variant === "menu"
+          ? "w-full rounded-md px-2.5 py-2 hover:bg-red-50"
+          : "rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 font-semibold hover:bg-red-100",
+      )}
     >
       <Trash2 className="h-4 w-4" />
       {deleteOrganization.isPending ? "Удаление..." : "Удалить"}

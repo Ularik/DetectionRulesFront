@@ -1,270 +1,294 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Search, SquareMinus, SquarePlus } from "lucide-react";
+import { Building2, ChevronsUpDown, EllipsisVertical, Eye, Pencil, Plus, Search } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { PaginationControl } from "@/shared/ui/pagination";
-import { useOrganizations } from "@/entities/organization";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
+import {
+  OrganizationStatusBadge,
+  OrganizationTag,
+  useOrganizations,
+  type Organization,
+} from "@/entities/organization";
+import { DeleteOrganizationButton } from "@/features/organization-delete";
+
+// Вёрстка по фрейму «Organization» макета CERT-KG SIEM (Figma 640:11556).
+// При открытой организации таблица сужается: псевдонимы, агенты и хосты видны в панели справа
 
 const PAGE_SIZE = 10;
 
-const columns = ["Название", "ID", "Псевдонимы", "Агенты", "Хосты", "Статус"];
+type SortKey = "agents" | "hosts" | "status";
+type SortState = { key: SortKey; direction: "asc" | "desc" } | null;
 
-const cellClass = "px-1.5 py-3 text-sm text-ink";
+function getSortValue(organization: Organization, key: SortKey) {
+  switch (key) {
+    case "agents":
+      return organization.agent_names?.length ?? 0;
+    case "hosts":
+      return organization.hostnames?.length ?? 0;
+    case "status":
+      return organization.enabled ? 1 : 0;
+  }
+}
+
+function matchesSearch(organization: Organization, query: string) {
+  if (!query) return true;
+  return [
+    organization.name,
+    organization.organization_id,
+    ...(organization.aliases ?? []),
+    ...(organization.agent_names ?? []),
+    ...(organization.hostnames ?? []),
+  ].some((value) => value?.toLowerCase().includes(query));
+}
+
+const headClass = "px-2 py-3.5 text-center text-[13px] font-semibold whitespace-nowrap text-ink";
+const cellClass = "px-2 py-3 text-center text-sm text-ink";
 
 function Tags({ values }: { values?: string[] }) {
-  if (!values?.length) return <span className="text-ink-muted">—</span>;
+  if (!values?.length) return <span>-</span>;
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap justify-center gap-1">
       {values.map((value) => (
-        <span
-          key={value}
-          className="rounded-md border border-line bg-surface px-1.5 py-0.5 text-[11px] text-ink"
-        >
-          {value}
-        </span>
+        <OrganizationTag key={value}>{value}</OrganizationTag>
       ))}
     </div>
   );
 }
 
-function DetailBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2 px-6 py-4">
-      <h3 className="text-sm font-semibold text-ink">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function DetailRow({
+function SortableHead({
   label,
-  value,
-  mono,
+  sortKey,
+  sort,
+  onSort,
 }: {
   label: string;
-  value: string;
-  mono?: boolean;
+  sortKey: SortKey;
+  sort: SortState;
+  onSort: (key: SortKey) => void;
 }) {
+  const isSorted = sort?.key === sortKey;
   return (
-    <div className="grid grid-cols-[120px_1fr] gap-3 text-sm">
-      <span className="text-xs text-ink-muted">{label}</span>
-      <span className={`break-words text-ink ${mono ? "font-mono text-xs" : ""}`}>
-        {value}
-      </span>
-    </div>
+    <th
+      className={headClass}
+      aria-sort={isSorted ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1.5"
+      >
+        {label}
+        <ChevronsUpDown
+          className={cn("size-3.5", isSorted ? "text-brand-light" : "text-ink-muted")}
+          aria-hidden
+        />
+      </button>
+    </th>
   );
 }
 
-export function OrganizationsList() {
+function RowActions({ organization }: { organization: Organization }) {
+  const itemClass =
+    "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-ink transition-colors hover:bg-surface-muted";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Действия с организацией ${organization.name}`}
+          className="flex size-7 items-center justify-center rounded-md text-ink hover:bg-white"
+        >
+          <EllipsisVertical className="size-5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-48 p-1">
+        <Link
+          href={routes.organization(organization.organization_id)}
+          scroll={false}
+          className={itemClass}
+        >
+          <Eye className="size-4" />
+          Подробнее
+        </Link>
+        <Link href={routes.organizationEdit(organization.organization_id)} className={itemClass}>
+          <Pencil className="size-4" />
+          Редактировать
+        </Link>
+        <DeleteOrganizationButton organization={organization} variant="menu" />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+type Props = {
+  /** organization_id открытой организации: строка подсвечивается, таблица становится компактной */
+  selectedId?: string | null;
+};
+
+export function OrganizationsList({ selectedId }: Props) {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortState>(null);
   const { data, isPending, isError, refetch } = useOrganizations();
+  const compact = Boolean(selectedId);
+
   const query = search.trim().toLowerCase();
-  const items = (data?.items ?? []).filter(
-    (organization) =>
-      !query ||
-      [
-        organization.name,
-        organization.organization_id,
-        ...(organization.aliases ?? []),
-        ...(organization.agent_names ?? []),
-        ...(organization.hostnames ?? []),
-      ].some((value) => value?.toLowerCase().includes(query)),
-  );
-  const pageItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const filtered = (data?.items ?? []).filter((organization) => matchesSearch(organization, query));
+  const sorted = sort
+    ? [...filtered].sort(
+        (a, b) =>
+          (getSortValue(a, sort.key) - getSortValue(b, sort.key)) *
+          (sort.direction === "asc" ? 1 : -1),
+      )
+    : filtered;
+  const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const columnCount = compact ? 5 : 8;
+
+  const toggleSort = (key: SortKey) => {
+    setSort((current) =>
+      current?.key === key && current.direction === "desc"
+        ? { key, direction: "asc" }
+        : { key, direction: "desc" },
+    );
+    setPage(1);
+  };
 
   return (
-    <section className="flex flex-col gap-[18px]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="rounded-xl bg-brand-soft/40 px-3 py-1.5">
-          <h1 className="text-base font-medium text-brand-light">Кампании</h1>
-          <p className="text-xs text-ink-muted">
-            Список кампаний и их настроек
-          </p>
-        </div>
+    <section className="flex min-w-0 flex-col gap-[18px]">
+      <div className="flex flex-wrap items-center gap-x-[53px] gap-y-3">
+        <label className="relative block min-w-0 flex-1">
+          <Search
+            aria-hidden="true"
+            className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Поиск по организациям, алиасам, хостам ..."
+            aria-label="Поиск организаций"
+            className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
+          />
+        </label>
         <Link
           href={routes.organizationNew}
-          className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-light"
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand/10 px-3.5 text-sm whitespace-nowrap text-brand-light transition-colors hover:bg-brand/15"
         >
           <Plus className="size-4" />
-          Добавить кампанию
+          Добавить Организацию
         </Link>
       </div>
 
-      <label className="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-2.5 text-sm text-ink-muted">
-        <Search className="size-5" />
-        <input
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-          placeholder="Поиск по названию, ID, псевдониму, агенту, хосту..."
-          className="w-full bg-transparent text-ink outline-none placeholder:text-ink-muted"
-        />
-      </label>
-
       {isError ? (
         <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
-          <p className="font-semibold text-ink">
-            Не удалось загрузить список кампаний
-          </p>
+          <p className="font-semibold text-ink">Не удалось загрузить список организаций</p>
           <Button variant="outline" onClick={() => refetch()}>
             Повторить попытку
           </Button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[960px] text-left">
+            <table className={cn("w-full", compact ? "min-w-[560px]" : "min-w-[1000px]")}>
               <thead className="border-b border-line-muted bg-surface-muted">
                 <tr>
-                  <th className="w-10 py-3.5 pr-1.5 pl-4">
-                    <span className="sr-only">Открыть</span>
+                  <th className={cn(headClass, "w-12 pl-4 text-left")}>№</th>
+                  <th className={headClass}>Наименование</th>
+                  <th className={headClass}>ID организации</th>
+                  {!compact && <th className={headClass}>Псевдонимы</th>}
+                  {!compact && (
+                    <SortableHead label="Агенты" sortKey="agents" sort={sort} onSort={toggleSort} />
+                  )}
+                  {!compact && (
+                    <SortableHead label="Хосты" sortKey="hosts" sort={sort} onSort={toggleSort} />
+                  )}
+                  <SortableHead label="Статус" sortKey="status" sort={sort} onSort={toggleSort} />
+                  <th className="w-12 pr-4">
+                    <span className="sr-only">Действия</span>
                   </th>
-                  {columns.map((column) => (
-                    <th
-                      key={column}
-                      className="px-1.5 py-3.5 text-[13px] font-semibold whitespace-nowrap text-ink"
-                    >
-                      {column}
-                    </th>
-                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-muted">
                 {isPending ? (
                   Array.from({ length: 5 }).map((_, rowIndex) => (
                     <tr key={rowIndex} className="animate-pulse">
-                      {Array.from({ length: columns.length + 1 }).map(
-                        (__, cellIndex) => (
-                          <td className="px-4 py-4" key={cellIndex}>
-                            <div className="h-4 w-20 rounded bg-line-muted" />
-                          </td>
-                        ),
-                      )}
+                      {Array.from({ length: columnCount }).map((__, cellIndex) => (
+                        <td className="px-4 py-4" key={cellIndex}>
+                          <div className="mx-auto h-4 w-16 rounded bg-line-muted" />
+                        </td>
+                      ))}
                     </tr>
                   ))
                 ) : pageItems.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={columns.length + 1}
-                      className="px-4 py-14 text-center text-sm text-ink-muted"
-                    >
-                      Кампании не найдены
+                    <td colSpan={columnCount} className="px-4 py-14 text-center text-sm text-ink-muted">
+                      <Building2 className="mx-auto mb-2 h-8 w-8 text-line" />
+                      {query ? "По запросу ничего не найдено" : "Организации не найдены"}
                     </td>
                   </tr>
                 ) : (
-                  pageItems.map((organization) => {
-                    const href = routes.organization(
-                      organization.organization_id,
-                    );
-                    const isExpanded = expandedId === organization.organization_id;
+                  pageItems.map((organization, index) => {
+                    const href = routes.organization(organization.organization_id);
+                    const isSelected = organization.organization_id === selectedId;
                     return (
-                      <Fragment key={organization.organization_id}>
-                        <tr
-                          onClick={() => router.push(href)}
-                          className="cursor-pointer transition-colors hover:bg-surface-muted"
-                        >
-                          <td className="py-3 pr-1.5 pl-4">
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setExpandedId(
-                                  isExpanded ? null : organization.organization_id,
-                                );
-                              }}
-                              aria-expanded={isExpanded}
-                              aria-label={`${isExpanded ? "Свернуть" : "Развернуть"} кампанию ${organization.name}`}
-                              className="flex justify-center text-[#595555] hover:text-brand-light"
-                            >
-                              {isExpanded ? (
-                                <SquareMinus className="size-[18px]" />
-                              ) : (
-                                <SquarePlus className="size-[18px]" />
-                              )}
-                            </button>
-                          </td>
-                          <td className={`${cellClass} font-medium`}>
+                      <tr
+                        key={organization.organization_id}
+                        aria-selected={isSelected || undefined}
+                        onClick={() => router.push(href, { scroll: false })}
+                        className={cn(
+                          "cursor-pointer transition-colors",
+                          isSelected ? "bg-brand-soft/40" : "hover:bg-white",
+                        )}
+                      >
+                        <td className={cn(cellClass, "pl-4 text-left font-semibold text-black")}>
+                          {(page - 1) * PAGE_SIZE + index + 1}
+                        </td>
+                        <td className={cn(cellClass, "max-w-[200px] break-words")}>
+                          <Link
+                            href={href}
+                            scroll={false}
+                            aria-current={isSelected ? "page" : undefined}
+                            onClick={(event) => event.stopPropagation()}
+                            className="hover:underline"
+                          >
                             {organization.name}
-                          </td>
-                          <td className={`${cellClass} font-mono text-xs`}>
-                            {organization.organization_id}
-                          </td>
+                          </Link>
+                        </td>
+                        <td className={cn(cellClass, "whitespace-nowrap")}>
+                          {organization.organization_id}
+                        </td>
+                        {!compact && (
                           <td className={cellClass}>
                             <Tags values={organization.aliases} />
                           </td>
+                        )}
+                        {!compact && (
                           <td className={cellClass}>
                             <Tags values={organization.agent_names} />
                           </td>
+                        )}
+                        {!compact && (
                           <td className={cellClass}>
                             <Tags values={organization.hostnames} />
                           </td>
-                          <td className={`${cellClass} pr-4`}>
-                            <span className="flex items-center gap-2 whitespace-nowrap">
-                              <span
-                                className={`size-2 shrink-0 rounded-full ${
-                                  organization.enabled
-                                    ? "bg-green-500"
-                                    : "bg-red-600"
-                                }`}
-                              />
-                              {organization.enabled ? "Активна" : "Отключена"}
-                            </span>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr className="bg-white">
-                            <td colSpan={columns.length + 1} className="p-0">
-                              <div className="grid divide-x divide-line-muted md:grid-cols-3">
-                                <DetailBlock title="Основные данные">
-                                  <DetailRow label="Кампания" value={organization.name} />
-                                  <DetailRow label="ID" value={organization.organization_id} mono />
-                                  <DetailRow
-                                    label="Статус"
-                                    value={organization.enabled ? "Активна" : "Отключена"}
-                                  />
-                                </DetailBlock>
-                                <DetailBlock title="Связанные сущности">
-                                  <DetailRow
-                                    label="Агенты"
-                                    value={organization.agent_names?.join(", ") || "—"}
-                                    mono
-                                  />
-                                  <DetailRow
-                                    label="Хосты"
-                                    value={organization.hostnames?.join(", ") || "—"}
-                                    mono
-                                  />
-                                </DetailBlock>
-                                <DetailBlock title="Сводка">
-                                  <DetailRow label="Псевдонимов" value={String(organization.aliases?.length ?? 0)} />
-                                  <DetailRow label="Агентов" value={String(organization.agent_ids?.length ?? 0)} />
-                                  <Link
-                                    href={href}
-                                    className="mt-2 inline-block text-sm text-brand-light hover:underline"
-                                  >
-                                    Открыть кампанию
-                                  </Link>
-                                </DetailBlock>
-                              </div>
-                            </td>
-                          </tr>
                         )}
-                      </Fragment>
+                        <td className={cellClass}>
+                          <OrganizationStatusBadge enabled={organization.enabled} />
+                        </td>
+                        <td className="py-3 pr-4" onClick={(event) => event.stopPropagation()}>
+                          <RowActions organization={organization} />
+                        </td>
+                      </tr>
                     );
                   })
                 )}
@@ -275,11 +299,11 @@ export function OrganizationsList() {
           <PaginationControl
             page={page}
             limit={PAGE_SIZE}
-            total={items.length}
+            total={sorted.length}
             onPageChange={setPage}
             isLoading={isPending}
-            itemsLabel="кампаний"
-            className="bg-surface-muted px-4 py-3"
+            itemsLabel="организаций"
+            className="border-t border-line-muted bg-surface-muted px-4 py-3"
           />
         </div>
       )}

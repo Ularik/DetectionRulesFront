@@ -5,7 +5,7 @@ export function IocSeverityBadge({ severity, className }: { severity: string; cl
   return (
     <span
       className={cn(
-        "inline-flex rounded-[10px] border px-2.5 py-0.5 text-[13px] font-semibold",
+        "inline-flex rounded-[10px] px-2.5 py-0.5 text-[13px] font-medium",
         IOC_SEVERITY_STYLES[severity.toLowerCase()] ?? IOC_SEVERITY_FALLBACK_STYLE,
         className,
       )}

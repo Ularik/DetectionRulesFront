@@ -3,6 +3,7 @@ import {
   Crosshair,
   Database,
   House,
+  Layers,
   type LucideIcon,
   Radar,
   Settings,
@@ -58,6 +59,11 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     label: "MITRE ATT&CK",
     href: routes.mitre,
     icon: Crosshair,
+  },
+  {
+    label: "Источники",
+    href: routes.sources,
+    icon: Layers,
   },
 ];
 

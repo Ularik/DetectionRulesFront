@@ -294,6 +294,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
 | `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
 | `mitre-technique` | `useMitreTechniques`, `useMitreTechnique` (`mitreKeys`)          | `MitreTechnique`, `MitreSyncResponse`, `MitreType`; `getMitreTechniqueStatus`, `MitreStatusBadge` | нет (массив)     |
+| `source`          | `useSources`, `useSource`, `useSourceHealth`, `useSourceSampleEvents` (`sourceKeys`) | `SourceType`, `SourceCreateUpdateType`, `SourceHealthType`, `SourceSampleEventsType` | нет (`{items}`, фильтры на клиенте) |
 | `attack-type`     | `useAttackTypes`, `useAttackGroups` (`attackTypeKeys`)           | `AttackTypes`, `AttackGroupsResponseSchema`, `HuntingIpIncidentSchema` | `page/size`; total = `summary.incident_count` |
 
 Связи между сущностями оформлены через `@x`:
@@ -343,6 +344,13 @@ Steiger знает только стандартное имя слоя `pages`, 
 | POST   | `/organizations/`                              | создать                                   | features/organization-upsert |
 | PUT    | `/organizations/{id}`                          | обновить                                  | features/organization-upsert |
 | DELETE | `/organizations/{id}`                          | удалить                                   | features/organization-delete |
+| GET    | `/sources/`                                    | список источников                         | entities/source       |
+| GET    | `/sources/{id}`                                | источник                                  | entities/source       |
+| GET    | `/sources/{id}/health`                         | состояние: events_5m, eps_5m, lag, status (опрос раз в 30 с) | entities/source |
+| GET    | `/sources/{id}/sample-events?size=`            | примеры raw-событий + `detected_fields`   | entities/source       |
+| POST   | `/sources/`                                    | создать                                   | features/source-upsert |
+| PUT    | `/sources/{id}`                                | обновить                                  | features/source-upsert |
+| DELETE | `/sources/{id}`                                | удалить                                   | features/source-delete |
 | GET    | `/audits/`                                     | журнал аудита                             | entities/audit        |
 | GET    | `/audits/{id}`                                 | запись аудита (с правилом)                | entities/audit        |
 | GET    | `/mitre/mitre`                                 | техники MITRE ATT&CK                      | entities/mitre-technique |
@@ -390,6 +398,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/admin/mitre`, `/[mitreId]`                 | `views/mitre`, `views/mitre-detail` | «MITRE ATT&CK»; таблица живёт в `app/(dashboard)/admin/mitre/layout.tsx` → `MitreLayout` (поиск и страница не сбрасываются), карточка техники открывается справа, таблица при этом компактная; id декодируется в route-файле |
 | `/admin/events`, `/[index_name]/[event_id]`  | `views/event*`, `views/event-modal` | «Raw data»; карточка события из списка открывается модалкой (`@modal/(.)events/...`); параметры декодируются в route-файле |
 | `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Организации» (раньше «Кампании»); как в MITRE: таблица в `app/(dashboard)/admin/organizations/layout.tsx` → `OrganizationsLayout`, карточка организации открывается справа по клику на строку; `/new` и `/[id]/edit` рендерятся без таблицы; id декодируется в route-файле |
+| `/admin/sources`, `/new`, `/[source_id]`, `/[source_id]/edit` | `views/source*` | «Источники» (макет `public/images/sources.jpeg`); таблица и фильтры в `app/(dashboard)/admin/sources/layout.tsx` → `SourcesLayout` → `widgets/sources/list`, карточка (`widgets/sources/details`) открывается справа; «Синхронизировать» — перезапрос `sourceKeys.all` (эндпоинта синхронизации нет), «Качество данных» — заполненность `detected_fields` по выборке `sample-events`; удаление — на странице редактирования; id декодируется в route-файле |
 | `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | «Администрирование» → правила обнаружения |
 | `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | «Администрирование» → правила корреляции; `/[id]` — форма редактирования |
 | `/admin/supers`, `/new`, `/[slug]`, `/[slug]/edit` | `views/suppression-rule*` | «Администрирование» → правила подавления |
@@ -469,7 +478,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 8. **Защита маршрутов только на клиенте** (раздел 6). Для server-side проверок — `proxy.ts`.
 9. **Тестов нет.**
 10. **«Главная» — заглушка**, макета для неё пока нет.
-11. **«Источники» из макета** не реализованы: отдельного API источников нет (есть только `source_context` в событиях), пункт убран из меню.
+11. **«Источники»:** у backend нет эндпоинтов синхронизации и качества данных, а в ответах нет `created_at`/`updated_at` (в карточке «—»). Схемы ответов `/sources` в OpenAPI не описаны — типы сняты с реальных ответов. `widgets/sources` — группа слайсов (`list`, `details`), чтобы слой `widgets` не превышал лимит Steiger в 20 слайсов.
 12. **Kibana и статус в карточке события:** в макете есть «Открыть в Kibana» и «Статус», но URL Kibana не настроен, а статуса у событий на backend нет — в UI их нет.
 13. **Период в «Сценариях»:** в макете есть выбор дат, но `GET /scenarios/` не принимает `from_time/to_time` — в UI его нет, пока backend не добавит параметры.
 

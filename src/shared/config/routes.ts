@@ -43,6 +43,11 @@ export const routes = {
   events: "/admin/events",
   event: (indexName: string, eventId: string) =>
     `/admin/events/${encodeURIComponent(indexName)}/${encodeURIComponent(eventId)}`,
+  sources: "/admin/sources",
+  sourceNew: "/admin/sources/new",
+  source: (sourceId: string) => `/admin/sources/${encodeURIComponent(sourceId)}`,
+  sourceEdit: (sourceId: string) =>
+    `/admin/sources/${encodeURIComponent(sourceId)}/edit`,
   mitre: "/admin/mitre",
   mitreTechnique: (mitreId: string) =>
     `/admin/mitre/${encodeURIComponent(mitreId)}`,

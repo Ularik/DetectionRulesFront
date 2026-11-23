@@ -14,6 +14,34 @@ interface CopyButtonProps {
   className?: string;
 }
 
+// navigator.clipboard есть только в secure context (HTTPS/localhost); по обычному http
+// он undefined — тогда копируем через скрытый textarea и execCommand("copy")
+function copyToClipboard(text: string): Promise<void> {
+  if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+
+  return new Promise((resolve, reject) => {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "0";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      if (document.execCommand("copy")) resolve();
+      else reject(new Error("execCommand copy failed"));
+    } catch (error) {
+      reject(error);
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  });
+}
+
 // Иконка «копировать»: копирует value в буфер обмена, на 2 с показывает галочку
 export function CopyButton({
   value,
@@ -30,7 +58,7 @@ export function CopyButton({
   }, [copied]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(value).then(
+    copyToClipboard(value).then(
       () => {
         setCopied(true);
         toast.success(successMessage);

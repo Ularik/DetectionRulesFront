@@ -29,6 +29,14 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? value || "—" : dateFormatter.format(date);
 }
 
+// Текст для буфера обмена: значение IOC, тип и источник (как в колонке «Источник»)
+function formatIocForCopy(item: IocType) {
+  const source = [item.source, item.source_org].filter(Boolean).join(" · ");
+  return [`IOC: ${item.value}`, `Тип: ${item.ioc_type}`, `Источник: ${source || "—"}`].join(
+    "\n",
+  );
+}
+
 const headClass = "px-2 py-3 text-[13px] font-semibold whitespace-nowrap text-ink";
 const cellClass = "px-2 py-2 text-sm font-normal text-ink";
 
@@ -92,8 +100,8 @@ export function IocTable({ items, isLoading = false, limit = 10, selectedId }: I
                         {item.value}
                       </Link>
                       <CopyButton
-                        value={item.value}
-                        label={`Копировать ${item.ioc_type}`}
+                        value={formatIocForCopy(item)}
+                        label="Копировать IOC, тип и источник"
                         successMessage="IOC скопирован"
                       />
                     </div>

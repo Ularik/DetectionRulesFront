@@ -6,5 +6,6 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <IocDetailPage iocId={id} />;
+  // params приходят URL-кодированными, а id дальше снова кодируется — декодируем
+  return <IocDetailPage iocId={decodeURIComponent(id)} />;
 }

@@ -6,6 +6,13 @@ export async function fetchMitreTechniques(): Promise<MitreTechnique[]> {
   return response.data;
 }
 
+export async function fetchMitreTechnique(mitreId: string): Promise<MitreTechnique> {
+  const response = await axiosApi.get<MitreTechnique>(
+    `/mitre/${encodeURIComponent(mitreId)}`,
+  );
+  return response.data;
+}
+
 export async function syncMitre(): Promise<MitreSyncResponse> {
   const response = await axiosApi.post<MitreSyncResponse>("/mitre/sync-mitre");
   return response.data;

@@ -1,5 +1,5 @@
-import { CreateCorrelationRuleForm } from "@/features/correlation-rule-upsert";
+import { CorrelationRuleCreate } from "@/widgets/correlation-rules/details";
 
-export function CorrelationRuleCreatePage() {
-  return <CreateCorrelationRuleForm />;
+export function CorrelationRuleCreatePage({ copyFrom }: { copyFrom?: string }) {
+  return <CorrelationRuleCreate copyFrom={copyFrom} />;
 }

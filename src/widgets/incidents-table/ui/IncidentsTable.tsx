@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Eye, EyeOff, CircleDashed, ShieldAlert, SquarePlus } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, CircleDashed, ShieldAlert } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
+  ANALYST_STATUSES,
   INCIDENT_SEVERITY_COLORS,
+  INCIDENT_STATUS_LABELS,
+  isAnalystStatus,
   useDailyIncidentCount,
   useIncidents,
   type IncidentLite,
@@ -46,7 +48,8 @@ type SortKey =
   | "source_ip"
   | "destination_ip"
   | "end_time"
-  | "start_time";
+  | "start_time"
+  | "analyst_status";
 
 const columns: Array<{ key: SortKey; label: string; width: string }> = [
   { key: "incident_id", label: "ID инцидента", width: "w-[164px]" },
@@ -56,10 +59,22 @@ const columns: Array<{ key: SortKey; label: string; width: string }> = [
   { key: "destination_ip", label: "Destination IP", width: "w-[144px]" },
   { key: "end_time", label: "Время", width: "w-[184px]" },
   { key: "start_time", label: "Начало инцидента", width: "w-[184px]" },
+  { key: "analyst_status", label: "Статус", width: "w-[168px]" },
 ];
+
+function getStatusLabel(status: string | null | undefined) {
+  if (!status) return "—";
+  return isAnalystStatus(status) ? INCIDENT_STATUS_LABELS[status] : status;
+}
 
 function getSortValue(incident: IncidentLite, key: SortKey) {
   if (key === "severity") return SEVERITY_RANK[incident.severity] ?? 0;
+  // Статусы сортируются по порядку жизненного цикла: new → … → closed
+  if (key === "analyst_status") {
+    return isAnalystStatus(incident.analyst_status)
+      ? ANALYST_STATUSES.indexOf(incident.analyst_status)
+      : ANALYST_STATUSES.length;
+  }
   if (key === "end_time" || key === "start_time") {
     return incident[key] ? new Date(incident[key]).getTime() : 0;
   }
@@ -85,8 +100,14 @@ function sortIncidents(
 
 const cellClass = "px-1.5 py-3 text-sm text-ink";
 
+// Сначала таблица всех инцидентов этого source_ip, из неё — детальная карточка.
+// Без source_ip группировать нечего, поэтому сразу детальная карточка
+const getIncidentHref = (incident: IncidentLite) =>
+  incident.source_ip
+    ? routes.sourceIpIncidents(incident.source_ip)
+    : routes.incident(incident.incident_id);
+
 export function IncidentsTable() {
-  const router = useRouter();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<IncidentFilterParams>({});
   const [isChartVisible, setIsChartVisible] = useState(true);
@@ -161,7 +182,7 @@ export function IncidentsTable() {
       ) : (
         <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1180px] text-left">
+            <table className="w-full min-w-[1340px] text-left">
               <thead className="border-b border-line-muted bg-surface-muted">
                 <tr>
                   <th className="w-10 py-3.5 pr-1.5 pl-4">
@@ -227,17 +248,15 @@ export function IncidentsTable() {
                     return (
                       <tr
                         key={incident.incident_id}
-                        onClick={() => router.push(routes.incident(incident.incident_id))}
-                        className="cursor-pointer transition-colors hover:bg-surface-muted"
+                        className="transition-colors hover:bg-surface-muted"
                       >
                         <td className="py-3 pr-1.5 pl-4">
                           <Link
-                            href={routes.incident(incident.incident_id)}
-                            onClick={(event) => event.stopPropagation()}
+                            href={getIncidentHref(incident)}
                             aria-label={`Открыть инцидент ${incident.incident_id}`}
                             className="flex justify-center text-[#595555] hover:text-brand-light"
                           >
-                            <SquarePlus className="size-[18px]" />
+                            <ChevronRight className="size-[18px]" />
                           </Link>
                         </td>
                         <td className={cn(cellClass, "max-w-[164px] truncate")} title={incident.incident_id}>
@@ -263,8 +282,11 @@ export function IncidentsTable() {
                         <td className={cn(cellClass, "whitespace-nowrap")}>
                           {formatDate(incident.end_time)}
                         </td>
-                        <td className={cn(cellClass, "whitespace-nowrap pr-4")}>
+                        <td className={cn(cellClass, "whitespace-nowrap")}>
                           {formatDate(incident.start_time)}
+                        </td>
+                        <td className={cn(cellClass, "whitespace-nowrap pr-4")}>
+                          {getStatusLabel(incident.analyst_status)}
                         </td>
                       </tr>
                     );

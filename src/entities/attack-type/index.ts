@@ -1,3 +1,13 @@
-export type { AttackTypes, AttackApiResponseTypes } from "./model/types";
-export { fetchAttackTypes } from "./api/attackTypeApi";
-export { attackTypeKeys, useAttackTypes } from "./api/queries";
+export type {
+  AttackTypes,
+  AttackApiResponseTypes,
+  AttackGroupsParams,
+  AttackGroupsResponseSchema,
+  AttackGroupSchema,
+  AttackGroupDestinationSchema,
+  HuntingIpSummarySchema,
+  HuntingIpDestinationSchema,
+  HuntingIpIncidentSchema,
+} from "./model/types";
+export { fetchAttackTypes, fetchAttackGroups } from "./api/attackTypeApi";
+export { attackTypeKeys, useAttackTypes, useAttackGroups } from "./api/queries";

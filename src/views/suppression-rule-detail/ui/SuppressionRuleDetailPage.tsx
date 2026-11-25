@@ -1,5 +1,6 @@
-import { SuppressionRuleDetails } from "@/widgets/suppression-rule-details";
+import { SuppressionRuleDetails } from "@/widgets/suppression-rules/details";
 
-export function SuppressionRuleDetailPage({ suppressionId }: { suppressionId: string }) {
-  return <SuppressionRuleDetails suppressionId={suppressionId} />;
+// ?tab=test — карточка сразу на вкладке «Тестирование»
+export function SuppressionRuleDetailPage({ suppressionId, tab }: { suppressionId: string; tab?: string }) {
+  return <SuppressionRuleDetails suppressionId={suppressionId} initialTab={tab === "test" ? "test" : undefined} />;
 }

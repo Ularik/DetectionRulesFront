@@ -155,8 +155,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 │  ├─ (auth)/login, (auth)/auth  # → @/views/login, @/views/register
 │  └─ (dashboard)/
 │     ├─ layout.tsx              # → @/app/layouts (DashboardLayout)
-│     ├─ admin/page.tsx          # redirect(routes.organizations)
-│     ├─ admin/hunters/layout.tsx  # → @/widgets/hunters-tabs
+│     ├─ admin/page.tsx          # → @/views/home («Главная»)
+│     ├─ admin/(administration)/ # audit (route group без своего layout)
 │     └─ admin/**/page.tsx       # → @/views/*
 ├─ steiger.config.ts             # конфиг линтера FSD
 └─ src/
@@ -166,27 +166,28 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ layouts/                # DashboardLayout (RoleGuard + Sidebar + main)
    │  └─ styles/globals.css
    ├─ views/
-   │  ├─ login/  register/  analyst-home/  viewer-home/  test-rule/
+   │  ├─ login/  register/  home/  analyst-home/  viewer-home/  test-rule/
    │  ├─ organizations/  organization-detail/  organization-create/  organization-edit/
    │  ├─ rules/  rule-detail/  rule-create/
    │  ├─ correlation-rules/  correlation-rule-detail/  correlation-rule-create/
-   │  ├─ suppression-rules/  suppression-rule-detail/  suppression-rule-create/  suppression-rule-edit/
+   │  ├─ suppression-rules/  suppression-rule-detail/  suppression-rule-create/
    │  ├─ ioc/  ioc-detail/  ioc-create/
-   │  ├─ incidents/  incident-detail/  scenarios/  scenario-detail/  events/  event-detail/
-   │  └─ audit/  audit-detail/  mitre/
+   │  ├─ incidents/  incident-detail/  incident-modal/  source-ip-incidents/  source-ip-incidents-modal/
+│  ├─ scenarios/  scenario-detail/  events/  event-detail/
+   │  └─ audit/  audit-detail/  mitre/  mitre-detail/
    ├─ widgets/
-   │  ├─ sidebar/  hunters-tabs/
-   │  ├─ rules-list/  rule-details/  correlation-rules-list/
-   │  ├─ suppression-rules-list/  suppression-rule-details/
+   │  ├─ sidebar/
+   │  ├─ rules/ (группа: list, details)  correlation-rules/ (группа: list, details)
+   │  ├─ suppression-rules/ (группа: list, details)
    │  ├─ ioc-list/  ioc-details/  audit-list/  audit-details/
    │  ├─ incidents-table/  incident-details/  scenarios-list/  scenario-details/
    │  ├─ events-table/  event-details/
-   │  └─ organizations-list/  organization-details/  mitre-techniques/
+   │  └─ organizations-list/  organization-details/  mitre-techniques/ (список + карточка техники)
    ├─ features/
    │  ├─ auth-login/  auth-logout/  auth-register/
-   │  ├─ rule-upsert/  rule-delete/  rule-toggle-status/
-   │  ├─ correlation-rule-upsert/  suppression-rule-upsert/
-   │  ├─ ioc-create/  ioc-edit/
+   │  ├─ rule-upsert/ (RuleForm + тест правила)  rule-delete/ (DeleteRulesDialog)  rule-toggle-status/
+   │  ├─ correlation-rule/ (группа: upsert — форма + тест, delete, toggle-status)  suppression-rule/ (группа: upsert — форма + тест, delete, toggle-status)
+   │  ├─ ioc-create/  ioc-mark-viewed/
    │  ├─ incident-change-status/  incidents-filter/  scenarios-filter/
    │  ├─ organization-upsert/  organization-delete/
    │  └─ mitre-sync/
@@ -197,7 +198,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    └─ shared/
       ├─ api/                    # axiosApi + interceptor 401
       ├─ config/                 # env (apiURL), routes, roleDashboardPaths, UserRole, theme
-      ├─ ui/                     # shadcn, pagination, form (ArrayField, inputClass…), detail-fields, table-styles
+      ├─ ui/                     # shadcn, pagination, form (ArrayField, inputClass…), detail-fields, table-styles,
+      │                          # filter-bar (поиск, «Добавить фильтр», чипы — для инцидентов и сценариев)
       └─ lib/                    # utils (cn), errors (getErrorMessage)
 ```
 
@@ -214,7 +216,8 @@ entities/rule/
 │  └─ queries.ts        # useRules, useRule, useSeverityHints
 ├─ config/severity.ts   # RULE_SEVERITY_STYLES
 ├─ model/types.ts       # RuleType, RuleApiResponse, QueryFiltersType
-├─ ui/                  # RuleCard (слот actions), RuleDetailTable (callback-driven)
+├─ config/conditions.ts # операторы условий, condition_mode, поля события (схема Event)
+├─ ui/                  # RuleDetailTable (callback-driven, используется в аудите)
 ├─ @x/audit.ts          # типы для entities/audit
 └─ index.ts             # public API
 ```
@@ -282,17 +285,18 @@ Steiger знает только стандартное имя слоя `pages`, 
 | Entity            | Query-хуки (`*Keys`)                                             | Ключевые типы                                                 | Пагинация        |
 | ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------- | ---------------- |
 | `user`            | `useMe` (`userKeys`)                                             | `UserType`, `UserRole`, `UserLoginType`, `UsersAuthType`      | —                |
-| `rule`            | `useRules`, `useRule`, `useSeverityHints` (`ruleKeys`)           | `RuleType`, `RuleCreateUpdateType`, `QueryFiltersType`        | `limit/offset` → `{total, has_next, items}` |
-| `correlation-rule`| `useCorrelationRules`, `useCorrelationRule`, `useSequenceOptions`, `useGroupByFields` (`correlationRuleKeys`) | `CorrelationRuleType`, `SequenceValueType`, `CorrelationGroupByFieldsType` | нет (массив) |
-| `suppression-rule`| `useSuppressionRules`, `useSuppressionRule`, `useSuppressionMatchFields` (`suppressionRuleKeys`) | `SuppressionRuleTypes`, `SuppressionRuleCreateType`, `MatchFieldResponseType` | нет (массив) |
-| `ioc`             | `useIocs`, `useIoc` (`iocKeys`)                                  | `IocType`, `IocCreateType`, `IocPatchType`                    | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
+| `rule`            | `useRules`, `useAllRules`, `useRule`, `useSeverityHints`, `useDetectionCategories`, `useDetectionScopes` (`ruleKeys`) | `RuleType`, `RuleCondition`, `RuleCreateUpdateType`, `DetectionCategory`, `DetectionScope`, `RuleTestResponse` | `limit/offset` (limit < 20) → `{total, has_next, items}`; раздел грузит все правила пачками (`fetchAllRules`) |
+| `correlation-rule`| `useCorrelationRules`, `useCorrelationRule`, `useSequenceOptions`, `useGroupByFields` (`correlationRuleKeys`) | `CorrelationRuleType`, `CorrelationRuleRequestCreateUpdateType`, `CorrelationSeverity`, `CorrelationRuleTestRequest/Response` | нет (массив) |
+| `suppression-rule`| `useSuppressionRules`, `useSuppressionRule`, `useSuppressionMatchFields` (`suppressionRuleKeys`) | `SuppressionRuleType`, `SuppressionRuleCreateType`, `SuppressionRuleUpdateType`, `SuppressionRuleTestRequest/Response`; `getExclusionType`, `summarizeMatch` | нет (массив, фильтры и пагинация на клиенте) |
+| `ioc`             | `useIocs`, `useIoc` (`iocKeys`)                                  | `IocType`, `IocCreateType`, `IocPatchResponse`                | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
 | `incident`        | `useIncidents`, `useIncident`, `useIncidentEvents` (`incidentKeys`) | `IncidentSchema`, `Incident`, `IncidentParams`, `ANALYST_STATUS` | `page/size` |
 | `scenario`        | `useScenarios`, `useScenario`, `useScenarioEvents` (`scenarioKeys`) | `SecurityScenario`, `ScenarioAggregateSchema`, `ScenarioQueryParams` | `page/size` |
 | `event`           | `useEvents`, `useEvent` (`eventKeys`)                            | `WazuhEvent`, `WazuhEventApiResponse`, `RawEventsQueryParamsSchema` | `page/size` |
 | `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
 | `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
-| `mitre-technique` | `useMitreTechniques` (`mitreKeys`)                               | `MitreTechnique`, `MitreSyncResponse`, `MitreType`            | нет (массив)     |
-| `attack-type`     | `useAttackTypes` (`attackTypeKeys`)                              | `AttackTypes`                                                 | —                |
+| `mitre-technique` | `useMitreTechniques`, `useMitreTechnique` (`mitreKeys`)          | `MitreTechnique`, `MitreSyncResponse`, `MitreType`; `getMitreTechniqueStatus`, `MitreStatusBadge` | нет (массив)     |
+| `source`          | `useSources`, `useSource`, `useSourceHealth`, `useSourceSampleEvents` (`sourceKeys`) | `SourceType`, `SourceCreateUpdateType`, `SourceHealthType`, `SourceSampleEventsType` | нет (`{items}`, фильтры на клиенте) |
+| `attack-type`     | `useAttackTypes`, `useAttackGroups` (`attackTypeKeys`)           | `AttackTypes`, `AttackGroupsResponseSchema`, `HuntingIpIncidentSchema` | `page/size`; total = `summary.incident_count` |
 
 Связи между сущностями оформлены через `@x`:
 `audit → rule, user`; `scenario → incident, event, ioc, mitre-technique`; `incident → event`.
@@ -308,24 +312,35 @@ Steiger знает только стандартное имя слоя `pages`, 
 | GET    | `/rules/`                                       | список правил обнаружения (фильтры)       | entities/rule         |
 | GET    | `/rules/{rule_id}`                              | правило                                   | entities/rule         |
 | GET    | `/rules/enums/severity-hints`                   | справочник severity                       | entities/rule         |
-| POST   | `/rules/admin/`                                 | создать правило                           | features/rule-upsert  |
-| PUT    | `/rules/admin/{rule_id}`                        | обновить правило                          | features/rule-upsert  |
+| GET    | `/rules/enums/detection-categories`             | категории + значения по умолчанию         | entities/rule         |
+| GET    | `/rules/enums/detection-scopes`                 | scope + `default_fields`                  | entities/rule         |
+| POST   | `/rules/admin/test`                             | `{rule, event}` → `{matched, rule_id}`    | features/rule-upsert  |
+| POST   | `/rules/admin/`, `/rules/analyst/`              | создать правило (путь по роли из `useMe`, 400 — id занят) | features/rule-upsert  |
+| PUT    | `/rules/admin/{rule_id}`, `/rules/analyst/{rule_id}` | обновить правило (путь по роли)      | features/rule-upsert  |
 | PATCH  | `/rules/admin/{rule_id}`                        | вкл/выкл (`{enabled}`)                    | features/rule-toggle-status |
 | DELETE | `/rules/admin/{rule_id}`                        | удалить правило                           | features/rule-delete  |
 | GET    | `/correlation-rules/`                          | список правил корреляции                  | entities/correlation-rule |
 | GET    | `/correlation-rules/{id}`                      | правило корреляции                        | entities/correlation-rule |
-| GET    | `/correlation-rules/sequence`                  | справочники sequence / group-by полей     | entities/correlation-rule |
-| POST   | `/correlation-rules/`                          | создать                                   | features/correlation-rule-upsert |
-| PUT    | `/correlation-rules/{id}`                      | обновить                                  | features/correlation-rule-upsert |
+| GET    | `/correlation-rules/sequence`                  | справочник шагов последовательности (`[{value,label}]`) | entities/correlation-rule |
+| GET    | `/correlation-rules/group-by-fields`           | поля группировки (`{items, count}`)       | entities/correlation-rule |
+| GET    | `/correlation-rules/scenario-types`            | справочник `scenario_type` (`{items:[{value,label}], count}`); в форме — всплывающий `SearchSelect` с поиском, можно ввести своё значение | entities/correlation-rule |
+| POST   | `/correlation-rules/`                          | создать (201, схема ответа не описана)    | features/correlation-rule/upsert |
+| PUT    | `/correlation-rules/{id}`                      | обновить                                  | features/correlation-rule/upsert |
+| POST   | `/correlation-rules/test`                      | `{rule, incidents}` → `{matched, scenario_type, severity, confidence, recommendations}` | features/correlation-rule/upsert |
+| PATCH  | `/correlation-rules/{id}/status`               | вкл/выкл (`{enabled}`)                    | features/correlation-rule/toggle-status |
+| DELETE | `/correlation-rules/{id}`                      | удалить (`{correlation_id, deleted}`)     | features/correlation-rule/delete |
 | GET    | `/supersession-rules/`                         | список правил подавления                  | entities/suppression-rule |
 | GET    | `/supersession-rules/{id}`                     | правило подавления                        | entities/suppression-rule |
 | GET    | `/supersession-rules/suppression-match-fields` | метаданные полей match                    | entities/suppression-rule |
-| POST   | `/supersession-rules/`                         | создать                                   | features/suppression-rule-upsert |
-| PUT    | `/supersession-rules/{id}`                     | обновить                                  | features/suppression-rule-upsert |
+| POST   | `/supersession-rules/`                         | создать (`{success, rule}`, id выдаёт backend) | features/suppression-rule/upsert |
+| PUT    | `/supersession-rules/{id}`                     | обновить: поля action плоско; severity, action.attack_type и enabled не меняются | features/suppression-rule/upsert |
+| POST   | `/supersession-rules/test`                     | `{rule, incident}` → `{matched, mode, reason, result}` | features/suppression-rule/upsert |
+| PATCH  | `/supersession-rules/{id}/status`              | вкл/выкл (`{enabled}`)                    | features/suppression-rule/toggle-status |
+| DELETE | `/supersession-rules/{id}`                     | удалить (`{success, suppression_id}`)     | features/suppression-rule/delete |
 | GET    | `/ioc/`                                        | список IoC                                | entities/ioc          |
 | GET    | `/ioc/{id}`                                    | IoC                                       | entities/ioc          |
 | POST   | `/ioc/`                                        | создать                                   | features/ioc-create   |
-| PATCH  | `/ioc/{id}`                                    | изменить                                  | features/ioc-edit     |
+| PATCH  | `/ioc/{id}` (без тела)                         | отметить просмотренным                    | features/ioc-mark-viewed |
 | GET    | `/incidents`                                   | список инцидентов (`IncidentParams`)      | entities/incident     |
 | GET    | `/incidents/{id}`                              | инцидент                                  | entities/incident     |
 | GET    | `/incidents/{id}/events`                       | события инцидента (page/size)             | entities/incident     |
@@ -341,16 +356,33 @@ Steiger знает только стандартное имя слоя `pages`, 
 | POST   | `/organizations/`                              | создать                                   | features/organization-upsert |
 | PUT    | `/organizations/{id}`                          | обновить                                  | features/organization-upsert |
 | DELETE | `/organizations/{id}`                          | удалить                                   | features/organization-delete |
+| GET    | `/sources/`                                    | список источников                         | entities/source       |
+| GET    | `/sources/{id}`                                | источник                                  | entities/source       |
+| GET    | `/sources/{id}/health`                         | состояние: events_5m, eps_5m, lag, status (опрос раз в 30 с) | entities/source |
+| GET    | `/sources/{id}/sample-events?size=`            | примеры raw-событий + `detected_fields`   | entities/source       |
+| POST   | `/sources/`                                    | создать                                   | features/source-upsert |
+| PUT    | `/sources/{id}`                                | обновить                                  | features/source-upsert |
+| DELETE | `/sources/{id}`                                | удалить                                   | features/source-delete |
+| GET    | `/normalization-profiles/`                     | профили нормализации (`items`, `count`)   | entities/normalization-profile |
+| GET    | `/normalization-profiles/{name}`               | профиль                                   | entities/normalization-profile |
+| GET    | `/normalization-profiles/fields`               | каталог полей SIEM (`items`, `categories`) | entities/normalization-profile |
+| POST   | `/normalization-profiles/test`                 | применить профиль к raw-событию без сохранения | features/normalization-profile/test |
+| POST   | `/normalization-profiles/`                     | создать (занятое имя → 500)               | features/normalization-profile/upsert |
+| PUT    | `/normalization-profiles/{name}`               | обновить                                  | features/normalization-profile/upsert |
+| DELETE | `/normalization-profiles/{name}`               | удалить (generic-профили нельзя)          | features/normalization-profile/delete |
 | GET    | `/audits/`                                     | журнал аудита                             | entities/audit        |
 | GET    | `/audits/{id}`                                 | запись аудита (с правилом)                | entities/audit        |
+| GET    | `/audits/correlation-rules`                    | история всех правил корреляции (`action`, `author_id`, limit < 20) → `{total, has_next, items}` | entities/audit |
+| GET    | `/audits/correlation-rules/rule/{correlation_id}` | история одного правила корреляции (`action`) | entities/audit (`useCorrelationRuleAudits`) |
+| GET    | `/audits/correlation-rules/{audit_id}`         | версия правила + `changes: [{field, old, new}]` | entities/audit (`useCorrelationAudit`) |
+| GET    | `/audits/rule/{rule_id}`                       | история изменений правила (`{total, items}` с `author`, limit < 20) | entities/audit (`useRuleAudits`, `AuditTimeline`) |
 | GET    | `/mitre/mitre`                                 | техники MITRE ATT&CK                      | entities/mitre-technique |
+| GET    | `/mitre/{mitre_id}`                            | техника MITRE (та же схема `MitreTechnique`) | entities/mitre-technique |
 | POST   | `/mitre/sync-mitre`                            | синхронизация MITRE                       | features/mitre-sync   |
 | GET    | `/attack-types/`                               | справочник типов атак                     | entities/attack-type  |
+| GET    | `/attack-types/attach-group`                   | инциденты одного `source_ip` + группировка по типам атак (page/size) | entities/attack-type  |
 
 > Все пути в `entities/*/api` начинаются с `/`.
->
-> ⚠️ `fetchGroupByFields` ходит на тот же `/correlation-rules/sequence`, что и `fetchSequenceOptions`, хотя ожидает
-> `CorrelationGroupByFieldsType[]` (с `description`). Похоже на опечатку — нужно сверить адрес с backend (раздел 9).
 
 ---
 
@@ -367,7 +399,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 
 | Роль      | Домашняя страница | Доступ          |
 | --------- | ----------------- | --------------- |
-| `ADMIN`   | `/admin` → `/admin/organizations` | весь `/admin/*` |
+| `ADMIN`   | `/admin` («Главная») | весь `/admin/*` |
 | `ANALYST` | `/analyst`        | заглушка        |
 | `VIEWER`  | `/viewer`         | заглушка        |
 
@@ -378,21 +410,29 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/`                                          | —                              | `redirect(routes.login)` |
 | `/login`                                     | `views/login`                  | |
 | `/auth`                                      | `views/register`               | регистрация |
-| `/admin`                                     | —                              | `redirect(routes.organizations)` |
-| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | id декодируется в route-файле |
-| `/admin/rules`, `/new`, `/[slug]`            | `views/rule*`                  | правила обнаружения |
-| `/admin/crule`, `/new`, `/[id]`              | `views/correlation-rule*`      | правила корреляции; `/[id]` — форма редактирования |
-| `/admin/supers`, `/new`, `/[slug]`, `/[slug]/edit` | `views/suppression-rule*` | правила подавления |
-| `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | |
-| `/admin/audit`, `/[id]`                      | `views/audit*`                 | |
-| `/admin/mitre`                               | `views/mitre`                  | |
-| `/admin/incidents`, `/[id]`                  | `views/incident*`              | вкладка «Инциденты» в `widgets/hunters-tabs` ведёт сюда |
-| `/admin/hunters`                             | —                              | `redirect(routes.incidents)` |
-| `/admin/hunters/scenarios`, `/[scenarioId]`  | `views/scenario*`              | layout с `widgets/hunters-tabs` |
-| `/admin/hunters/events`, `/[index_name]/[event_id]` | `views/event*`          | параметры декодируются в route-файле |
-| `/admin/scenarios`, `/[scenarioId]`          | —                              | редирект на `/admin/hunters/scenarios[/id]` |
+| `/admin`                                    | `views/home`                   | «Главная», заглушка |
+| `/admin/incidents`, `/[id]`                  | `views/incident*`              | «Инциденты»; плюсик в строке списка (вся строка не кликабельна) → `/ip/[sourceIp]` (или сразу `/[id]`, если source_ip нет) |
+| `/admin/incidents/ip/[sourceIp]`             | `views/source-ip-incidents*`   | все инциденты source_ip; из списка открывается модалкой (`@modal/(.)incidents/ip`); при прямом заходе/F5 полная страница рисует список инцидентов подложкой и ту же модалку (закрытие → `replace` на список), стрелка в строке → `/[id]`; параметр декодируется в route-файле |
+| `/admin/scenarios`, `/[scenarioId]`          | `views/scenario*`              | «Сценарии»: строка списка раскрывается только по плюсику (карточки сценария + связанные инциденты из `/scenarios/{id}`); клик по id связанного инцидента → `/admin/incidents/ip/[sourceIp]` |
+| `/admin/ioc`, `/new`, `/[id]`                | `views/ioc*`                   | «Threat Intelligence»; как в MITRE: таблица в `app/(dashboard)/admin/ioc/layout.tsx` → `IocLayout`, карточка IOC открывается справа по клику на значение (`/new` рендерится без таблицы); id декодируется в route-файле |
+| `/admin/mitre`, `/[mitreId]`                 | `views/mitre`, `views/mitre-detail` | «MITRE ATT&CK»; таблица живёт в `app/(dashboard)/admin/mitre/layout.tsx` → `MitreLayout` (поиск и страница не сбрасываются), карточка техники открывается справа, таблица при этом компактная; id декодируется в route-файле |
+| `/admin/events`, `/[index_name]/[event_id]`  | `views/event*`, `views/event-modal` | «Raw data»; карточка события из списка открывается модалкой (`@modal/(.)events/...`); параметры декодируются в route-файле |
+| `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Организации» (раньше «Кампании»); как в MITRE: таблица в `app/(dashboard)/admin/organizations/layout.tsx` → `OrganizationsLayout`, карточка организации открывается справа по клику на строку; `/new` и `/[id]/edit` рендерятся без таблицы; id декодируется в route-файле |
+| `/admin/sources`, `/new`, `/[source_id]`, `/[source_id]/edit` | `views/source*` | «Источники» (макет `public/images/sources.jpeg`); таблица и фильтры в `app/(dashboard)/admin/sources/layout.tsx` → `SourcesLayout` → `widgets/sources/list`, карточка (`widgets/sources/details`) открывается справа; «Синхронизировать» — перезапрос `sourceKeys.all` (эндпоинта синхронизации нет), «Качество данных» — заполненность `detected_fields` по выборке `sample-events`; удаление — на странице редактирования; id декодируется в route-файле |
+| `/admin/normalization-profiles`, `/new[?copy=<name>]`, `/[profile_name]`, `/[profile_name]/edit` | `views/normalization-profile*` | «Профили нормализации» (макет `public/images/normalizations-profile.jpeg`); как «Источники»: таблица в layout → `widgets/normalization/list`, карточка (`widgets/normalization/details`) справа с вкладками «Сопоставление полей», «Тест профиля», «JSON-просмотр»; «Дублировать» — `/new?copy=<name>`; имя профиля при редактировании не меняется |
+| `/admin/normalization-fields` | `views/normalization-fields` | «Поля нормализации» — каталог `GET /normalization-profiles/fields` |
+| `/admin/rules`, `/new[?copy=<id>]`, `/[slug][?tab=test\|history]` | `views/rule*`       | «Правила обнаружения» — отдельный пункт сайдбара (макет `public/images/detect-rules.jpeg`); таблица, фильтры, счётчики и массовые действия в `app/(dashboard)/admin/rules/layout.tsx` → `RulesLayout` → `widgets/rules/list`; форма правила (`features/rule-upsert` → `RuleForm`, вкладки Основное/Условия/Классификация/MITRE/Тестирование) открывается справа и для `/new`, и для `/[slug]`; id декодируется в route-файле |
+| `/admin/correlation-rules`, `/new[?copy=<id>]`, `/[correlation_id][?tab=test\|history]` | `views/correlation-rule*` | «Правила корреляции» — отдельный пункт сайдбара (макет `public/images/correlation-rules.jpeg`); как «Правила обнаружения»: таблица в layout → `widgets/correlation-rules/list`, форма (`features/correlation-rule/upsert`, вкладки Основное/Условия/Действия/Тестирование/История) справа; id декодируется в route-файле |
+| `/admin/supers`, `/new[?copy=<id>]`, `/[suppression_id][?tab=test]` | `views/suppression-rule*` | «Правила подавления» (макет `public/images/suppression-rules.jpeg`); как «Правила корреляции»: таблица в `app/(dashboard)/admin/supers/layout.tsx` → `widgets/suppression-rules/list`, форма (`features/suppression-rule/upsert`, вкладки Основное/Условия/Действие/Тестирование) справа; id декодируется в route-файле |
+| `/admin/audit`, `/[id]`                      | `views/audit*`                 | «Администрирование» → аудит |
 | `/admin/testRule`                            | `views/test-rule`              | заглушка |
 | `/analyst`, `/viewer`                        | `views/analyst-home`, `views/viewer-home` | заглушки |
+
+Навигация повторяет макет CERT-KG SIEM (Figma): пункты сайдбара — `widgets/sidebar/config/menu.ts`
+(«Администрирование» закреплён внизу и раскрывается по клику: внутри «Правила обнаружения», «Правила корреляции»,
+«Правила подавления», «Нормализация», «Аудит»; на маршрутах группы она открыта сразу).
+Аудит лежит в route group `(administration)` (имя группы не попадает в URL); полосы вкладок у раздела нет.
+«Организации» (раньше «Кампании») в UI — это сущность `organization` (backend `/organizations`).
 
 Константы путей хранятся в `shared/config/routes.ts` (`routes.rule(id)`, `routes.organizationEdit(id)` и т. д.).
 Строки URL в компонентах не хардкодятся.
@@ -450,16 +490,38 @@ Steiger знает только стандартное имя слоя `pages`, 
 8. ✅ ESLint: 0 ошибок и 0 предупреждений (было 3 и 47), в том числе `setState` в `useEffect` у формы организации и `any`.
 
 ### Открыто
-1. **`fetchGroupByFields` и `fetchSequenceOptions` ходят на один эндпоинт** `/correlation-rules/sequence` (см. 5.2).
-2. **Заглушки в правилах корреляции:** кнопка удаления на карточке делает `console.log("delete")` (эндпоинта удаления нет);
-   форма создания пишет данные в консоль и показывает тост «Заглушка: …» до ответа сервера.
-3. **Пагинация правил подавления** — `PaginationControl` отображается, но список не режется (backend отдаёт массив целиком).
-4. **`features/ioc-edit`** содержит только хук `useUpdateIoc` — UI редактирования IoC нет.
+1. **«Правила корреляции» (сверено с OpenAPI 2026-11-24):** без авторизации проверены только `/sequence`, `/group-by-fields` и `/scenario-types`
+   (`group-by-fields` отдаёт `{items, count}`, а не массив — исправлено); список, карточка и мутации свёрстаны по схемам OpenAPI.
+   Создание (`/new`, в т. ч. копия) — отдельная страница-конструктор на всю ширину (layout раздела не рисует таблицу),
+   редактирование — та же форма в правой панели. Пять блоков: основное → условия (sequence) → параметры (окно, group_by,
+   «Дополнительные параметры» с min_unique_categories) → результат → MITRE. Шаги sequence трёх типов
+   (`model/useConditionCatalog.ts`): Detection Rule = `rule:<rule_id>` (формат из постановки, в OpenAPI не описан),
+   Detection Category и Attack Type — значения без префикса. `mitre_ids` — необязательное поле
+   `CorrelationRuleRequestCreateUpdateSchema` (сверено с OpenAPI 2026-11-25), значения из `/mitre/mitre`.
+   Устаревшие значения старых правил (неизвестный scenario_type, group_by вне справочника, удалённое/отключённое правило
+   обнаружения, отозванная техника) показываются с предупреждением; сохранение блокируют только отозванные техники.
+   В модели backend нет названия, MITRE, организации и флага «учитывать порядок» из макета — в UI их нет;
+   «Название» в таблице — `description`, 4-й счётчик вместо «С предупреждениями» — правила с высокой и критической критичностью.
+   Вкладка «Тестирование» — `POST /correlation-rules/test`; «История» — `/audits/correlation-rules/*` (фильтр по действию, раскрытая запись показывает изменённые поля). Ручки истории под авторизацией — свёрстаны по OpenAPI. Контролы форм-панелей — `shared/ui/form/controls.tsx`.
+3. **«Правила подавления» (сверено с OpenAPI 2026-11-25):** названия и «Тип исключения» на backend нет — «Название» = `description`, «Описание / Причина» = `reason`, тип выводится из заполненных условий match (`getExclusionType`). Счётчика «Сработавших», фильтра по организации и вкладки «История» из макета нет (нет данных и ручки аудита); 4-й счётчик — активные правила с `suppressed`. `created_at`/`updated_at` backend отдаёт `null`. PUT не меняет `severity`, `action.attack_type` и `enabled` — в форме редактирования первые два заблокированы, статус уходит отдельным `PATCH /status`. `POST /test`, `PATCH`, `DELETE` под авторизацией — свёрстаны по OpenAPI. Метаданные match ссылаются на `/reference/attack-types`, такой ручки нет — берём `/attack-types/`.
+4. **Редактирования IoC в UI нет:** `PATCH /ioc/{id}` вызывается без тела и только отмечает IoC просмотренным (`features/ioc-mark-viewed`).
 5. **Env:** `NEXT_BACK_URL` не задана, а `NEXT_API_URL`, `NEXT_IMAGE_URL` и `NEXT_PUBLIC_BACK_API_URL` не используются (раздел 3).
 6. **Разные схемы пагинации** (`limit/offset` и `page/size`). Общие типы ответов можно вынести в `shared/api/types.ts`.
 7. **Цвета захардкожены** (`#1E2B6D` и др.) в классах Tailwind на страницах, ещё не переведённых на макет CERT-KG SIEM. Палитра макета уже лежит в `@theme` в `globals.css` (`bg-brand`, `text-ink`, `border-line`…) — используйте её.
 8. **Защита маршрутов только на клиенте** (раздел 6). Для server-side проверок — `proxy.ts`.
 9. **Тестов нет.**
+10. **«Главная» — заглушка**, макета для неё пока нет.
+11. **«Источники»:** у backend нет эндпоинтов синхронизации и качества данных, а в ответах нет `created_at`/`updated_at` (в карточке «—»). Схемы ответов `/sources` в OpenAPI не описаны — типы сняты с реальных ответов. `widgets/sources` — группа слайсов (`list`, `details`), чтобы слой `widgets` не превышал лимит Steiger в 20 слайсов.
+12. **«Профили нормализации»:** в ответах нет даты изменения (в макете «Обновлён» — не выводим). `features/normalization-profile` и `widgets/normalization` — группы слайсов из-за лимита Steiger. Сайдбар поддерживает подпункты (`children` в `widgets/sidebar/config/menu.ts`).
+12. **Kibana и статус в карточке события:** в макете есть «Открыть в Kibana» и «Статус», но URL Kibana не настроен, а статуса у событий на backend нет — в UI их нет.
+14. **«Правила обнаружения» (проверено на backend 2026-11-24):** схемы описаны в OpenAPI (`RuleESSchema`, `RuleRequestCreateUpdateSchema`); в ответе `category`, `attack_type`, `description`, `created_by`, `updated_by` могут быть `null`.
+    Карточка правила: вкладка «История» (`?tab=history`, `GET /audits/rule/{id}`), кнопка «Удалить», автор и даты под заголовком. Аналитик сохраняет правила через `/rules/analyst/*`, но раздела аналитика в UI пока нет (`/analyst` — заглушка).
+    `GET /rules/` принимает только `limit < 20`; фильтров по scope/категории/статусу/severity нет, поэтому раздел загружает все правила и фильтрует на клиенте.
+    Одна запись в БД ломает список (500 на любой выборке, где она есть) — `fetchAllRules` перезапрашивает такую пачку по одному правилу и показывает, сколько не загрузилось.
+    `?rule_id=` в `GET /rules/` возвращает страницу из одного правила или пустую — `ruleExists` проверяет занятость Rule ID перед созданием.
+    `POST`/`PUT`/`DELETE /rules/admin/*` на момент проверки отвечали 500, проверить их ответы не удалось. «С предупреждением» из макета на backend нет — 4-й счётчик показывает critical-правила.
+    Операторы условий backend: contains/equals/startswith/endswith (regex из макета не поддерживается); scope у правила один, а не список.
+13. **Период в «Сценариях»:** в макете есть выбор дат, но `GET /scenarios/` не принимает `from_time/to_time` — в UI его нет, пока backend не добавит параметры.
 
 ---
 

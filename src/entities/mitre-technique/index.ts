@@ -3,5 +3,18 @@ export type {
   MitreTechnique,
   MitreSyncResponse,
 } from "./model/types";
-export { fetchMitreTechniques, syncMitre } from "./api/mitreApi";
-export { mitreKeys, useMitreTechniques } from "./api/queries";
+export {
+  getMitreTechniqueStatus,
+  type MitreTechniqueStatus,
+} from "./model/status";
+export {
+  fetchMitreTechniques,
+  fetchMitreTechnique,
+  syncMitre,
+} from "./api/mitreApi";
+export {
+  mitreKeys,
+  useMitreTechniques,
+  useMitreTechnique,
+} from "./api/queries";
+export { MitreStatusBadge } from "./ui/MitreStatusBadge";

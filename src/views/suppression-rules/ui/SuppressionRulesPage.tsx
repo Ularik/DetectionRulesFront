@@ -1,5 +1,4 @@
-import { SuppressionRulesList } from "@/widgets/suppression-rules-list";
-
+// Таблица правил подавления рендерится в SuppressionRulesLayout; у самого списка своей разметки нет
 export function SuppressionRulesPage() {
-  return <SuppressionRulesList />;
+  return null;
 }

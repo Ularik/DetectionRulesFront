@@ -26,8 +26,15 @@ export interface ScenarioEvents {
 
 export type Severity = "low" | "medium" | "high" | "critical";
 export type AssetCriticality = "low" | "medium" | "high" | "critical";
-// Для AnalystStatus используйте ваши значения из src/incidents/schemas
-export type AnalystStatus = "new" | "in_progress" | "closed" | "resolved";
+// Совпадает с analyst_status инцидентов (enum backend)
+export type AnalystStatus =
+  | "new"
+  | "in_review"
+  | "confirmed"
+  | "false_positive"
+  | "closed";
+// Системный статус сценария (engine): open — события ещё приходят, stale — давно нет новых, closed — закрыт
+export type ScenarioStatus = "open" | "stale" | "closed";
 export type Decision = "malicious" | "suspicious";
 export type Action = "monitor" | "block" | "investigate";
 
@@ -36,6 +43,8 @@ export type Action = "monitor" | "block" | "investigate";
 export interface ScenarioQueryParams {
   // Строковые и идентификационные фильтры
   organization_id?: string | null;
+  scenario_id?: string | null;
+  scenario_type?: string | null;
 
   // Сетевые фильтры
   source_ip?: string | null;

@@ -15,3 +15,5 @@ export {
 } from "./api/organizationApi";
 export { organizationKeys } from "./api/queryKeys";
 export { useOrganizations, useOrganization, useAgents } from "./api/queries";
+export { OrganizationTag } from "./ui/OrganizationTag";
+export { OrganizationStatusBadge } from "./ui/OrganizationStatusBadge";

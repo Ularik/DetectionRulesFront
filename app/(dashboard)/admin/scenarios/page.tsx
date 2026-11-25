@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { routes } from "@/shared/config";
+import { ScenariosPage } from "@/views/scenarios";
 
 export default function Page() {
-  redirect(routes.scenarios);
+  return <ScenariosPage />;
 }

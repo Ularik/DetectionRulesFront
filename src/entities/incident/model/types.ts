@@ -95,6 +95,8 @@ export interface ScoreBreakdown {
   mitre: string;
   technique: string;
   base: number;
+  // Есть в макете «Расчёт риска», backend может не отдавать
+  volume?: number;
   final: number;
 }
 

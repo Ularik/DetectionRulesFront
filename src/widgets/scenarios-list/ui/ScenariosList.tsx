@@ -1,158 +1,282 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import { ArrowDown, ShieldAlert, SquareMinus, SquarePlus } from "lucide-react";
 import Link from "next/link";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
 import { PaginationControl } from "@/shared/ui/pagination";
+import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
-import { SCENARIO_SEVERITY_STYLES, useScenarios } from "@/entities/scenario";
-import { ScenariosFilter } from "@/features/scenarios-filter";
+import { INCIDENT_SEVERITY_COLORS } from "@/entities/incident";
+import { useScenarios, type SecurityScenario } from "@/entities/scenario";
+import { ScenariosFilter, type ScenarioFilterParams } from "@/features/scenarios-filter";
+import { ScenarioExpandedRow } from "./ScenarioExpandedRow";
+import {
+  formatDateTime,
+  getAnalystStatusLabel,
+  sortItems,
+  type SortState,
+} from "../lib/table";
 
-const formatDate = (value: string | null | undefined) => {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat("ru-RU", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date);
-};
+// Вёрстка по фрейму «Сценарии» макета CERT-KG SIEM (Figma 471:3736)
+
+const PAGE_SIZE = 10;
+
+type SortKey =
+  | "first_seen"
+  | "scenario_id"
+  | "source_ip"
+  | "destination_ip"
+  | "analyst_status"
+  | "severity"
+  | "organization_id"
+  | "incident_count";
+
+const SEVERITY_RANK: Record<string, number> = { low: 1, medium: 2, high: 3, critical: 4 };
+
+const columns: Array<{ key: SortKey; label: string; width: string }> = [
+  { key: "first_seen", label: "Период", width: "w-[176px]" },
+  { key: "scenario_id", label: "ID сценария", width: "w-[160px]" },
+  { key: "source_ip", label: "Source IP", width: "w-[128px]" },
+  { key: "destination_ip", label: "Destination IP", width: "w-[128px]" },
+  { key: "analyst_status", label: "Статус", width: "w-[112px]" },
+  { key: "severity", label: "Критичность", width: "w-[136px]" },
+  { key: "organization_id", label: "Организация", width: "w-[140px]" },
+  { key: "incident_count", label: "Инциденты", width: "w-[116px]" },
+];
+
+function getSortValue(scenario: SecurityScenario, key: SortKey) {
+  switch (key) {
+    case "first_seen":
+      return scenario.first_seen ? new Date(scenario.first_seen).getTime() : 0;
+    case "severity":
+      return scenario.severity ? SEVERITY_RANK[scenario.severity] : 0;
+    case "incident_count":
+      return scenario.incident_count ?? 0;
+    default:
+      return scenario[key] ?? "";
+  }
+}
+
+const cellClass = "px-1.5 py-3 text-center text-sm text-black";
 
 export function ScenariosList() {
   const [page, setPage] = useState(1);
-  const [size, setSize] = useState(10);
-  const [organizationId, setOrganizationId] = useState("");
-  const [attackType, setAttackType] = useState("");
-  const { data, isPending, isError } = useScenarios({
+  const [size, setSize] = useState(PAGE_SIZE);
+  const [filters, setFilters] = useState<ScenarioFilterParams>({});
+  const [sort, setSort] = useState<SortState<SortKey>>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { data, isPending, isFetching, error, refetch } = useScenarios({
     page,
     size,
-    organization_id: organizationId || undefined,
-    attack_type: attackType || undefined,
+    ...filters,
   });
+  const items = sortItems(data?.items ?? [], sort, getSortValue);
 
-  const handleSizeChange = (newSize: number) => {
-    setSize(newSize);
+  const handleFiltersChange = (nextFilters: ScenarioFilterParams) => {
+    setFilters(nextFilters);
     setPage(1);
+    setExpandedId(null);
   };
 
+  const toggleSort = (key: SortKey) => {
+    setSort((current) =>
+      current?.key === key && current.direction === "desc"
+        ? { key, direction: "asc" }
+        : { key, direction: "desc" },
+    );
+  };
+
+  const toggleRow = (scenarioId: string) =>
+    setExpandedId((current) => (current === scenarioId ? null : scenarioId));
+
   return (
-    <section className="space-y-5">
-      <header className="border-b border-gray-200 pb-4">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Сценарии безопасности
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Обнаруженные сценарии и их текущий статус
-        </p>
-      </header>
+    <section className="flex flex-col gap-2">
+      <h1 className="sr-only">Сценарии</h1>
 
-      <ScenariosFilter
-        organizationId={organizationId}
-        attackType={attackType}
-        onOrganizationChange={(value) => {
-          setOrganizationId(value);
-          setPage(1);
-        }}
-        onAttackTypeChange={(value) => {
-          setAttackType(value);
-          setPage(1);
-        }}
-      />
+      <ScenariosFilter filters={filters} onChange={handleFiltersChange} />
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        {isError ? (
-          <p className="p-6 text-sm text-red-700" role="alert">
-            Не удалось загрузить сценарии. Попробуйте обновить страницу.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead>ID сценария</TableHead>
-                <TableHead>Тип</TableHead>
-                <TableHead>Серьезность</TableHead>
-                <TableHead>Статус аналитика</TableHead>
-                <TableHead>Оценка</TableHead>
-                <TableHead>Источник</TableHead>
-                <TableHead>Назначение</TableHead>
-                <TableHead>Последнее обнаружение</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isPending ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="h-24 text-center text-gray-500"
-                  >
-                    Загрузка сценариев...
-                  </TableCell>
-                </TableRow>
-              ) : data?.items.length ? (
-                data.items.map((scenario) => (
-                  <TableRow key={scenario.scenario_id}>
-                    <TableCell className="font-medium">
-                      {scenario.scenario_id ? (
-                        <Link
-                          href={routes.scenario(scenario.scenario_id)}
-                          className="text-blue-700 hover:text-blue-900 hover:underline"
-                        >
-                          {scenario.scenario_id}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>{scenario.scenario_type}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex rounded px-2 py-1 text-xs font-medium capitalize ${scenario.severity ? SCENARIO_SEVERITY_STYLES[scenario.severity] : "bg-gray-100 text-gray-600"}`}
+      {error ? (
+        <div className="mt-2 space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
+          <p className="font-semibold text-ink">Не удалось загрузить сценарии</p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Повторить попытку
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-2 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1200px] border-collapse">
+              <thead className="border-b border-line-muted">
+                <tr>
+                  <th className="w-[42px] py-2.5 pl-2">
+                    <span className="sr-only">Развернуть</span>
+                  </th>
+                  {columns.map((column) => {
+                    const isSorted = sort?.key === column.key;
+                    return (
+                      <th
+                        key={column.key}
+                        className={cn("px-1.5 py-2.5", column.width)}
+                        aria-sort={
+                          isSorted
+                            ? sort.direction === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : undefined
+                        }
                       >
-                        {scenario.severity ?? "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell>{scenario.analyst_status}</TableCell>
-                    <TableCell>{scenario.scenario_score}/100</TableCell>
-                    <TableCell>
-                      {scenario.source_ip ?? scenario.observer_host}
-                    </TableCell>
-                    <TableCell>
-                      {scenario.destination_ip || scenario.destination_host}
-                    </TableCell>
-                    <TableCell>{formatDate(scenario.last_seen)}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="h-24 text-center text-gray-500"
-                  >
-                    Сценарии не найдены
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(column.key)}
+                          className="mx-auto flex items-center gap-2.5 text-sm font-medium whitespace-nowrap text-black"
+                        >
+                          {column.label}
+                          <ArrowDown
+                            className={cn(
+                              "size-4 transition-transform",
+                              isSorted ? "text-brand-light" : "text-black",
+                              isSorted && sort.direction === "asc" && "rotate-180",
+                            )}
+                          />
+                        </button>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {isPending ? (
+                  Array.from({ length: size }).map((_, rowIndex) => (
+                    <tr key={rowIndex} className="animate-pulse border-b border-line-muted">
+                      {Array.from({ length: columns.length + 1 }).map((__, cellIndex) => (
+                        <td className="px-4 py-4" key={cellIndex}>
+                          <div className="mx-auto h-4 w-16 rounded bg-line-muted" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={columns.length + 1}
+                      className="px-4 py-14 text-center text-sm text-ink-muted"
+                    >
+                      <ShieldAlert className="mx-auto mb-2 h-8 w-8 text-line" />
+                      Сценарии не найдены
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((scenario, index) => {
+                    const scenarioId = scenario.scenario_id ?? `row-${index}`;
+                    const isExpanded = expandedId === scenarioId;
+                    const severity = scenario.severity
+                      ? INCIDENT_SEVERITY_COLORS[scenario.severity]
+                      : undefined;
+                    const ToggleIcon = isExpanded ? SquareMinus : SquarePlus;
 
-      <PaginationControl
-        page={page}
-        limit={size}
-        total={data?.total ?? 0}
-        onPageChange={setPage}
-        onLimitChange={handleSizeChange}
-        isLoading={isPending}
-      />
+                    return (
+                      <Fragment key={scenarioId}>
+                        <tr
+                          className={cn(
+                            "border-b border-line-muted transition-colors hover:bg-surface-muted",
+                            isExpanded && "bg-surface-muted",
+                          )}
+                        >
+                          <td className="py-2 pl-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleRow(scenarioId)}
+                              aria-expanded={isExpanded}
+                              aria-label={`${isExpanded ? "Свернуть" : "Развернуть"} сценарий ${scenario.scenario_id ?? ""}`}
+                              className="flex size-6 items-center justify-center text-[#595555] hover:text-brand-light"
+                            >
+                              <ToggleIcon className="size-[18px]" />
+                            </button>
+                          </td>
+                          <td className={cn(cellClass, "py-2 leading-[17px] whitespace-nowrap")}>
+                            {formatDateTime(scenario.first_seen, false)}
+                            <br />
+                            {formatDateTime(scenario.last_seen, false)}
+                          </td>
+                          <td className={cn(cellClass, "break-all")}>
+                            {scenario.scenario_id ? (
+                              <Link
+                                href={routes.scenario(scenario.scenario_id)}
+                                title="Открыть страницу сценария"
+                                className="hover:text-brand-light hover:underline"
+                              >
+                                {scenario.scenario_id}
+                              </Link>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className={cn(cellClass, "whitespace-nowrap")}>
+                            {scenario.source_ip ?? "—"}
+                          </td>
+                          <td className={cn(cellClass, "whitespace-nowrap")}>
+                            {scenario.destination_ip ?? "—"}
+                          </td>
+                          <td className={cellClass}>
+                            {getAnalystStatusLabel(scenario.analyst_status)}
+                          </td>
+                          <td className={cellClass}>
+                            <span className="inline-flex items-center gap-[5px]">
+                              <span
+                                className={cn(
+                                  "size-2 shrink-0 rounded-full bg-ink-muted",
+                                  severity?.dot,
+                                )}
+                              />
+                              {scenario.severity ?? "—"}
+                            </span>
+                          </td>
+                          <td className={cn(cellClass, "break-all")}>
+                            {scenario.organization_id || "—"}
+                          </td>
+                          <td className={cn(cellClass, "pr-4")}>
+                            {scenario.incident_count ?? 0}
+                          </td>
+                        </tr>
+                        {isExpanded && scenario.scenario_id && (
+                          <tr className="border-b border-line-muted">
+                            <td colSpan={columns.length + 1} className="p-0">
+                              <ScenarioExpandedRow
+                                scenario={scenario}
+                                scenarioId={scenario.scenario_id}
+                                onCollapse={() => setExpandedId(null)}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <PaginationControl
+            page={page}
+            limit={size}
+            total={data?.total ?? 0}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setExpandedId(null);
+            }}
+            onLimitChange={(nextSize) => {
+              setSize(nextSize);
+              setPage(1);
+              setExpandedId(null);
+            }}
+            isLoading={isFetching}
+            itemsLabel="сценариев"
+            className="px-4 py-3"
+          />
+        </div>
+      )}
     </section>
   );
 }

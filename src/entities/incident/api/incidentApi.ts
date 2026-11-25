@@ -10,7 +10,7 @@ import type {
 import type { IncidentEventResponse } from "../model/eventsTypes";
 
 export async function fetchIncidents(params: IncidentParams) {
-  const res = await axiosApi.get<IncidentApiResponse>("/incidents", { params });
+  const res = await axiosApi.get<IncidentApiResponse>("/incidents/", { params });
   return res.data;
 }
 

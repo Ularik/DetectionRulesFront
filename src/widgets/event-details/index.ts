@@ -1,1 +1,1 @@
-export { EventDetails } from "./ui/EventDetails";
+export { EventDetails, EventDetailsBody } from "./ui/EventDetails";

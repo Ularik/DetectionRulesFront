@@ -1,1 +1,1 @@
-export { IncidentDetails } from "./ui/IncidentDetails";
+export { IncidentDetails, IncidentDetailsBody } from "./ui/IncidentDetails";

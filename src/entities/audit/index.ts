@@ -3,8 +3,31 @@ export type {
   AuditDetailType,
   ApiAuditResponseType,
   AuditParams,
+  RuleAuditParams,
+  CorrelationAuditAction,
+  CorrelationAuditType,
+  ApiCorrelationAuditResponse,
+  AuditFieldChange,
+  CorrelationRuleVersion,
+  CorrelationAuditDetailType,
+  CorrelationAuditParams,
 } from "./model/types";
-export { fetchAudits, fetchAudit } from "./api/auditApi";
+export {
+  fetchAudits,
+  fetchAudit,
+  fetchRuleAudits,
+  fetchCorrelationAudits,
+  fetchCorrelationRuleAudits,
+  fetchCorrelationAudit,
+} from "./api/auditApi";
 export { auditKeys } from "./api/queryKeys";
-export { useAudits, useAudit } from "./api/queries";
+export {
+  useAudits,
+  useAudit,
+  useRuleAudits,
+  useCorrelationAudits,
+  useCorrelationRuleAudits,
+  useCorrelationAudit,
+} from "./api/queries";
 export { AuditTable } from "./ui/AuditTable";
+export { AuditTimeline, AUDIT_ACTION_LABELS } from "./ui/AuditTimeline";

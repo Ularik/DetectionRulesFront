@@ -4,6 +4,7 @@ export type {
   Severity,
   AssetCriticality,
   AnalystStatus,
+  ScenarioStatus,
   Decision,
   Action,
   ScenarioQueryParams,
@@ -24,4 +25,8 @@ export {
   useScenario,
   useScenarioEvents,
 } from "./api/queries";
-export { SCENARIO_SEVERITY_STYLES } from "./config/severity";
+export {
+  SCENARIO_SEVERITY_STYLES,
+  SCENARIO_SEVERITY_LABELS,
+  SCENARIO_STATUS_LABELS,
+} from "./config/severity";

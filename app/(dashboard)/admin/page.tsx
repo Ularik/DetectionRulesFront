@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { routes } from "@/shared/config";
+import { HomePage } from "@/views/home";
 
 export default function Page() {
-  redirect(routes.organizations);
+  return <HomePage />;
 }

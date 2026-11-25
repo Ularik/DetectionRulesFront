@@ -33,6 +33,7 @@ RUN adduser --system --uid 1001 nextjs
 # Копируем только то, что реально нужно для запуска standalone-сервера
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 

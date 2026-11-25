@@ -3,44 +3,41 @@ import {
   fetchCorrelationRule,
   fetchCorrelationRules,
   fetchGroupByFields,
+  fetchScenarioTypes,
   fetchSequenceOptions,
 } from "./correlationRuleApi";
+import { correlationRuleKeys } from "./queryKeys";
 
-export const correlationRuleKeys = {
-  all: ["correlation-rules"] as const,
-  lists: () => [...correlationRuleKeys.all, "list"] as const,
-  detail: (correlationId: string) =>
-    [...correlationRuleKeys.all, "detail", correlationId] as const,
-  sequenceOptions: () => [...correlationRuleKeys.all, "sequence"] as const,
-  groupByFields: () => [...correlationRuleKeys.all, "group-by"] as const,
-};
-
-export const useCorrelationRules = () => {
-  return useQuery({
+export const useCorrelationRules = () =>
+  useQuery({
     queryKey: correlationRuleKeys.lists(),
     queryFn: fetchCorrelationRules,
-    staleTime: 5 * 60 * 1000, // 5 минут данные считаются "свежими"
-    gcTime: 10 * 60 * 1000, // Кэш хранится в памяти 10 минут после размонтирования
   });
-};
 
-export const useCorrelationRule = (correlation_id: string) => {
-  return useQuery({
-    queryKey: correlationRuleKeys.detail(correlation_id),
-    queryFn: () => fetchCorrelationRule(correlation_id),
+export const useCorrelationRule = (correlationId: string) =>
+  useQuery({
+    queryKey: correlationRuleKeys.detail(correlationId),
+    queryFn: () => fetchCorrelationRule(correlationId),
+    enabled: Boolean(correlationId),
   });
-};
 
-export function useSequenceOptions() {
-  return useQuery({
+export const useSequenceOptions = () =>
+  useQuery({
     queryKey: correlationRuleKeys.sequenceOptions(),
     queryFn: fetchSequenceOptions,
+    staleTime: Infinity,
   });
-}
 
-export function useGroupByFields() {
-  return useQuery({
+export const useGroupByFields = () =>
+  useQuery({
     queryKey: correlationRuleKeys.groupByFields(),
     queryFn: fetchGroupByFields,
+    staleTime: Infinity,
   });
-}
+
+export const useScenarioTypes = () =>
+  useQuery({
+    queryKey: correlationRuleKeys.scenarioTypes(),
+    queryFn: fetchScenarioTypes,
+    staleTime: Infinity,
+  });

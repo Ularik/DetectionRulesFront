@@ -10,4 +10,6 @@ export const incidentKeys = {
     [...incidentKeys.all, "detail", incidentId] as const,
   events: (incidentId: string, page: number, size: number) =>
     [...incidentKeys.all, "events", incidentId, page, size] as const,
+  artifacts: (incidentId: string, page: number, size: number) =>
+    [...incidentKeys.all, "artifacts", incidentId, page, size] as const,
 };

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { routes } from "@/shared/config";
 import certKgLogo from "./cert-kg.svg";
 import {
@@ -71,45 +71,21 @@ const MenuLink = ({
   );
 };
 
-const AdministrationMenu = ({ pathname }: { pathname: string }) => {
-  const { label, icon: Icon, items } = administrationMenu;
-  const isGroupActive = items.some((item) => isMenuItemActive(item, pathname));
-  // При заходе прямо в раздел группы она раскрыта; дальше — по клику
-  const [isOpen, setIsOpen] = useState(isGroupActive);
-
-  return (
-    <nav className="mt-auto flex flex-col gap-2">
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls="sidebar-administration"
-        onClick={() => setIsOpen((open) => !open)}
-        className={clsx(
-          "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-base text-white transition-colors",
-          isGroupActive && !isOpen ? "bg-brand-light" : "hover:bg-white/10",
-        )}
-      >
-        <Icon className="size-6 shrink-0" strokeWidth={2} />
-        <span className="flex-1">{label}</span>
-        <ChevronDown
-          aria-hidden
-          className={clsx("size-4 shrink-0 transition-transform", !isOpen && "-rotate-90")}
-        />
-      </button>
-
-      {isOpen && (
-        <div id="sidebar-administration" className="flex flex-col gap-2">
-          {items.map((item) => (
-            <MenuLink key={item.href} item={item} pathname={pathname} />
-          ))}
-        </div>
-      )}
-    </nav>
-  );
-};
+const isAdministrationRoute = (pathname: string) =>
+  administrationMenu.items.some((item) => isMenuItemActive(item, pathname));
 
 export const Sidebar = () => {
   const pathname = usePathname();
+  const { label: adminLabel, icon: AdminIcon, items: adminItems } = administrationMenu;
+
+  // Режим сайдбара: основное меню или меню администрирования (заменяет основное целиком).
+  // Открывается по кнопке «Администрирование»; при переходе по маршруту синхронизируется с разделом.
+  const [isAdminMode, setIsAdminMode] = useState(() => isAdministrationRoute(pathname));
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setIsAdminMode(isAdministrationRoute(pathname));
+  }
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 overflow-hidden border-r border-[#0a4f8c] bg-brand bg-[url(/videos/sidebar-poster.png)] bg-cover bg-center lg:block">
@@ -143,13 +119,41 @@ export const Sidebar = () => {
   
         <div className="h-px w-full shrink-0 bg-white/20" />
   
-        <nav className="flex flex-col gap-2 py-4">
-          {dashboardMenuItems.map((item) => (
-            <MenuLink key={item.href} item={item} pathname={pathname} />
-          ))}
-        </nav>
-  
-        <AdministrationMenu pathname={pathname} />
+        {isAdminMode ? (
+          <nav aria-label={adminLabel} className="flex flex-col gap-2 py-4">
+            <button
+              type="button"
+              onClick={() => setIsAdminMode(false)}
+              className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              <ChevronLeft className="size-6 shrink-0" strokeWidth={2} />
+              <span className="flex-1">{adminLabel}</span>
+            </button>
+            {adminItems.map((item) => (
+              <MenuLink key={item.href} item={item} pathname={pathname} />
+            ))}
+          </nav>
+        ) : (
+          <>
+            <nav className="flex flex-col gap-2 py-4">
+              {dashboardMenuItems.map((item) => (
+                <MenuLink key={item.href} item={item} pathname={pathname} />
+              ))}
+            </nav>
+
+            <nav className="mt-auto flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAdminMode(true)}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-base text-white transition-colors hover:bg-white/10"
+              >
+                <AdminIcon className="size-6 shrink-0" strokeWidth={2} />
+                <span className="flex-1">{adminLabel}</span>
+                <ChevronRight aria-hidden className="size-4 shrink-0" />
+              </button>
+            </nav>
+          </>
+        )}
       </div>
     </aside>
   );

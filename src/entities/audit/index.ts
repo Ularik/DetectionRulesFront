@@ -16,6 +16,7 @@ export {
   fetchAudits,
   fetchAudit,
   fetchRuleAudits,
+  fetchAllRuleAudits,
   fetchCorrelationAudits,
   fetchCorrelationRuleAudits,
   fetchCorrelationAudit,
@@ -25,9 +26,11 @@ export {
   useAudits,
   useAudit,
   useRuleAudits,
+  useRuleAuditVersion,
+  useAllRuleAudits,
   useCorrelationAudits,
   useCorrelationRuleAudits,
   useCorrelationAudit,
 } from "./api/queries";
 export { AuditTable } from "./ui/AuditTable";
-export { AuditTimeline, AUDIT_ACTION_LABELS } from "./ui/AuditTimeline";
+export { AuditTimeline, AUDIT_ACTION_LABELS, normalizeAuditAction } from "./ui/AuditTimeline";

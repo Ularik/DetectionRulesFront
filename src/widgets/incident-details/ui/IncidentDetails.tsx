@@ -20,6 +20,7 @@ import {
 } from "@/entities/incident";
 import type { WazuhEvent } from "@/entities/event";
 import { IncidentStatusSelect } from "@/features/incident-change-status";
+import { IncidentArtifacts } from "./IncidentArtifacts";
 import { IncidentModalContent } from "./IncidentModalContent";
 
 function formatDate(value: string | null | undefined) {
@@ -188,6 +189,8 @@ function IncidentContent({ incident }: { incident: Incident }) {
           )}
         </section>
       )}
+
+      <IncidentArtifacts incidentId={incident.incident_id} className="mb-6" />
 
       <div className="space-y-5">
         <Section title="Сводка">

@@ -14,15 +14,21 @@ export type {
   IncidentSchema,
 } from "./model/types";
 export type { IncidentEventResponse } from "./model/eventsTypes";
+export type {
+  IncidentArtifact,
+  IncidentArtifactEvent,
+  IncidentArtifactsResponse,
+} from "./model/artifactsTypes";
 export {
   fetchIncidents,
   fetchDailyIncidentCount,
   fetchIncident,
   fetchIncidentEvents,
+  fetchIncidentArtifacts,
   patchIncidentStatus,
 } from "./api/incidentApi";
 export { incidentKeys } from "./api/queryKeys";
-export { useDailyIncidentCount, useIncidents, useIncident, useIncidentEvents } from "./api/queries";
+export { useDailyIncidentCount, useIncidents, useIncident, useIncidentEvents, useIncidentArtifacts } from "./api/queries";
 export {
   INCIDENT_STATUS_LABELS,
   ANALYST_STATUSES,

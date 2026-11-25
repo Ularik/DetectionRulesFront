@@ -23,7 +23,7 @@ const ACTION_STYLES: Record<string, string> = {
 };
 
 // create → created, update → updated
-function normalizeAction(action: string | null) {
+export function normalizeAuditAction(action: string | null) {
   const key = action?.toLowerCase() ?? "";
   if (key in AUDIT_ACTION_LABELS) return key;
   if (`${key}d` in AUDIT_ACTION_LABELS) return `${key}d`;
@@ -93,7 +93,7 @@ export function AuditTimeline<T extends AuditTimelineItem>({
   return (
     <ul className="flex flex-col gap-2">
       {items.map((item) => {
-        const action = normalizeAction(item.action);
+        const action = normalizeAuditAction(item.action);
         const isOpen = expanded === item.id;
         const row = (
           <>

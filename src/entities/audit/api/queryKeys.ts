@@ -9,6 +9,7 @@ export const auditKeys = {
   rule: (ruleId: string) => [...auditKeys.rules(), ruleId] as const,
   ruleList: (ruleId: string, params: RuleAuditParams) =>
     [...auditKeys.rule(ruleId), params] as const,
+  ruleAll: (ruleId: string) => [...auditKeys.rule(ruleId), "all"] as const,
   correlation: () => [...auditKeys.all, "correlation"] as const,
   correlationList: (params: CorrelationAuditParams) =>
     [...auditKeys.correlation(), "list", params] as const,

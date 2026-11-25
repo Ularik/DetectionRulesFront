@@ -35,6 +35,23 @@ export async function fetchRuleAudits(
   return result.data;
 }
 
+// GET /audits/rule/{id}: limit строго меньше 20
+const RULE_AUDITS_MAX_LIMIT = 19;
+
+/** Вся история правила обнаружения (пачками по 19) — для фильтрации на клиенте:
+ * фильтра по действию у этого эндпоинта нет */
+export async function fetchAllRuleAudits(ruleId: string): Promise<ApiAuditResponseType> {
+  const first = await fetchRuleAudits(ruleId, { limit: RULE_AUDITS_MAX_LIMIT, offset: 0 });
+  const offsets: number[] = [];
+  for (let offset = RULE_AUDITS_MAX_LIMIT; offset < first.total; offset += RULE_AUDITS_MAX_LIMIT) {
+    offsets.push(offset);
+  }
+  const rest = await Promise.all(
+    offsets.map((offset) => fetchRuleAudits(ruleId, { limit: RULE_AUDITS_MAX_LIMIT, offset })),
+  );
+  return { total: first.total, items: [first, ...rest].flatMap((page) => page.items) };
+}
+
 /** История изменений всех правил корреляции (фильтры: action, author_id) */
 export async function fetchCorrelationAudits(
   params: CorrelationAuditParams,

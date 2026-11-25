@@ -12,6 +12,7 @@ import {
   type IncidentSchema,
 } from "@/entities/incident";
 import { IncidentStatusMenu } from "@/features/incident-change-status";
+import { IncidentArtifacts } from "./IncidentArtifacts";
 
 // Вёрстка по фрейму «modal» макета CERT-KG SIEM (Figma 164:4587)
 
@@ -622,6 +623,9 @@ export function IncidentModalContent({ data }: { data: IncidentSchema }) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
+          {/* Артефакты — вверху правой колонки, рядом с «Анализом SIEM», чтобы были видны сразу */}
+          <IncidentArtifacts incidentId={incident.incident_id} />
+
           <Card title="Источник наблюдения">
             <Rows>
               <Row label="observer_host" value={incident.observer_host} />

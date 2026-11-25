@@ -6,10 +6,8 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Trash2, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { PaginationControl } from "@/shared/ui/pagination";
 import { routes } from "@/shared/config";
 import { useRule, type RuleType } from "@/entities/rule";
-import { AuditTimeline, useRuleAudits } from "@/entities/audit";
 import { DeleteRulesDialog } from "@/features/rule-delete";
 import {
   RuleForm,
@@ -18,6 +16,7 @@ import {
   ruleToFormValues,
   type RuleFormTab,
 } from "@/features/rule-upsert";
+import { RuleHistory } from "./RuleHistory";
 
 // Правая панель раздела «Правила обнаружения»: форма правила по макету public/images/detect-rules.jpeg
 
@@ -72,52 +71,6 @@ function RuleMeta({ rule }: { rule: RuleType }) {
   ].filter(Boolean);
   if (!parts.length) return null;
   return <p className="text-xs text-ink-muted">{parts.join("  ·  ")}</p>;
-}
-
-// GET /audits/rule/{id} принимает limit строго меньше 20
-const HISTORY_PAGE_SIZE = 10;
-
-function RuleHistory({ ruleId }: { ruleId: string }) {
-  const [page, setPage] = useState(1);
-  const { data, isPending, isFetching, error, refetch } = useRuleAudits(ruleId, {
-    limit: HISTORY_PAGE_SIZE,
-    offset: (page - 1) * HISTORY_PAGE_SIZE,
-  });
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <p className="text-sm text-ink">Не удалось загрузить историю изменений</p>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          Повторить попытку
-        </Button>
-      </div>
-    );
-  }
-
-  const total = data?.total ?? 0;
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-xs text-ink-muted">
-        Журнал изменений правила. Запись открывает состояние правила на момент изменения.
-      </p>
-      <AuditTimeline
-        items={data?.items ?? []}
-        isLoading={isPending}
-        getHref={(item) => routes.auditEntry(String(item.id))}
-      />
-      {total > HISTORY_PAGE_SIZE && (
-        <PaginationControl
-          page={page}
-          limit={HISTORY_PAGE_SIZE}
-          total={total}
-          onPageChange={setPage}
-          isLoading={isFetching}
-          itemsLabel="записей"
-        />
-      )}
-    </div>
-  );
 }
 
 function DeleteRuleAction({ ruleId }: { ruleId: string }) {

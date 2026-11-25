@@ -8,6 +8,7 @@ import type {
   IncidentSchema,
 } from "../model/types";
 import type { IncidentEventResponse } from "../model/eventsTypes";
+import type { IncidentArtifactsResponse } from "../model/artifactsTypes";
 
 export async function fetchIncidents(params: IncidentParams) {
   const res = await axiosApi.get<IncidentApiResponse>("/incidents/", { params });
@@ -41,6 +42,22 @@ export async function fetchIncidentEvents({
 }) {
   const res = await axiosApi.get<IncidentEventResponse>(
     `/incidents/${inc_id}/events`,
+    { params: { page, size } },
+  );
+  return res.data;
+}
+
+export async function fetchIncidentArtifacts({
+  inc_id,
+  page,
+  size,
+}: {
+  inc_id: string;
+  page: number;
+  size: number;
+}) {
+  const res = await axiosApi.get<IncidentArtifactsResponse>(
+    `/incidents/${encodeURIComponent(inc_id)}/artifacts`,
     { params: { page, size } },
   );
   return res.data;

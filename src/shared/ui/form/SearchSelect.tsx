@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../popover";
@@ -20,6 +20,8 @@ export interface SearchSelectOption {
 
 /** Больше строк не рисуем — длинные справочники (каталог MITRE) сужаются поиском */
 const RENDER_LIMIT = 150;
+/** Высота поля поиска + полного списка (max-h-64) — столько места под триггером хватает, чтобы открыть вниз */
+const MIN_SPACE_BELOW = 320;
 
 /** Всплывающий select с поиском по подписи и значению.
  * allowCustom — можно выбрать введённое значение, которого нет в справочнике */
@@ -55,6 +57,8 @@ export function SearchSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [side, setSide] = useState<"top" | "bottom">("bottom");
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selected = options.find((option) => option.value === value);
   const trimmed = query.trim();
@@ -81,6 +85,13 @@ export function SearchSelect({
   const changeOpen = (next: boolean) => {
     setOpen(next);
     if (next) {
+      // Сторону выбираем один раз при открытии: иначе Radix перекидывает список вверх/вниз
+      // при каждом изменении его высоты во время ввода, и поле поиска «прыгает»
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const spaceBelow = window.innerHeight - rect.bottom;
+        setSide(spaceBelow >= MIN_SPACE_BELOW || spaceBelow >= rect.top ? "bottom" : "top");
+      }
       setQuery("");
       const index = options.findIndex((option) => option.value === value);
       setActiveIndex(index >= 0 && index < RENDER_LIMIT ? index : 0);
@@ -109,7 +120,7 @@ export function SearchSelect({
 
   return (
     <Popover open={open} onOpenChange={changeOpen}>
-      <PopoverTrigger asChild disabled={disabled}>
+      <PopoverTrigger ref={triggerRef} asChild disabled={disabled}>
         {trigger ?? (
           <button
             type="button"
@@ -140,9 +151,20 @@ export function SearchSelect({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-(--radix-popover-trigger-width) min-w-64 overflow-hidden p-0"
+        side={side}
+        avoidCollisions={false}
+        className={cn(
+          "flex w-(--radix-popover-trigger-width) min-w-64 max-h-(--radix-popover-content-available-height) overflow-hidden p-0",
+          // Над триггером поле поиска — снизу, рядом с кнопкой: при сужении списка оно остаётся на месте
+          side === "top" ? "flex-col-reverse" : "flex-col",
+        )}
       >
-        <div className="flex items-center gap-2 border-b border-line-muted px-3">
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-2 border-line-muted px-3",
+            side === "top" ? "border-t" : "border-b",
+          )}
+        >
           <Search aria-hidden className="size-4 shrink-0 text-ink-muted" />
           <input
             autoFocus
@@ -160,7 +182,7 @@ export function SearchSelect({
             className="h-10 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-muted"
           />
         </div>
-        <ul id={listId} role="listbox" className="scrollbar-subtle max-h-64 overflow-y-auto p-1">
+        <ul id={listId} role="listbox" className="scrollbar-subtle max-h-64 min-h-0 overflow-y-auto p-1">
           {loading && !options.length && (
             <li className="px-3 py-2 text-[13px] text-ink-muted">Загрузка…</li>
           )}

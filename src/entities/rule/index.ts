@@ -51,4 +51,11 @@ export {
   RULE_CONDITION_MODES,
   RULE_EVENT_FIELDS,
 } from "./config/conditions";
+export {
+  RULE_FIELD_LABELS,
+  ruleFieldLabel,
+  formatRuleFieldValue,
+  diffRuleVersions,
+  type RuleFieldChange,
+} from "./lib/fields";
 export { RuleDetailTable } from "./ui/RuleDetailTable";

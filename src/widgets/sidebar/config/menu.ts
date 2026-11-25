@@ -12,6 +12,7 @@ import {
   Settings,
   Filter,
   ScrollText,
+  Server,
   ShieldAlert,
   Workflow,
 } from "lucide-react";
@@ -103,6 +104,11 @@ export const administrationMenu = {
         { label: "Профили нормализации", href: routes.normalizationProfiles },
         { label: "Поля нормализации", href: routes.normalizationFields },
       ],
+    },
+    {
+      label: "Активы",
+      href: routes.assets,
+      icon: Server,
     },
     {
       label: "Аудит",

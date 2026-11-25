@@ -7,6 +7,7 @@ import {
   fetchCorrelationAudits,
   fetchCorrelationRuleAudits,
   fetchRuleAudits,
+  fetchAllRuleAudits,
 } from "./auditApi";
 import { auditKeys } from "./queryKeys";
 
@@ -24,12 +25,33 @@ export function useAudit(id: string) {
   });
 }
 
+/** Снимок версии правила обнаружения для истории: записи аудита не меняются — кэшируем навсегда.
+ * Ключ общий с useAudit, чтобы страница записи аудита брала данные из того же кэша */
+export function useRuleAuditVersion(id: string | number | null | undefined) {
+  const auditId = id === null || id === undefined || id === "" ? null : String(id);
+  return useQuery({
+    queryKey: auditKeys.detail(auditId ?? ""),
+    queryFn: () => fetchAudit(auditId as string),
+    enabled: auditId !== null,
+    staleTime: Infinity,
+  });
+}
+
 export function useRuleAudits(ruleId: string, params: RuleAuditParams) {
   return useQuery({
     queryKey: auditKeys.ruleList(ruleId, params),
     queryFn: () => fetchRuleAudits(ruleId, params),
     enabled: Boolean(ruleId),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Вся история правила обнаружения — фильтр по действию и пагинация на клиенте */
+export function useAllRuleAudits(ruleId: string) {
+  return useQuery({
+    queryKey: auditKeys.ruleAll(ruleId),
+    queryFn: () => fetchAllRuleAudits(ruleId),
+    enabled: Boolean(ruleId),
   });
 }
 

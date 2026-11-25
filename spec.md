@@ -289,13 +289,14 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `correlation-rule`| `useCorrelationRules`, `useCorrelationRule`, `useSequenceOptions`, `useGroupByFields` (`correlationRuleKeys`) | `CorrelationRuleType`, `CorrelationRuleRequestCreateUpdateType`, `CorrelationSeverity`, `CorrelationRuleTestRequest/Response` | нет (массив) |
 | `suppression-rule`| `useSuppressionRules`, `useSuppressionRule`, `useSuppressionMatchFields` (`suppressionRuleKeys`) | `SuppressionRuleType`, `SuppressionRuleCreateType`, `SuppressionRuleUpdateType`, `SuppressionRuleTestRequest/Response`; `getExclusionType`, `summarizeMatch` | нет (массив, фильтры и пагинация на клиенте) |
 | `ioc`             | `useIocs`, `useIoc` (`iocKeys`)                                  | `IocType`, `IocCreateType`, `IocPatchResponse`                | `page/size` → `{items,total,page,size,pages,has_next,has_previous}` |
-| `incident`        | `useIncidents`, `useIncident`, `useIncidentEvents` (`incidentKeys`) | `IncidentSchema`, `Incident`, `IncidentParams`, `ANALYST_STATUS` | `page/size` |
+| `incident`        | `useIncidents`, `useIncident`, `useIncidentEvents`, `useIncidentArtifacts` (`incidentKeys`) | `IncidentSchema`, `Incident`, `IncidentParams`, `ANALYST_STATUS` | `page/size` |
 | `scenario`        | `useScenarios`, `useScenario`, `useScenarioEvents` (`scenarioKeys`) | `SecurityScenario`, `ScenarioAggregateSchema`, `ScenarioQueryParams` | `page/size` |
 | `event`           | `useEvents`, `useEvent` (`eventKeys`)                            | `WazuhEvent`, `WazuhEventApiResponse`, `RawEventsQueryParamsSchema` | `page/size` |
 | `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
 | `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
 | `mitre-technique` | `useMitreTechniques`, `useMitreTechnique` (`mitreKeys`)          | `MitreTechnique`, `MitreSyncResponse`, `MitreType`; `getMitreTechniqueStatus`, `MitreStatusBadge` | нет (массив)     |
 | `source`          | `useSources`, `useSource`, `useSourceHealth`, `useSourceSampleEvents` (`sourceKeys`) | `SourceType`, `SourceCreateUpdateType`, `SourceHealthType`, `SourceSampleEventsType` | нет (`{items}`, фильтры на клиенте) |
+| `asset`           | `useAssets`, `useAsset` (`assetKeys`)                            | `Asset`, `AssetCreateUpdateType`, `AssetType`, `AssetCriticality`, `AssetEnvironment` | нет (`{items, count}`, фильтры и пагинация на клиенте) |
 | `attack-type`     | `useAttackTypes`, `useAttackGroups` (`attackTypeKeys`)           | `AttackTypes`, `AttackGroupsResponseSchema`, `HuntingIpIncidentSchema` | `page/size`; total = `summary.incident_count` |
 
 Связи между сущностями оформлены через `@x`:
@@ -344,6 +345,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | GET    | `/incidents`                                   | список инцидентов (`IncidentParams`)      | entities/incident     |
 | GET    | `/incidents/{id}`                              | инцидент                                  | entities/incident     |
 | GET    | `/incidents/{id}/events`                       | события инцидента (page/size)             | entities/incident     |
+| GET    | `/incidents/{id}/artifacts`                    | артефакты (команды, IP, файлы, хэши) из RAW-событий инцидента, без дедупликации; page/size — по событиям | entities/incident (`useIncidentArtifacts`) |
 | PATCH  | `/incidents/{id}/status`                       | статус аналитика (optimistic update)      | features/incident-change-status |
 | GET    | `/scenarios/`                                  | список сценариев                          | entities/scenario     |
 | GET    | `/scenarios/{id}`                              | агрегат сценария                          | entities/scenario     |
@@ -363,6 +365,11 @@ Steiger знает только стандартное имя слоя `pages`, 
 | POST   | `/sources/`                                    | создать                                   | features/source-upsert |
 | PUT    | `/sources/{id}`                                | обновить                                  | features/source-upsert |
 | DELETE | `/sources/{id}`                                | удалить                                   | features/source-delete |
+| GET    | `/assets/`                                     | реестр активов (`{items, count}`)         | entities/asset        |
+| GET    | `/assets/{id}`                                 | актив                                     | entities/asset        |
+| POST   | `/assets/`                                     | создать                                   | features/asset/upsert |
+| PUT    | `/assets/{id}`                                 | обновить                                  | features/asset/upsert |
+| DELETE | `/assets/{id}`                                 | удалить (массовое удаление — по одному)   | features/asset/delete |
 | GET    | `/normalization-profiles/`                     | профили нормализации (`items`, `count`)   | entities/normalization-profile |
 | GET    | `/normalization-profiles/{name}`               | профиль                                   | entities/normalization-profile |
 | GET    | `/normalization-profiles/fields`               | каталог полей SIEM (`items`, `categories`) | entities/normalization-profile |
@@ -375,7 +382,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | GET    | `/audits/correlation-rules`                    | история всех правил корреляции (`action`, `author_id`, limit < 20) → `{total, has_next, items}` | entities/audit |
 | GET    | `/audits/correlation-rules/rule/{correlation_id}` | история одного правила корреляции (`action`) | entities/audit (`useCorrelationRuleAudits`) |
 | GET    | `/audits/correlation-rules/{audit_id}`         | версия правила + `changes: [{field, old, new}]` | entities/audit (`useCorrelationAudit`) |
-| GET    | `/audits/rule/{rule_id}`                       | история изменений правила (`{total, items}` с `author`, limit < 20) | entities/audit (`useRuleAudits`, `AuditTimeline`) |
+| GET    | `/audits/rule/{rule_id}`                       | история изменений правила (`{total, items}` с `author`, limit < 20) | entities/audit (`useRuleAudits`, `AuditTimeline`); вкладка «История» правила (`widgets/rules/details/ui/RuleHistory`) раскрывает запись и показывает изменённые поля: снимок `rule` из `GET /audits/{id}` сравнивается со снимком записи `before_id` (`useRuleAuditVersion`, `diffRuleVersions` из entities/rule) — готового diff, как у корреляции, backend не отдаёт. Фильтра `action` у эндпоинта нет — вкладка грузит всю историю (`useAllRuleAudits`, пачками по 19) и фильтрует по действию и листает на клиенте |
 | GET    | `/mitre/mitre`                                 | техники MITRE ATT&CK                      | entities/mitre-technique |
 | GET    | `/mitre/{mitre_id}`                            | техника MITRE (та же схема `MitreTechnique`) | entities/mitre-technique |
 | POST   | `/mitre/sync-mitre`                            | синхронизация MITRE                       | features/mitre-sync   |
@@ -420,6 +427,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Организации» (раньше «Кампании»); как в MITRE: таблица в `app/(dashboard)/admin/organizations/layout.tsx` → `OrganizationsLayout`, карточка организации открывается справа по клику на строку; `/new` и `/[id]/edit` рендерятся без таблицы; id декодируется в route-файле |
 | `/admin/sources`, `/new`, `/[source_id]`, `/[source_id]/edit` | `views/source*` | «Источники» (макет `public/images/sources.jpeg`); таблица и фильтры в `app/(dashboard)/admin/sources/layout.tsx` → `SourcesLayout` → `widgets/sources/list`, карточка (`widgets/sources/details`) открывается справа; «Синхронизировать» — перезапрос `sourceKeys.all` (эндпоинта синхронизации нет), «Качество данных» — заполненность `detected_fields` по выборке `sample-events`; удаление — на странице редактирования; id декодируется в route-файле |
 | `/admin/normalization-profiles`, `/new[?copy=<name>]`, `/[profile_name]`, `/[profile_name]/edit` | `views/normalization-profile*` | «Профили нормализации» (макет `public/images/normalizations-profile.jpeg`); как «Источники»: таблица в layout → `widgets/normalization/list`, карточка (`widgets/normalization/details`) справа с вкладками «Сопоставление полей», «Тест профиля», «JSON-просмотр»; «Дублировать» — `/new?copy=<name>`; имя профиля при редактировании не меняется |
+| `/admin/assets` | `views/assets` | «Активы» / Asset Inventory (макет `public/images/assets.jpeg`); одна страница: карточки-счётчики, фильтры, таблица (`widgets/assets/list`), создание и редактирование — диалог `AssetFormDialog` (`features/asset/upsert`), удаление из меню «⋯» строки и массово по чекбоксам, «Экспорт» — CSV отфильтрованного списка. «Требуют внимания» — включённые активы без организации или типа. ОС, ответственного и даты обновления в API нет — вместо них колонки «Среда» и «Теги» |
 | `/admin/normalization-fields` | `views/normalization-fields` | «Поля нормализации» — каталог `GET /normalization-profiles/fields` |
 | `/admin/rules`, `/new[?copy=<id>]`, `/[slug][?tab=test\|history]` | `views/rule*`       | «Правила обнаружения» — отдельный пункт сайдбара (макет `public/images/detect-rules.jpeg`); таблица, фильтры, счётчики и массовые действия в `app/(dashboard)/admin/rules/layout.tsx` → `RulesLayout` → `widgets/rules/list`; форма правила (`features/rule-upsert` → `RuleForm`, вкладки Основное/Условия/Классификация/MITRE/Тестирование) открывается справа и для `/new`, и для `/[slug]`; id декодируется в route-файле |
 | `/admin/correlation-rules`, `/new[?copy=<id>]`, `/[correlation_id][?tab=test\|history]` | `views/correlation-rule*` | «Правила корреляции» — отдельный пункт сайдбара (макет `public/images/correlation-rules.jpeg`); как «Правила обнаружения»: таблица в layout → `widgets/correlation-rules/list`, форма (`features/correlation-rule/upsert`, вкладки Основное/Условия/Действия/Тестирование/История) справа; id декодируется в route-файле |

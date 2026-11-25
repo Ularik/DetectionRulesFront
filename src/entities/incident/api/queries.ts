@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { DailyIncidentCountParams, IncidentParams } from "../model/types";
 import {
   fetchDailyIncidentCount,
   fetchIncident,
+  fetchIncidentArtifacts,
   fetchIncidentEvents,
   fetchIncidents,
 } from "./incidentApi";
@@ -37,6 +38,23 @@ export const useIncidentEvents = ({
     queryKey: incidentKeys.events(incidentId, page, size),
     queryFn: () => fetchIncidentEvents({ inc_id: incidentId, page, size }),
     enabled,
+  });
+};
+
+export const useIncidentArtifacts = ({
+  incidentId,
+  page,
+  size,
+}: {
+  incidentId: string;
+  page: number;
+  size: number;
+}) => {
+  return useQuery({
+    queryKey: incidentKeys.artifacts(incidentId, page, size),
+    queryFn: () => fetchIncidentArtifacts({ inc_id: incidentId, page, size }),
+    enabled: Boolean(incidentId),
+    placeholderData: keepPreviousData,
   });
 };
 

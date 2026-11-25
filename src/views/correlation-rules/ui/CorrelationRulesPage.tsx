@@ -1,5 +1,4 @@
-import { CorrelationRulesList } from "@/widgets/correlation-rules-list";
-
+// Таблица правил корреляции рендерится в CorrelationRulesLayout; у самого списка своей разметки нет
 export function CorrelationRulesPage() {
-  return <CorrelationRulesList />;
+  return null;
 }

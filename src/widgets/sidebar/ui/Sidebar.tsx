@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import clsx from "clsx";
+import { ChevronDown } from "lucide-react";
 import { routes } from "@/shared/config";
 import certKgLogo from "./cert-kg.svg";
 import {
-  administrationMenuItem,
+  administrationMenu,
   dashboardMenuItems,
   isMenuItemActive,
   type DashboardMenuItem,
@@ -23,18 +25,86 @@ const MenuLink = ({
   const Icon = item.icon;
   const isActive = isMenuItemActive(item, pathname);
 
-  return (
+  const link = (
     <Link
       href={item.href}
-      aria-current={isActive ? "page" : undefined}
+      aria-current={isActive && !item.children ? "page" : undefined}
       className={clsx(
         "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-base text-white transition-colors",
         isActive ? "bg-brand-light" : "hover:bg-white/10",
       )}
     >
       <Icon className="size-6 shrink-0" strokeWidth={2} />
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {item.children && (
+        <ChevronDown
+          aria-hidden
+          className={clsx("size-4 shrink-0 transition-transform", !isActive && "-rotate-90")}
+        />
+      )}
     </Link>
+  );
+
+  if (!item.children || !isActive) return link;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {link}
+      {item.children.map((child) => {
+        const isChildActive =
+          pathname === child.href || pathname.startsWith(`${child.href}/`);
+        return (
+          <Link
+            key={child.href}
+            href={child.href}
+            aria-current={isChildActive ? "page" : undefined}
+            className={clsx(
+              "ml-9 rounded-lg px-3 py-1.5 text-sm transition-colors",
+              isChildActive ? "bg-white/15 font-medium text-white" : "text-[#ccdae7] hover:bg-white/10",
+            )}
+          >
+            {child.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+};
+
+const AdministrationMenu = ({ pathname }: { pathname: string }) => {
+  const { label, icon: Icon, items } = administrationMenu;
+  const isGroupActive = items.some((item) => isMenuItemActive(item, pathname));
+  // При заходе прямо в раздел группы она раскрыта; дальше — по клику
+  const [isOpen, setIsOpen] = useState(isGroupActive);
+
+  return (
+    <nav className="mt-auto flex flex-col gap-2">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls="sidebar-administration"
+        onClick={() => setIsOpen((open) => !open)}
+        className={clsx(
+          "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-base text-white transition-colors",
+          isGroupActive && !isOpen ? "bg-brand-light" : "hover:bg-white/10",
+        )}
+      >
+        <Icon className="size-6 shrink-0" strokeWidth={2} />
+        <span className="flex-1">{label}</span>
+        <ChevronDown
+          aria-hidden
+          className={clsx("size-4 shrink-0 transition-transform", !isOpen && "-rotate-90")}
+        />
+      </button>
+
+      {isOpen && (
+        <div id="sidebar-administration" className="flex flex-col gap-2">
+          {items.map((item) => (
+            <MenuLink key={item.href} item={item} pathname={pathname} />
+          ))}
+        </div>
+      )}
+    </nav>
   );
 };
 
@@ -55,7 +125,7 @@ export const Sidebar = () => {
         className="pointer-events-none absolute inset-0 size-full object-cover motion-reduce:hidden"
       />
 
-      <div className="relative flex h-full flex-col gap-4 overflow-y-auto px-5 pt-5 pb-6">
+      <div className="scrollbar-subtle relative flex h-full flex-col gap-4 overflow-x-hidden overflow-y-auto px-5 pt-5 pb-6 [--scrollbar-thumb:rgb(255_255_255/0.25)]">
         <Link href={routes.home} className="flex items-center">
           <Image
             src={certKgLogo}
@@ -79,9 +149,7 @@ export const Sidebar = () => {
           ))}
         </nav>
   
-        <nav className="mt-auto flex flex-col">
-          <MenuLink item={administrationMenuItem} pathname={pathname} />
-        </nav>
+        <AdministrationMenu pathname={pathname} />
       </div>
     </aside>
   );

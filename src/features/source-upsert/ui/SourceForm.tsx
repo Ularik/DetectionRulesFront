@@ -3,12 +3,13 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { inputClass } from "@/shared/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
-import { useOrganizations } from "@/entities/organization";
+import { useAgents, useOrganizations } from "@/entities/organization";
 import {
   DEFAULT_HEALTH_OFFLINE_SECONDS,
   DEFAULT_HEALTH_WARNING_SECONDS,
@@ -98,7 +99,7 @@ export function SourceForm({
   const [normalizationProfile, setNormalizationProfile] = useState(
     initialValues?.normalization_profile ?? "",
   );
-  const [agentIds, setAgentIds] = useState(joinList(initialValues?.agent_ids));
+  const [agentIds, setAgentIds] = useState<string[]>(initialValues?.agent_ids ?? []);
   const [agentNames, setAgentNames] = useState(joinList(initialValues?.agent_names));
   const [hostnames, setHostnames] = useState(joinList(initialValues?.hostnames));
   const [locations, setLocations] = useState(joinList(initialValues?.locations));
@@ -114,6 +115,20 @@ export function SourceForm({
 
   // Организация источника может отсутствовать в списке (удалена) — всё равно показываем её
   const organizationOptions = organizations?.items ?? [];
+  const {
+    data: agents = [],
+    isPending: isAgentsLoading,
+    isError: isAgentsError,
+  } = useAgents();
+  // ID агентов источника, которых уже нет в списке Wazuh, — показываем, чтобы их можно было снять
+  const unknownAgentIds = isAgentsLoading
+    ? []
+    : agentIds.filter((id) => !agents.some((agent) => agent.agent_id === id));
+  const toggleAgent = (agentId: string) =>
+    setAgentIds((current) =>
+      current.includes(agentId) ? current.filter((id) => id !== agentId) : [...current, agentId],
+    );
+
   const hasUnknownOrganization =
     Boolean(organizationId) &&
     !isOrganizationsLoading &&
@@ -151,7 +166,7 @@ export function SourceForm({
       vendor_name: emptyToNull(vendorName),
       product_name: emptyToNull(productName),
       normalization_profile: emptyToNull(normalizationProfile),
-      agent_ids: parseList(agentIds),
+      agent_ids: agentIds,
       agent_names: parseList(agentNames),
       hostnames: parseList(hostnames),
       locations: parseList(locations),
@@ -269,14 +284,73 @@ export function SourceForm({
         </FormSection>
 
         <FormSection title="Идентификация (значения через запятую)">
-          <Field label="Agent IDs">
-            <input
-              value={agentIds}
-              onChange={(event) => setAgentIds(event.target.value)}
-              className={inputClass}
-              placeholder="001, 002"
-            />
-          </Field>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-ink">Agent IDs</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(inputClass, "flex items-center justify-between gap-2 text-left")}
+                  disabled={isAgentsLoading}
+                >
+                  <span className={cn("truncate", !agentIds.length && "text-ink-muted")}>
+                    {isAgentsLoading
+                      ? "Загрузка..."
+                      : agentIds.length
+                        ? agentIds.join(", ")
+                        : "Выберите агентов"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-ink-muted" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="max-h-72 w-(--radix-popover-trigger-width) overflow-y-auto p-1"
+              >
+                {isAgentsError && (
+                  <div className="px-3 py-2 text-sm text-red-600">
+                    Не удалось загрузить список агентов.
+                  </div>
+                )}
+                {!isAgentsError && !agents.length && !unknownAgentIds.length && (
+                  <div className="px-3 py-2 text-sm text-ink-muted">Агентов пока нет.</div>
+                )}
+                {[
+                  ...unknownAgentIds.map((id) => ({ agent_id: id, agent_name: "" })),
+                  ...agents,
+                ].map((agent) => {
+                  const selected = agentIds.includes(agent.agent_id);
+                  return (
+                    <button
+                      key={agent.agent_id}
+                      type="button"
+                      onClick={() => toggleAgent(agent.agent_id)}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-muted"
+                    >
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                          selected
+                            ? "border-brand bg-brand text-white"
+                            : "border-line bg-white text-transparent",
+                        )}
+                      >
+                        <Check className="h-3 w-3" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-ink">{agent.agent_id}</span>
+                        {agent.agent_name && (
+                          <span className="block truncate text-xs text-ink-muted">
+                            {agent.agent_name}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
+          </div>
           <Field label="Agent names">
             <input
               value={agentNames}

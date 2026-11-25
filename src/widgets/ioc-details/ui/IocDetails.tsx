@@ -6,7 +6,7 @@ import { Database, FileText, Info, ShieldAlert, Tags, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { routes } from "@/shared/config";
-import { IocSeverityBadge, useIoc, type IocType } from "@/entities/ioc";
+import { IocSeverityLabel, useIoc, type IocType } from "@/entities/ioc";
 import { MarkIocViewedButton } from "@/features/ioc-mark-viewed";
 
 // Карточка IOC в стиле панели техники MITRE ATT&CK (Figma 608:10445): открывается справа от таблицы
@@ -60,7 +60,7 @@ function IocContent({ ioc }: { ioc: IocType }) {
           {ioc.ioc_type}
         </span>
         <h1 className="min-w-0 flex-1 text-sm font-semibold break-all text-[#1067c2]">{ioc.value}</h1>
-        <IocSeverityBadge severity={ioc.severity} className="hidden sm:inline-flex" />
+        <IocSeverityLabel severity={ioc.severity} className="hidden shrink-0 text-sm sm:flex" />
         <MarkIocViewedButton iocId={ioc.ioc_id} viewed={ioc.viewed} />
         <Link
           href={routes.ioc}

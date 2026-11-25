@@ -1,8 +1,7 @@
-export const IOC_SEVERITY_STYLES: Record<string, string> = {
-  critical: "bg-rose-50 text-rose-600",
-  high: "bg-orange-50 text-orange-600",
-  medium: "bg-amber-50 text-amber-600",
-  low: "bg-sky-50 text-sky-600",
+// Точка перед критичностью (таблица и шапка карточки) — цвета как у критичности инцидентов (INCIDENT_SEVERITY_COLORS)
+export const IOC_SEVERITY_DOT: Record<string, string> = {
+  critical: "bg-[#b50000]",
+  high: "bg-[#ff8024]",
+  medium: "bg-[#0965c5]",
+  low: "bg-[#0ac053]",
 };
-
-export const IOC_SEVERITY_FALLBACK_STYLE = "bg-surface-muted text-ink-muted";

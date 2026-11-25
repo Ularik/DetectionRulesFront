@@ -2,26 +2,29 @@ export type {
   SuppressionAction,
   SuppressionSeverity,
   SuppressionDecision,
-  SuppressionMatchTypes,
-  SuppressionActionTypes,
-  SuppressionRuleTypes,
+  SuppressionMatchSchema,
+  SuppressionActionResponseSchema,
+  SuppressionActionRequestSchema,
+  SuppressionRuleType,
   SuppressionRuleCreateType,
-  SuppressionMatchUpdateTypes,
-  ActionType,
   SuppressionRuleUpdateType,
-  UiControlType,
-  ValueSourceType,
-  MatchModeType,
+  SuppressionRuleCreateUpdateResult,
+  SuppressionRuleDeleteResponse,
+  SuppressionTestIncident,
+  SuppressionRuleTestRequest,
+  SuppressionRuleTestResponse,
   MatchFieldType,
-  FrontendRulesForMatchFields,
   MatchFieldResponseType,
 } from "./model/types";
 export {
   fetchSuppressionRules,
   fetchSuppressionRule,
-  updateSuppressionRule,
-  fetchSuppressionMatchFields,
   createSuppressionRule,
+  updateSuppressionRule,
+  patchSuppressionRuleStatus,
+  deleteSuppressionRule,
+  testSuppressionRule,
+  fetchSuppressionMatchFields,
 } from "./api/suppressionRuleApi";
 export {
   suppressionRuleKeys,
@@ -29,6 +32,23 @@ export {
   useSuppressionRule,
   useSuppressionMatchFields,
 } from "./api/queries";
-export { actionAction, actionSeverity, actionDecision } from "./config/options";
-export { SuppressionRuleCard } from "./ui/SuppressionRuleCard";
-export { SuppressionRuleDetailsCard } from "./ui/SuppressionRuleDetailsCard";
+export {
+  SUPPRESSION_ACTIONS,
+  SUPPRESSION_SEVERITIES,
+  SUPPRESSION_DECISIONS,
+  MATCH_FIELDS,
+  MATCH_FIELD_LABELS,
+  suppressionActionLabel,
+  suppressionSeverityLabel,
+  suppressionDecisionLabel,
+} from "./config/options";
+export {
+  EXCLUSION_TYPES,
+  EXCLUSION_TYPE_LABELS,
+  getExclusionType,
+  hasMatchConditions,
+  summarizeMatch,
+  matchValues,
+  type ExclusionType,
+} from "./lib/match";
+export { ExclusionTypeLabel, SuppressionStatusBadge } from "./ui/ExclusionTypeLabel";

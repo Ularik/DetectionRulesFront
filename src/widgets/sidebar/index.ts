@@ -1,6 +1,6 @@
 export { Sidebar } from "./ui/Sidebar";
 export {
-  administrationMenuItem,
+  administrationMenu,
   dashboardMenuItems,
   type DashboardMenuItem,
 } from "./config/menu";

@@ -2,11 +2,16 @@ import {
   Bell,
   Crosshair,
   Database,
+  GitMerge,
   House,
   Layers,
+  LocateFixed,
   type LucideIcon,
+  Shuffle,
   Radar,
   Settings,
+  Filter,
+  ScrollText,
   ShieldAlert,
   Workflow,
 } from "lucide-react";
@@ -20,6 +25,8 @@ export type DashboardMenuItem = {
   match?: string[];
   // Подсвечивать только при точном совпадении (для «Главной», чей href — префикс всех разделов)
   exact?: boolean;
+  // Подпункты — раскрываются под пунктом, когда раздел активен
+  children?: { label: string; href: string }[];
 };
 
 // Порядок и названия — по макету CERT-KG SIEM (Figma)
@@ -67,17 +74,42 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   },
 ];
 
-// Пункт закреплён внизу сайдбара
-export const administrationMenuItem: DashboardMenuItem = {
+// Группа «Администрирование» закреплена внизу сайдбара и раскрывается по клику
+export const administrationMenu = {
   label: "Администрирование",
-  href: routes.rules,
   icon: Settings,
-  match: [
-    routes.rules,
-    routes.correlationRules,
-    routes.suppressionRules,
-    routes.audit,
-  ],
+  items: [
+    {
+      label: "Правила обнаружения",
+      href: routes.rules,
+      icon: LocateFixed,
+    },
+    {
+      label: "Правила корреляции",
+      href: routes.correlationRules,
+      icon: GitMerge,
+    },
+    {
+      label: "Правила подавления",
+      href: routes.suppressionRules,
+      icon: Filter,
+    },
+    {
+      label: "Нормализация",
+      href: routes.normalizationProfiles,
+      icon: Shuffle,
+      match: [routes.normalizationProfiles, routes.normalizationFields],
+      children: [
+        { label: "Профили нормализации", href: routes.normalizationProfiles },
+        { label: "Поля нормализации", href: routes.normalizationFields },
+      ],
+    },
+    {
+      label: "Аудит",
+      href: routes.audit,
+      icon: ScrollText,
+    },
+  ] satisfies DashboardMenuItem[],
 };
 
 export const isMenuItemActive = (item: DashboardMenuItem, pathname: string) =>

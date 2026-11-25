@@ -1,5 +1,5 @@
-import { RuleCreateForm } from "@/features/rule-upsert";
+import { RuleCreate } from "@/widgets/rules/details";
 
-export function RuleCreatePage() {
-  return <RuleCreateForm />;
+export function RuleCreatePage({ copyFrom }: { copyFrom?: string }) {
+  return <RuleCreate copyFrom={copyFrom} />;
 }

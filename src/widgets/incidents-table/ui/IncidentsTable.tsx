@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Eye, EyeOff, CircleDashed, ShieldAlert, SquarePlus } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, CircleDashed, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Button } from "@/shared/ui/button";
@@ -256,7 +256,7 @@ export function IncidentsTable() {
                             aria-label={`Открыть инцидент ${incident.incident_id}`}
                             className="flex justify-center text-[#595555] hover:text-brand-light"
                           >
-                            <SquarePlus className="size-[18px]" />
+                            <ChevronRight className="size-[18px]" />
                           </Link>
                         </td>
                         <td className={cn(cellClass, "max-w-[164px] truncate")} title={incident.incident_id}>

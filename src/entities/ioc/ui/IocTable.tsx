@@ -6,7 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import { CopyButton } from "@/shared/ui/copy-button";
 import type { IocType } from "../model/types";
-import { IocSeverityBadge } from "./IocSeverityBadge";
+import { IocSeverityLabel } from "./IocSeverityLabel";
 
 interface IocTableProps {
   items: IocType[];
@@ -109,7 +109,7 @@ export function IocTable({ items, isLoading = false, limit = 10, selectedId }: I
                   <td className={cn(cellClass, "whitespace-nowrap")}>{item.ioc_type}</td>
                   <td className={cn(cellClass, "whitespace-nowrap")}>{item.threat_type}</td>
                   <td className={cn(cellClass, "whitespace-nowrap", compact && "pr-4")}>
-                    <IocSeverityBadge severity={item.severity} />
+                    <IocSeverityLabel severity={item.severity} />
                   </td>
                   {!compact && (
                     <td className={cn(cellClass, "whitespace-nowrap")}>

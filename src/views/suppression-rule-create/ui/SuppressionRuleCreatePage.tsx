@@ -1,5 +1,5 @@
-import { CreateSuppressionRuleForm } from "@/features/suppression-rule-upsert";
+import { SuppressionRuleCreate } from "@/widgets/suppression-rules/details";
 
-export function SuppressionRuleCreatePage() {
-  return <CreateSuppressionRuleForm />;
+export function SuppressionRuleCreatePage({ copyFrom }: { copyFrom?: string }) {
+  return <SuppressionRuleCreate copyFrom={copyFrom} />;
 }

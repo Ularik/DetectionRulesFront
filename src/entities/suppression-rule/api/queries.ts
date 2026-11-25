@@ -8,8 +8,7 @@ import {
 export const suppressionRuleKeys = {
   all: ["suppression-rules"] as const,
   lists: () => [...suppressionRuleKeys.all, "list"] as const,
-  detail: (suppressionId: string) =>
-    [...suppressionRuleKeys.all, "detail", suppressionId] as const,
+  detail: (suppressionId: string) => [...suppressionRuleKeys.all, "detail", suppressionId] as const,
   matchFields: () => [...suppressionRuleKeys.all, "match-fields"] as const,
 };
 
@@ -24,12 +23,15 @@ export function useSuppressionRule(suppressionId: string) {
   return useQuery({
     queryKey: suppressionRuleKeys.detail(suppressionId),
     queryFn: () => fetchSuppressionRule(suppressionId),
+    enabled: Boolean(suppressionId),
   });
 }
 
+/** Метаданные полей match: подписи и подсказки для формы */
 export function useSuppressionMatchFields() {
   return useQuery({
     queryKey: suppressionRuleKeys.matchFields(),
     queryFn: fetchSuppressionMatchFields,
+    staleTime: 10 * 60 * 1000,
   });
 }

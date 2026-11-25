@@ -147,5 +147,37 @@ body {
     /* Место под вертикальный скролл зарезервировано всегда: контент не сдвигается,
        когда страница становится выше экрана (например, при раскрытии строки сценария) */
     scrollbar-gutter: stable;
+    /* Скролл страницы — тонкий и светлый */
+    scrollbar-width: thin;
+    scrollbar-color: rgb(15 23 42 / 0.15) transparent;
+  }
+}
+
+/* Почти незаметный скролл: тонкий, ползунок проявляется только при наведении на область.
+   Цвет ползунка — переменная --scrollbar-thumb (например, светлый на тёмном сайдбаре) */
+@utility scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s;
+
+  &:hover,
+  &:focus-within {
+    scrollbar-color: var(--scrollbar-thumb, rgb(15 23 42 / 0.18)) transparent;
+  }
+
+  /* Браузеры без scrollbar-color (Safari) */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: transparent;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, rgb(15 23 42 / 0.18));
   }
 }

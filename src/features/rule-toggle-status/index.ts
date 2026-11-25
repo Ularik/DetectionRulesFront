@@ -1,2 +1,1 @@
-export { useToggleRuleStatus } from "./model/useToggleRuleStatus";
-export { ToggleRuleStatusButton } from "./ui/ToggleRuleStatusButton";
+export { useSetRuleStatus, useToggleRuleStatus } from "./model/useToggleRuleStatus";

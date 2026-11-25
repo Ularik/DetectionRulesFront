@@ -2,8 +2,10 @@
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Copy, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
+import { routes } from "@/shared/config";
 import {
   INCIDENT_STATUS_LABELS,
   type Incident,
@@ -87,6 +89,38 @@ function Row({
         )}
       >
         {isEmpty(value) ? empty : toText(value)}
+      </dd>
+    </div>
+  );
+}
+
+// ID техники MITRE ATT&CK (T1059 или T1059.001) внутри значения
+const MITRE_ID_PATTERN = /\bT\d{4}(?:\.\d{3})?\b/;
+
+// Как Row, но значения, содержащие ID техники, — ссылки на карточку техники
+function MitreRow({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+      <dt className="shrink-0 text-xs font-medium text-gray-500 sm:w-[220px]">
+        {label}
+      </dt>
+      <dd className="flex min-w-0 flex-1 flex-wrap gap-x-2 gap-y-1 font-mono text-[13px] wrap-break-word text-gray-900">
+        {values.length === 0
+          ? "—"
+          : values.map((value) => {
+              const mitreId = value.match(MITRE_ID_PATTERN)?.[0];
+              return mitreId ? (
+                <Link
+                  key={value}
+                  href={routes.mitreTechnique(mitreId)}
+                  className="text-[#0965c5] hover:underline"
+                >
+                  {value}
+                </Link>
+              ) : (
+                <span key={value}>{value}</span>
+              );
+            })}
       </dd>
     </div>
   );
@@ -408,15 +442,27 @@ export function IncidentModalContent({ data }: { data: IncidentSchema }) {
                   MITRE ATT&CK техники:
                 </h3>
                 <ul className="flex flex-col gap-1.5">
-                  {techniques.map((technique) => (
-                    <li
-                      key={technique}
-                      className="flex items-start gap-2 text-sm text-[#0965c5]"
-                    >
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#0965c5]" />
-                      {technique}
-                    </li>
-                  ))}
+                  {techniques.map((technique) => {
+                    const mitreId = technique.match(MITRE_ID_PATTERN)?.[0];
+                    return (
+                      <li
+                        key={technique}
+                        className="flex items-start gap-2 text-sm text-[#0965c5]"
+                      >
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#0965c5]" />
+                        {mitreId ? (
+                          <Link
+                            href={routes.mitreTechnique(mitreId)}
+                            className="hover:underline"
+                          >
+                            {technique}
+                          </Link>
+                        ) : (
+                          technique
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -491,16 +537,18 @@ export function IncidentModalContent({ data }: { data: IncidentSchema }) {
           <Card title="MITRE ATT&CK">
             <Rows>
               <Row label="kill_chain" value={incident.kill_chain} />
-              <Row
+              <MitreRow
                 label="mitre.ids"
-                value={data.mitre?.ids ?? incident.mitre_ids}
-                mono
+                values={data.mitre?.ids ?? incident.mitre_ids}
               />
               <Row
                 label="mitre.tactics"
                 value={data.mitre?.tactics ?? incident.tactics}
               />
-              <Row label="mitre.techniques" value={data.mitre?.techniques} />
+              <MitreRow
+                label="mitre.techniques"
+                values={data.mitre?.techniques ?? []}
+              />
             </Rows>
           </Card>
 

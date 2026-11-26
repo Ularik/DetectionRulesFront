@@ -70,9 +70,9 @@ function OrganizationContent({ organization }: { organization: Organization }) {
           <span className="flex size-[27px] shrink-0 items-center justify-center rounded-md bg-[#8fcdf1]/60 text-[#1067c2]">
             <Building2 className="size-[18px]" aria-hidden />
           </span>
-          <h1 className="min-w-0 flex-1 text-base font-semibold break-words text-ink">
+          <h2 className="min-w-0 flex-1 text-base font-semibold break-words text-ink">
             {organization.name}
-          </h1>
+          </h2>
           <div className="flex shrink-0 items-center gap-1.5">
             <Link
               href={routes.organizationEdit(organization.organization_id)}

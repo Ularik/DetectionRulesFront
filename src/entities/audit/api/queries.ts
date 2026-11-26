@@ -1,22 +1,16 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { AuditParams, CorrelationAuditParams, RuleAuditParams } from "../model/types";
+import type { CorrelationAuditParams, RuleAuditParams } from "../model/types";
 import {
   fetchAudit,
-  fetchAudits,
   fetchCorrelationAudit,
   fetchCorrelationAudits,
   fetchCorrelationRuleAudits,
+  fetchEngineAudits,
   fetchRuleAudits,
   fetchAllRuleAudits,
 } from "./auditApi";
 import { auditKeys } from "./queryKeys";
-
-export function useAudits(params: AuditParams) {
-  return useQuery({
-    queryKey: auditKeys.list(params),
-    queryFn: () => fetchAudits(params),
-  });
-}
+import type { EngineAuditParams } from "../model/engineTypes";
 
 export function useAudit(id: string) {
   return useQuery({
@@ -82,5 +76,13 @@ export function useCorrelationAudit(auditId: number | null) {
     queryFn: () => fetchCorrelationAudit(auditId as number),
     enabled: auditId !== null,
     staleTime: Infinity,
+  });
+}
+
+export function useEngineAudits(params: EngineAuditParams) {
+  return useQuery({
+    queryKey: auditKeys.engineList(params),
+    queryFn: () => fetchEngineAudits(params),
+    placeholderData: keepPreviousData,
   });
 }

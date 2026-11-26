@@ -13,19 +13,20 @@ import {
   type IncidentArtifact,
   type IncidentArtifactEvent,
 } from "@/entities/incident";
+import { MitreTechniqueLink } from "./MitreTechniqueLink";
 
 // Блок «Артефакты» карточки инцидента: GET /incidents/{id}/artifacts.
 // Backend не дедуплицирует артефакты и пагинирует по событиям, поэтому сверху — уникальные
 // значения текущей страницы, ниже — события с их артефактами
 
 const ARTIFACT_TYPES: Record<string, { label: string; className: string }> = {
-  command: { label: "Команда", className: "bg-violet-50 text-violet-700 border-violet-200" },
+  command: { label: "Команда", className: "bg-blue-50 text-blue-700 border-blue-200" },
   ip: { label: "IP", className: "bg-sky-50 text-sky-700 border-sky-200" },
   file: { label: "Файл", className: "bg-amber-50 text-amber-700 border-amber-200" },
   hash: { label: "Хэш", className: "bg-slate-100 text-slate-700 border-slate-200" },
   user: { label: "Пользователь", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   domain: { label: "Домен", className: "bg-cyan-50 text-cyan-700 border-cyan-200" },
-  url: { label: "URL", className: "bg-blue-50 text-blue-700 border-blue-200" },
+  url: { label: "URL", className: "bg-indigo-50 text-indigo-700 border-indigo-200" },
   process: { label: "Процесс", className: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200" },
   host: { label: "Хост", className: "bg-teal-50 text-teal-700 border-teal-200" },
 };
@@ -58,7 +59,7 @@ function ArtifactTypeBadge({ type }: { type: string }) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 rounded-md border px-1.5 text-[11px] leading-5 font-semibold",
+        "inline-flex shrink-0 rounded-md border px-1.5 text-xs leading-5 font-semibold",
         className,
       )}
     >
@@ -84,17 +85,17 @@ function ArtifactValue({
       className="flex min-w-0 items-start gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-[#b9d7f5]"
     >
       {count !== undefined && (
-        <span className="order-last mt-0.5 shrink-0 rounded-md bg-gray-100 px-1.5 text-[11px] leading-5 text-gray-600">
+        <span className="order-last mt-0.5 shrink-0 rounded-md bg-gray-100 px-1.5 text-xs leading-5 text-gray-600">
           ×{count}
         </span>
       )}
       <ArtifactTypeBadge type={artifact.type} />
-      <code
+      <span
         title={`Поле: ${artifact.field}`}
-        className="min-w-0 flex-1 font-mono text-[13px] break-all text-gray-900"
+        className="min-w-0 flex-1 text-sm break-all text-gray-900"
       >
         {artifact.value}
-      </code>
+      </span>
       <CopyButton
         value={artifact.value}
         label="Скопировать артефакт"
@@ -150,15 +151,15 @@ function ArtifactEventRow({ event }: { event: IncidentArtifactEvent }) {
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {event.mitre_ids.map((mitreId) =>
             MITRE_ID_PATTERN.test(mitreId) ? (
-              <Link
+              <MitreTechniqueLink
                 key={mitreId}
-                href={routes.mitreTechnique(mitreId)}
-                className="rounded-md bg-[#f2f9ff] px-1.5 font-mono text-xs leading-5 text-[#0965c5] hover:underline"
+                mitreId={mitreId}
+                className="rounded-md bg-[#f2f9ff] px-1.5 text-xs leading-5 text-[#0965c5] hover:underline"
               >
                 {mitreId}
-              </Link>
+              </MitreTechniqueLink>
             ) : (
-              <span key={mitreId} className="font-mono text-xs text-gray-600">
+              <span key={mitreId} className="text-xs text-gray-600">
                 {mitreId}
               </span>
             ),

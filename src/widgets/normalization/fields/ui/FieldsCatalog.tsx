@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import { useNormalizationFields } from "@/entities/normalization-profile";
@@ -28,32 +30,27 @@ export function FieldsCatalog() {
   const categoryLabel = new Map(categories.map((item) => [item.id, item.label]));
 
   return (
-    <section className="flex flex-col gap-5">
-      <header>
-        <Link
-          href={routes.normalizationProfiles}
-          className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-ink-muted hover:text-brand-light"
-        >
-          <ArrowLeft className="h-4 w-4" />К профилям нормализации
-        </Link>
-        <h1 className="text-2xl font-bold text-ink">Поля нормализации</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Внутренние поля SOC Engine, которые можно заполнять через сопоставление полей в профилях.
-        </p>
-      </header>
+    <section className={pageStackClass}>
+      <PageHeader
+        title="Поля нормализации"
+        description="Внутренние поля SOC Engine, которые можно заполнять через сопоставление полей в профилях"
+        actions={
+          <Link
+            href={routes.normalizationProfiles}
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-surface-muted"
+          >
+            <ArrowLeft className="size-4" />К профилям нормализации
+          </Link>
+        }
+      />
 
-      <div className="flex flex-wrap gap-3">
-        <label className="relative block min-w-[240px] flex-1">
-          <Search aria-hidden className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted" />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Поиск по полю, названию или полю источника"
-            aria-label="Поиск полей"
-            className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-          />
-        </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Поиск по полю, названию или полю источника"
+          label="Поиск полей"
+        />
       </div>
 
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Категории полей">

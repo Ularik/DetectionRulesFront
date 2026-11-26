@@ -36,13 +36,6 @@ export interface RuleAuditParams {
 }
 
 
-export interface AuditParams {
-    limit: number;
-    offset: number;
-    rule_id?: string;
-    user_id?: string;
-}
-
 
 // ——— История изменений правил корреляции: /audits/correlation-rules/* ———
 

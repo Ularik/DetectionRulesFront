@@ -17,7 +17,7 @@ type Props = {
 // Строка поиска, меню «Добавить фильтр» и чипы применённых фильтров
 export function IncidentsFilter({ filters, onChange }: Props) {
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <FilterSearch
           value={filters.text ?? ""}

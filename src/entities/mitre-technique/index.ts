@@ -18,3 +18,4 @@ export {
   useMitreTechnique,
 } from "./api/queries";
 export { MitreStatusBadge } from "./ui/MitreStatusBadge";
+export { MitreTechniqueCard } from "./ui/MitreTechniqueCard";

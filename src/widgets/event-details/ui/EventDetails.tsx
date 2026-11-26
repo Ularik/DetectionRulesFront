@@ -286,7 +286,7 @@ export function EventDetailsBody({ indexName, eventId }: { indexName: string; ev
 
 export function EventDetails({ indexName, eventId }: { indexName: string; eventId: string }) {
   return (
-    <main className="mx-auto max-w-[1431px]">
+    <div>
       <Button variant="ghost" asChild className="mb-4 -ml-3">
         <Link href={routes.events}>
           <ArrowLeft /> К Raw data
@@ -295,6 +295,6 @@ export function EventDetails({ indexName, eventId }: { indexName: string; eventI
       <div className="rounded-[10px] border border-[#e5e7eb] bg-white shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
         <EventDetailsBody indexName={indexName} eventId={eventId} />
       </div>
-    </main>
+    </div>
   );
 }

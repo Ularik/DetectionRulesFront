@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { ArrowDown, ShieldAlert, SquareMinus, SquarePlus } from "lucide-react";
 import Link from "next/link";
 import { PaginationControl } from "@/shared/ui/pagination";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
@@ -91,20 +92,20 @@ export function ScenariosList() {
     setExpandedId((current) => (current === scenarioId ? null : scenarioId));
 
   return (
-    <section className="flex flex-col gap-2">
-      <h1 className="sr-only">Сценарии</h1>
+    <section className={pageStackClass}>
+      <PageHeader title="Сценарии" description="Сценарии атак, собранные из связанных инцидентов" />
 
       <ScenariosFilter filters={filters} onChange={handleFiltersChange} />
 
       {error ? (
-        <div className="mt-2 space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
+        <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
           <p className="font-semibold text-ink">Не удалось загрузить сценарии</p>
           <Button variant="outline" onClick={() => refetch()}>
             Повторить попытку
           </Button>
         </div>
       ) : (
-        <div className="mt-2 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
+        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.04)]">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1200px] border-collapse">
               <thead className="border-b border-line-muted">

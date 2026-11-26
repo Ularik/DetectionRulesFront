@@ -39,7 +39,7 @@ export function IocCreateForm() {
   };
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Link
         href={routes.ioc}
         className="mb-5 inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2B6D]"
@@ -48,7 +48,7 @@ export function IocCreateForm() {
         Все IOC
       </Link>
       <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        <h1 className="text-2xl leading-8 font-semibold text-ink">
           Создание IOC
         </h1>
         <p className="mt-1 text-sm text-gray-500">

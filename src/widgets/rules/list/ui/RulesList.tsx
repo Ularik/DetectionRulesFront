@@ -15,7 +15,6 @@ import {
   Play,
   Plus,
   Power,
-  Search,
   ShieldAlert,
   SlidersHorizontal,
   SquarePen,
@@ -28,6 +27,8 @@ import { Button } from "@/shared/ui/button";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { SelectPill } from "@/shared/ui/select-pill";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
@@ -231,10 +232,83 @@ export function RulesList({ selectedId, detail }: Props) {
   const columnCount = compact ? 7 : 10;
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
-      <div>
-        <h1 className="text-2xl font-semibold text-ink">Правила обнаружения</h1>
-        <p className="mt-1 text-sm text-ink-muted">Настройка логики выявления угроз</p>
+    <section className={pageStackClass}>
+      <PageHeader
+        title="Правила обнаружения"
+        description="Настройка логики выявления угроз"
+      />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={withPageReset(setSearch)}
+          placeholder="Поиск по ID, названию, описанию, MITRE (например, T1059)"
+          label="Поиск правил"
+        />
+        <Link
+          href={routes.ruleNew}
+          scroll={false}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
+        >
+          <Plus className="size-4" />
+          Создать правило
+        </Link>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SelectPill
+          label="Scope"
+          icon={<Layers aria-hidden className="size-4 text-ink-muted" />}
+          value={scopeFilter}
+          display={filterLabel(scopeFilter, scopeName)}
+          onChange={withPageReset(setScopeFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {scopeOptions.map((scope) => (
+            <option key={scope} value={scope}>
+              {scopeName(scope)}
+            </option>
+          ))}
+        </SelectPill>
+        <SelectPill
+          label="Категория"
+          icon={<Grid2x2 aria-hidden className="size-4 text-ink-muted" />}
+          value={categoryFilter}
+          display={filterLabel(categoryFilter, categoryName)}
+          onChange={withPageReset(setCategoryFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {categoryOptions.map((category) => (
+            <option key={category} value={category}>
+              {categoryName(category)}
+            </option>
+          ))}
+        </SelectPill>
+        <SelectPill
+          label="Статус"
+          icon={<Activity aria-hidden className="size-4 text-ink-muted" />}
+          value={statusFilter}
+          display={filterLabel(statusFilter, (value) => (value === "enabled" ? "Активен" : "Отключён"))}
+          onChange={withPageReset((value: string) => setStatusFilter(value as StatusFilter))}
+        >
+          <option value="">Все</option>
+          <option value="enabled">Активен</option>
+          <option value="disabled">Отключён</option>
+        </SelectPill>
+        <SelectPill
+          label="Severity"
+          icon={<SlidersHorizontal aria-hidden className="size-4 text-ink-muted" />}
+          value={severityFilter}
+          display={filterLabel(severityFilter, (value) => value)}
+          onChange={withPageReset(setSeverityFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {RULE_SEVERITIES.map((severity) => (
+            <option key={severity} value={severity}>
+              {severity}
+            </option>
+          ))}
+        </SelectPill>
       </div>
 
       <div
@@ -243,88 +317,7 @@ export function RulesList({ selectedId, detail }: Props) {
           detail && "xl:grid-cols-[minmax(0,1fr)_minmax(440px,520px)]",
         )}
       >
-        <div className={cn("flex min-w-0 flex-col gap-[18px]", detail && "order-2 xl:order-1")}>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="relative block min-w-[240px] flex-1">
-              <Search
-                aria-hidden="true"
-                className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => withPageReset(setSearch)(event.target.value)}
-                placeholder="Поиск по ID, названию, описанию, MITRE (например, T1059)"
-                aria-label="Поиск правил"
-                className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-              />
-            </label>
-            <Link
-              href={routes.ruleNew}
-              scroll={false}
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
-            >
-              <Plus className="size-4" />
-              Создать правило
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <SelectPill
-              label="Scope"
-              icon={<Layers aria-hidden className="size-4 text-ink-muted" />}
-              value={scopeFilter}
-              display={filterLabel(scopeFilter, scopeName)}
-              onChange={withPageReset(setScopeFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {scopeOptions.map((scope) => (
-                <option key={scope} value={scope}>
-                  {scopeName(scope)}
-                </option>
-              ))}
-            </SelectPill>
-            <SelectPill
-              label="Категория"
-              icon={<Grid2x2 aria-hidden className="size-4 text-ink-muted" />}
-              value={categoryFilter}
-              display={filterLabel(categoryFilter, categoryName)}
-              onChange={withPageReset(setCategoryFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {categoryOptions.map((category) => (
-                <option key={category} value={category}>
-                  {categoryName(category)}
-                </option>
-              ))}
-            </SelectPill>
-            <SelectPill
-              label="Статус"
-              icon={<Activity aria-hidden className="size-4 text-ink-muted" />}
-              value={statusFilter}
-              display={filterLabel(statusFilter, (value) => (value === "enabled" ? "Активен" : "Отключён"))}
-              onChange={withPageReset((value: string) => setStatusFilter(value as StatusFilter))}
-            >
-              <option value="">Все</option>
-              <option value="enabled">Активен</option>
-              <option value="disabled">Отключён</option>
-            </SelectPill>
-            <SelectPill
-              label="Severity"
-              icon={<SlidersHorizontal aria-hidden className="size-4 text-ink-muted" />}
-              value={severityFilter}
-              display={filterLabel(severityFilter, (value) => value)}
-              onChange={withPageReset(setSeverityFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {RULE_SEVERITIES.map((severity) => (
-                <option key={severity} value={severity}>
-                  {severity}
-                </option>
-              ))}
-            </SelectPill>
-          </div>
-
+        <div className={cn("flex min-w-0 flex-col gap-5", detail && "order-2 xl:order-1")}>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard icon={Layers} tone="blue" label="Всего правил" value={stats.total} loading={isPending} />
             <StatCard icon={CircleCheck} tone="green" label="Активные" value={stats.enabled} loading={isPending} />

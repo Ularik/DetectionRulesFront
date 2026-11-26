@@ -257,7 +257,7 @@ export function CorrelationRuleForm({
       className={cn(
         "@container flex flex-col",
         isPage
-          ? "mx-auto w-full max-w-[920px] gap-5"
+          ? "w-full gap-5"
           : "rounded-2xl border border-line bg-surface shadow-[0_8px_24px_-12px_rgba(15,23,42,0.08)]",
       )}
     >

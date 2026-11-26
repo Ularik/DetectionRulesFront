@@ -2,21 +2,12 @@ import { axiosApi } from "@/shared/api";
 import type {
   ApiAuditResponseType,
   AuditDetailType,
-  AuditParams,
   RuleAuditParams,
   ApiCorrelationAuditResponse,
   CorrelationAuditDetailType,
   CorrelationAuditParams,
 } from "../model/types";
-
-export async function fetchAudits(
-  params: AuditParams,
-): Promise<ApiAuditResponseType> {
-  const result = await axiosApi.get<ApiAuditResponseType>("/audits/", {
-    params,
-  });
-  return result.data;
-}
+import type { EngineAuditParams, EngineAuditType } from "../model/engineTypes";
 
 export async function fetchAudit(id: string): Promise<AuditDetailType> {
   const result = await axiosApi.get<AuditDetailType>(`/audits/${id}`);
@@ -79,5 +70,11 @@ export async function fetchCorrelationAudit(auditId: number): Promise<Correlatio
   const result = await axiosApi.get<CorrelationAuditDetailType>(
     `/audits/correlation-rules/${auditId}`,
   );
+  return result.data;
+}
+
+/** Журнал аудита движка: последние `size` записей, фильтры action / resource_type / resource_id */
+export async function fetchEngineAudits(params: EngineAuditParams): Promise<EngineAuditType[]> {
+  const result = await axiosApi.get<EngineAuditType[]>("/audits/engine", { params });
   return result.data;
 }

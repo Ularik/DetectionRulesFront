@@ -71,7 +71,7 @@ export function AuditDetails({ auditId }: { auditId: string }) {
   };
 
   return (
-    <div className="max-w-[900px] mx-auto space-y-6 py-6">
+    <div className="space-y-6">
       {/* Шапка с инфой о действии */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-4 pb-2">

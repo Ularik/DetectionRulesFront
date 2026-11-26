@@ -179,7 +179,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ sidebar/
    │  ├─ rules/ (группа: list, details)  correlation-rules/ (группа: list, details)
    │  ├─ suppression-rules/ (группа: list, details)
-   │  ├─ ioc-list/  ioc-details/  audit-list/  audit-details/
+   │  ├─ ioc-list/  ioc-details/  audit-details/  engine-audit/ (группа: journal)  engine-settings/ (группа: editor)
    │  ├─ incidents-table/  incident-details/  scenarios-list/  scenario-details/
    │  ├─ events-table/  event-details/
    │  └─ organizations-list/  organization-details/  mitre-techniques/ (список + карточка техники)
@@ -192,19 +192,20 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
    │  ├─ organization-upsert/  organization-delete/
    │  └─ mitre-sync/
    ├─ entities/
-   │  ├─ user/  rule/  correlation-rule/  suppression-rule/  ioc/
+   │  ├─ user/  rule/  correlation-rule/  suppression-rule/  ioc/  engine-config/
    │  ├─ incident/  scenario/  event/  organization/  audit/
    │  └─ mitre-technique/  attack-type/
    └─ shared/
       ├─ api/                    # axiosApi + interceptor 401
       ├─ config/                 # env (apiURL), routes, roleDashboardPaths, UserRole, theme
       ├─ ui/                     # shadcn, pagination, form (ArrayField, inputClass…), detail-fields, table-styles,
+      │                          # page-header (PageHeader, pageStackClass), search-input (SearchInput),
       │                          # filter-bar (поиск, «Добавить фильтр», чипы — для инцидентов и сценариев)
       └─ lib/                    # utils (cn), errors (getErrorMessage)
 ```
 
-Фильтров у списков правил и событий в UI нет, поэтому `rules-filter` и `events-filter` не созданы. Таблицы IoC и аудита — это
-презентационный UI сущностей (`entities/ioc/ui/IocTable`, `entities/audit/ui/AuditTable`), а не отдельные виджеты.
+Фильтров у списков правил и событий в UI нет, поэтому `rules-filter` и `events-filter` не созданы. Таблица IoC — это
+презентационный UI сущности (`entities/ioc/ui/IocTable`), а не отдельный виджет.
 
 ### 4.5. Шаблон слайса сущности
 
@@ -293,10 +294,11 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `scenario`        | `useScenarios`, `useScenario`, `useScenarioEvents` (`scenarioKeys`) | `SecurityScenario`, `ScenarioAggregateSchema`, `ScenarioQueryParams` | `page/size` |
 | `event`           | `useEvents`, `useEvent` (`eventKeys`)                            | `WazuhEvent`, `WazuhEventApiResponse`, `RawEventsQueryParamsSchema` | `page/size` |
 | `organization`    | `useOrganizations`, `useOrganization`, `useAgents` (`organizationKeys`) | `Organization`, `AgentType`, `OrganizationCreateUpdateType` | нет          |
-| `audit`           | `useAudits`, `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
+| `audit`           | `useAudit` (`auditKeys`)                            | `AuditType`, `AuditDetailType` (содержит `rule: RuleType`)     | `limit/offset`   |
 | `mitre-technique` | `useMitreTechniques`, `useMitreTechnique` (`mitreKeys`)          | `MitreTechnique`, `MitreSyncResponse`, `MitreType`; `getMitreTechniqueStatus`, `MitreStatusBadge` | нет (массив)     |
 | `source`          | `useSources`, `useSource`, `useSourceHealth`, `useSourceSampleEvents` (`sourceKeys`) | `SourceType`, `SourceCreateUpdateType`, `SourceHealthType`, `SourceSampleEventsType` | нет (`{items}`, фильтры на клиенте) |
 | `asset`           | `useAssets`, `useAsset` (`assetKeys`)                            | `Asset`, `AssetCreateUpdateType`, `AssetType`, `AssetCriticality`, `AssetEnvironment` | нет (`{items, count}`, фильтры и пагинация на клиенте) |
+| `data-quality`    | `useDataQualitySummary`, `useDataQualitySources`, `useDataQualitySource` (`dataQualityKeys`) | `DataQualityStats`, `DataQualitySummary`, `DataQualitySource`, `DataQualityParams`; `qualityPercent`, `getQualityLevel` | нет (фильтры `hours`, `organization_id`; таблица — на клиенте) |
 | `attack-type`     | `useAttackTypes`, `useAttackGroups` (`attackTypeKeys`)           | `AttackTypes`, `AttackGroupsResponseSchema`, `HuntingIpIncidentSchema` | `page/size`; total = `summary.incident_count` |
 
 Связи между сущностями оформлены через `@x`:
@@ -365,6 +367,13 @@ Steiger знает только стандартное имя слоя `pages`, 
 | POST   | `/sources/`                                    | создать                                   | features/source-upsert |
 | PUT    | `/sources/{id}`                                | обновить                                  | features/source-upsert |
 | DELETE | `/sources/{id}`                                | удалить                                   | features/source-delete |
+| GET    | `/data-quality/summary`                        | сводка good/warning/error, покрытие, top пропущенных полей и ошибок разбора (`hours`, `organization_id`, `source_id`, `profile_name`) | entities/data-quality |
+| GET    | `/data-quality/sources`                        | то же по каждому источнику (`{items, count}`; `__unresolved__` — события без источника) | entities/data-quality |
+| GET    | `/data-quality/sources/{id}`                   | статистика одного источника                | entities/data-quality |
+| GET    | `/engine-settings/`                            | `EngineSettingsResponseSchema` (настройки + `updated_by`, `updated_at`); `normalizeEngineSettings` дополняет отсутствующие поля значениями по умолчанию | entities/engine-config |
+| PUT    | `/engine-settings/`                            | полная замена `EngineSettingsSchema` → `{success, settings}` (кладётся в кэш); `updated_by` ставит backend | features/engine-settings/update |
+| POST   | `/engine-settings/validate`                    | проверка без сохранения → `{valid, settings}`; ошибки полей — 422 | features/engine-settings/update |
+| POST   | `/engine-settings/reset`                       | сброс к значениям по умолчанию → `{success, settings}` | features/engine-settings/reset |
 | GET    | `/assets/`                                     | реестр активов (`{items, count}`)         | entities/asset        |
 | GET    | `/assets/{id}`                                 | актив                                     | entities/asset        |
 | POST   | `/assets/`                                     | создать                                   | features/asset/upsert |
@@ -377,7 +386,7 @@ Steiger знает только стандартное имя слоя `pages`, 
 | POST   | `/normalization-profiles/`                     | создать (занятое имя → 500)               | features/normalization-profile/upsert |
 | PUT    | `/normalization-profiles/{name}`               | обновить                                  | features/normalization-profile/upsert |
 | DELETE | `/normalization-profiles/{name}`               | удалить (generic-профили нельзя)          | features/normalization-profile/delete |
-| GET    | `/audits/`                                     | журнал аудита                             | entities/audit        |
+| GET    | `/audits/engine`                               | журнал аудита движка: массив последних `size` записей (`EngineAuditSchema`: actor, role, action, resource_type/id, before/after, metadata), без total | entities/audit (`useEngineAudits`) |
 | GET    | `/audits/{id}`                                 | запись аудита (с правилом)                | entities/audit        |
 | GET    | `/audits/correlation-rules`                    | история всех правил корреляции (`action`, `author_id`, limit < 20) → `{total, has_next, items}` | entities/audit |
 | GET    | `/audits/correlation-rules/rule/{correlation_id}` | история одного правила корреляции (`action`) | entities/audit (`useCorrelationRuleAudits`) |
@@ -427,12 +436,14 @@ Steiger знает только стандартное имя слоя `pages`, 
 | `/admin/organizations`, `/new`, `/[organization_id]`, `/[organization_id]/edit` | `views/organization*` | «Организации» (раньше «Кампании»); как в MITRE: таблица в `app/(dashboard)/admin/organizations/layout.tsx` → `OrganizationsLayout`, карточка организации открывается справа по клику на строку; `/new` и `/[id]/edit` рендерятся без таблицы; id декодируется в route-файле |
 | `/admin/sources`, `/new`, `/[source_id]`, `/[source_id]/edit` | `views/source*` | «Источники» (макет `public/images/sources.jpeg`); таблица и фильтры в `app/(dashboard)/admin/sources/layout.tsx` → `SourcesLayout` → `widgets/sources/list`, карточка (`widgets/sources/details`) открывается справа; «Синхронизировать» — перезапрос `sourceKeys.all` (эндпоинта синхронизации нет), «Качество данных» — заполненность `detected_fields` по выборке `sample-events`; удаление — на странице редактирования; id декодируется в route-файле |
 | `/admin/normalization-profiles`, `/new[?copy=<name>]`, `/[profile_name]`, `/[profile_name]/edit` | `views/normalization-profile*` | «Профили нормализации» (макет `public/images/normalizations-profile.jpeg`); как «Источники»: таблица в layout → `widgets/normalization/list`, карточка (`widgets/normalization/details`) справа с вкладками «Сопоставление полей», «Тест профиля», «JSON-просмотр»; «Дублировать» — `/new?copy=<name>`; имя профиля при редактировании не меняется |
+| `/admin/data-quality` | `views/data-quality` | «Качество данных» (макет `public/images/data-quality.jpeg`); `widgets/data-quality/overview`: период (`hours`), счётчики, полосы good/warning/error по источникам, кольцо распределения, таблица источников (склеена со справочником `/sources`, источники без событий тоже видны), панель источника справа (Обзор / Поля / Ошибки). «Нормализовано» = good + warning, «Качество» = 100 − error %. Вкладка «Ошибки нормализации» — top пропусков и ошибок разбора из summary; «Профили нормализации» — ссылка на раздел. «Метрик», «Отчётов» и «Динамики качества» нет: у backend нет данных (временного ряда) |
 | `/admin/assets` | `views/assets` | «Активы» / Asset Inventory (макет `public/images/assets.jpeg`); одна страница: карточки-счётчики, фильтры, таблица (`widgets/assets/list`), создание и редактирование — диалог `AssetFormDialog` (`features/asset/upsert`), удаление из меню «⋯» строки и массово по чекбоксам, «Экспорт» — CSV отфильтрованного списка. «Требуют внимания» — включённые активы без организации или типа. ОС, ответственного и даты обновления в API нет — вместо них колонки «Среда» и «Теги» |
 | `/admin/normalization-fields` | `views/normalization-fields` | «Поля нормализации» — каталог `GET /normalization-profiles/fields` |
 | `/admin/rules`, `/new[?copy=<id>]`, `/[slug][?tab=test\|history]` | `views/rule*`       | «Правила обнаружения» — отдельный пункт сайдбара (макет `public/images/detect-rules.jpeg`); таблица, фильтры, счётчики и массовые действия в `app/(dashboard)/admin/rules/layout.tsx` → `RulesLayout` → `widgets/rules/list`; форма правила (`features/rule-upsert` → `RuleForm`, вкладки Основное/Условия/Классификация/MITRE/Тестирование) открывается справа и для `/new`, и для `/[slug]`; id декодируется в route-файле |
 | `/admin/correlation-rules`, `/new[?copy=<id>]`, `/[correlation_id][?tab=test\|history]` | `views/correlation-rule*` | «Правила корреляции» — отдельный пункт сайдбара (макет `public/images/correlation-rules.jpeg`); как «Правила обнаружения»: таблица в layout → `widgets/correlation-rules/list`, форма (`features/correlation-rule/upsert`, вкладки Основное/Условия/Действия/Тестирование/История) справа; id декодируется в route-файле |
 | `/admin/supers`, `/new[?copy=<id>]`, `/[suppression_id][?tab=test]` | `views/suppression-rule*` | «Правила подавления» (макет `public/images/suppression-rules.jpeg`); как «Правила корреляции»: таблица в `app/(dashboard)/admin/supers/layout.tsx` → `widgets/suppression-rules/list`, форма (`features/suppression-rule/upsert`, вкладки Основное/Условия/Действие/Тестирование) справа; id декодируется в route-файле |
-| `/admin/audit`, `/[id]`                      | `views/audit*`                 | «Администрирование» → аудит |
+| `/admin/audit`, `/[id]`                      | `views/audit*`                 | «Аудит: журнал действий» (макет `public/images/audit.jpeg`): `widgets/engine-audit/journal` над `GET /audits/engine`. Ответ без total, поэтому грузим последние N записей («Загружать»: 100–5000) и фильтруем (период, пользователь, действие, тип объекта, поиск), сортируем и листаем на клиенте. Панель справа — «Событие» и «Изменения (до / после)» (diff снимков `before`/`after`). Описание — из `metadata` или собирается по изменённым полям. Подписи действий и типов объектов — `entities/audit/config/engine.ts` (незнакомые значения выводятся как есть). Вкладка «Статистика» — распределения отфильтрованных записей. `/[id]` — старая страница записи аудита правила обнаружения (на неё ведёт история правила) |
+| `/admin/engine-settings` | `views/engine-settings` | «Настройки движка» (макет `public/images/engine.jpeg`): `widgets/engine-settings/editor` — форма по разделам Correlation / IOC Scoring / Asset Scoring / Decision / Attack Tracker (подписи, подсказки и ограничения min/max — `entities/engine-config/config/fields.ts`, из OpenAPI), справа «Информация о настройках» и «Описание параметров». Кнопки: «Сохранить изменения» (PUT), «Сбросить» (откат несохранённых правок), «Проверить» (validate), «Значения по умолчанию» (reset, с подтверждением), «Обновить из БД» (перезагрузка, заменяет правки). Сущность названа `engine-config`, потому что Steiger требует имена сущностей в единственном числе |
 | `/admin/testRule`                            | `views/test-rule`              | заглушка |
 | `/analyst`, `/viewer`                        | `views/analyst-home`, `views/viewer-home` | заглушки |
 
@@ -545,3 +556,9 @@ Steiger знает только стандартное имя слоя `pages`, 
 - Тексты UI пишутся на русском.
 - `"use client"` ставится только там, где нужны хуки или браузерные API.
 - Уведомления об успехе и ошибке мутаций показываются через `sonner` (`toast`) в feature, а не в entity.
+- Раскладка страниц дашборда единая: корневой элемент страницы — `pageStackClass` (`flex flex-col gap-5`), первым идёт
+  `PageHeader` (h1 `text-2xl` + обязательный подзаголовок, действия справа), сразу под ним — строка поиска
+  (`SearchInput` или `FilterSearch`, высота `h-11`) с кнопками создания, затем фильтры, карточки статистики и таблица.
+  Боковая панель карточки (сетка «таблица + панель») начинается под строкой поиска и фильтров — поиск и заголовок не
+  сужаются. Страницы и карточки занимают всю ширину `<main>`: без собственных `max-w-*`/`mx-auto`. Заголовок раздела в
+  `TopBar` не выводится, h1 рендерит только страница; заголовки карточек в боковой панели — h2.

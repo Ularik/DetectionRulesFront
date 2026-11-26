@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, ChevronsUpDown, EllipsisVertical, Eye, Pencil, Plus, Search } from "lucide-react";
+import { Building2, ChevronsUpDown, EllipsisVertical, Eye, Pencil, Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
+import { SearchInput } from "@/shared/ui/search-input";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
@@ -129,9 +131,11 @@ function RowActions({ organization }: { organization: Organization }) {
 type Props = {
   /** organization_id открытой организации: строка подсвечивается, таблица становится компактной */
   selectedId?: string | null;
+  /** Карточка организации — открывается справа от таблицы */
+  detail?: ReactNode;
 };
 
-export function OrganizationsList({ selectedId }: Props) {
+export function OrganizationsList({ selectedId, detail }: Props) {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -161,34 +165,30 @@ export function OrganizationsList({ selectedId }: Props) {
   };
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
-      <div className="flex flex-wrap items-center gap-x-[53px] gap-y-3">
-        <label className="relative block min-w-0 flex-1">
-          <Search
-            aria-hidden="true"
-            className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Поиск по организациям, алиасам, хостам ..."
-            aria-label="Поиск организаций"
-            className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-          />
-        </label>
+    <section className={pageStackClass}>
+      <PageHeader title="Организации" description="Организации, их агенты, хосты и псевдонимы" />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder="Поиск по организациям, алиасам, хостам ..."
+          label="Поиск организаций"
+        />
         <Link
           href={routes.organizationNew}
-          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand/10 px-3.5 text-sm whitespace-nowrap text-brand-light transition-colors hover:bg-brand/15"
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
         >
           <Plus className="size-4" />
-          Добавить Организацию
+          Добавить организацию
         </Link>
       </div>
 
+      <div className={cn("grid items-start gap-5", detail && "xl:grid-cols-[minmax(0,1fr)_422px]")}>
+      <div className={cn("min-w-0", detail && "order-2 xl:order-1")}>
       {isError ? (
         <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
           <p className="font-semibold text-ink">Не удалось загрузить список организаций</p>
@@ -307,6 +307,13 @@ export function OrganizationsList({ selectedId }: Props) {
           />
         </div>
       )}
+      </div>
+      {detail && (
+        <aside className="order-1 xl:sticky xl:top-5 xl:order-2 xl:max-h-[calc(100vh-40px)] xl:overflow-y-auto">
+          {detail}
+        </aside>
+      )}
+      </div>
     </section>
   );
 }

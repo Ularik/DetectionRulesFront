@@ -1,5 +1,6 @@
 import {
   Bell,
+  Cog,
   Crosshair,
   Database,
   GitMerge,
@@ -13,6 +14,7 @@ import {
   Filter,
   ScrollText,
   Server,
+  Gauge,
   ShieldAlert,
   Workflow,
 } from "lucide-react";
@@ -106,6 +108,11 @@ export const administrationMenu = {
       ],
     },
     {
+      label: "Качество данных",
+      href: routes.dataQuality,
+      icon: Gauge,
+    },
+    {
       label: "Активы",
       href: routes.assets,
       icon: Server,
@@ -114,6 +121,11 @@ export const administrationMenu = {
       label: "Аудит",
       href: routes.audit,
       icon: ScrollText,
+    },
+    {
+      label: "Настройки движка",
+      href: routes.engineSettings,
+      icon: Cog,
     },
   ] satisfies DashboardMenuItem[],
 };

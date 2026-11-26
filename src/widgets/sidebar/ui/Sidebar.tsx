@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import { routes } from "@/shared/config";
 import certKgLogo from "./cert-kg.svg";
 import {
@@ -149,7 +149,6 @@ export const Sidebar = () => {
               >
                 <AdminIcon className="size-6 shrink-0" strokeWidth={2} />
                 <span className="flex-1">{adminLabel}</span>
-                <ChevronRight aria-hidden className="size-4 shrink-0" />
               </button>
             </nav>
           </>

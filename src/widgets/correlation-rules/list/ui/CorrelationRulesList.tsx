@@ -16,7 +16,6 @@ import {
   Plus,
   Power,
   RefreshCw,
-  Search,
   ShieldAlert,
   SlidersHorizontal,
   SquarePen,
@@ -30,6 +29,8 @@ import { Button } from "@/shared/ui/button";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { SelectPill } from "@/shared/ui/select-pill";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
@@ -228,12 +229,82 @@ export function CorrelationRulesList({ selectedId, detail }: Props) {
   const columnCount = compact ? 7 : 10;
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
-      <div>
-        <h1 className="text-2xl font-semibold text-ink">Правила корреляции</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Настройка логики корреляции событий для выявления инцидентов безопасности
-        </p>
+    <section className={pageStackClass}>
+      <PageHeader
+        title="Правила корреляции"
+        description="Настройка логики корреляции событий для выявления инцидентов безопасности"
+      />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={withPageReset(setSearch)}
+          placeholder="Поиск по правилам (ID, описание, сценарий, последовательность, теги)"
+          label="Поиск правил корреляции"
+        />
+        <Link
+          href={routes.correlationRuleNew}
+          scroll={false}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
+        >
+          <Plus className="size-4" />
+          Создать правило
+        </Link>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SelectPill
+          label="Статус"
+          icon={<Activity aria-hidden className="size-4 text-ink-muted" />}
+          value={statusFilter}
+          display={filterLabel(statusFilter, (value) => (value === "enabled" ? "Активен" : "Отключён"))}
+          onChange={withPageReset((value: string) => setStatusFilter(value as StatusFilter))}
+        >
+          <option value="">Все</option>
+          <option value="enabled">Активен</option>
+          <option value="disabled">Отключён</option>
+        </SelectPill>
+        <SelectPill
+          label="Сценарий"
+          icon={<Workflow aria-hidden className="size-4 text-ink-muted" />}
+          value={scenarioFilter}
+          display={filterLabel(scenarioFilter, (value) => value)}
+          onChange={withPageReset(setScenarioFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {scenarioOptions.map((scenario) => (
+            <option key={scenario} value={scenario}>
+              {scenario}
+            </option>
+          ))}
+        </SelectPill>
+        <SelectPill
+          label="Критичность"
+          icon={<SlidersHorizontal aria-hidden className="size-4 text-ink-muted" />}
+          value={severityFilter}
+          display={filterLabel(
+            severityFilter,
+            (value) => CORRELATION_SEVERITY_LABELS[value as CorrelationSeverity] ?? value,
+          )}
+          onChange={withPageReset(setSeverityFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {CORRELATION_SEVERITIES.map((severity) => (
+            <option key={severity} value={severity}>
+              {CORRELATION_SEVERITY_LABELS[severity]}
+            </option>
+          ))}
+        </SelectPill>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          aria-label="Обновить список"
+          title="Обновить список"
+          className="ml-auto flex size-11 items-center justify-center rounded-xl border border-line bg-white text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:opacity-60"
+        >
+          <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
+        </button>
       </div>
 
       <div
@@ -242,87 +313,7 @@ export function CorrelationRulesList({ selectedId, detail }: Props) {
           detail && "xl:grid-cols-[minmax(0,1fr)_minmax(440px,520px)]",
         )}
       >
-        <div className={cn("flex min-w-0 flex-col gap-[18px]", detail && "order-2 xl:order-1")}>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="relative block min-w-[240px] flex-1">
-              <Search
-                aria-hidden="true"
-                className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => withPageReset(setSearch)(event.target.value)}
-                placeholder="Поиск по правилам (ID, описание, сценарий, последовательность, теги)"
-                aria-label="Поиск правил корреляции"
-                className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-              />
-            </label>
-            <Link
-              href={routes.correlationRuleNew}
-              scroll={false}
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
-            >
-              <Plus className="size-4" />
-              Создать правило
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <SelectPill
-              label="Статус"
-              icon={<Activity aria-hidden className="size-4 text-ink-muted" />}
-              value={statusFilter}
-              display={filterLabel(statusFilter, (value) => (value === "enabled" ? "Активен" : "Отключён"))}
-              onChange={withPageReset((value: string) => setStatusFilter(value as StatusFilter))}
-            >
-              <option value="">Все</option>
-              <option value="enabled">Активен</option>
-              <option value="disabled">Отключён</option>
-            </SelectPill>
-            <SelectPill
-              label="Сценарий"
-              icon={<Workflow aria-hidden className="size-4 text-ink-muted" />}
-              value={scenarioFilter}
-              display={filterLabel(scenarioFilter, (value) => value)}
-              onChange={withPageReset(setScenarioFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {scenarioOptions.map((scenario) => (
-                <option key={scenario} value={scenario}>
-                  {scenario}
-                </option>
-              ))}
-            </SelectPill>
-            <SelectPill
-              label="Критичность"
-              icon={<SlidersHorizontal aria-hidden className="size-4 text-ink-muted" />}
-              value={severityFilter}
-              display={filterLabel(
-                severityFilter,
-                (value) => CORRELATION_SEVERITY_LABELS[value as CorrelationSeverity] ?? value,
-              )}
-              onChange={withPageReset(setSeverityFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {CORRELATION_SEVERITIES.map((severity) => (
-                <option key={severity} value={severity}>
-                  {CORRELATION_SEVERITY_LABELS[severity]}
-                </option>
-              ))}
-            </SelectPill>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              aria-label="Обновить список"
-              title="Обновить список"
-              className="ml-auto flex size-11 items-center justify-center rounded-xl border border-line bg-white text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:opacity-60"
-            >
-              <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
-            </button>
-          </div>
-
+        <div className={cn("flex min-w-0 flex-col gap-5", detail && "order-2 xl:order-1")}>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard icon={Layers} tone="blue" label="Всего правил" value={stats.total} loading={isPending} />
             <StatCard icon={CircleCheck} tone="green" label="Активных" value={stats.enabled} loading={isPending} />

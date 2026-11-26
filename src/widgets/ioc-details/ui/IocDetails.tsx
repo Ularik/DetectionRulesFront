@@ -59,7 +59,7 @@ function IocContent({ ioc }: { ioc: IocType }) {
         <span className="flex h-[27px] min-w-[80px] shrink-0 items-center justify-center rounded-[5px] bg-[#0088ff]/35 px-2 text-sm font-semibold text-[#07519e]">
           {ioc.ioc_type}
         </span>
-        <h1 className="min-w-0 flex-1 text-sm font-semibold break-all text-[#1067c2]">{ioc.value}</h1>
+        <h2 className="min-w-0 flex-1 text-sm font-semibold break-all text-[#1067c2]">{ioc.value}</h2>
         <IocSeverityLabel severity={ioc.severity} className="hidden shrink-0 text-sm sm:flex" />
         <MarkIocViewedButton iocId={ioc.ioc_id} viewed={ioc.viewed} />
         <Link

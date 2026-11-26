@@ -247,7 +247,7 @@ export function SourceIpIncidents({
   if (variant === "modal") return card;
 
   return (
-    <main className="mx-auto max-w-7xl">
+    <div>
       <Button
         variant="ghost"
         onClick={() => router.push(routes.incidents)}
@@ -256,6 +256,6 @@ export function SourceIpIncidents({
         <ArrowLeft /> К списку инцидентов
       </Button>
       {card}
-    </main>
+    </div>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Download, Plus, Search, Server, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Plus, Server, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { useOrganizations } from "@/entities/organization";
 import {
@@ -66,7 +68,7 @@ function FilterSelect({
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-10 w-full cursor-pointer appearance-none rounded-xl border border-line bg-white pr-9 pl-3.5 text-sm text-ink outline-none focus:border-brand-light focus:ring-2 focus:ring-brand-light/20 sm:w-[160px]"
+          className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-line bg-white pr-9 pl-3.5 text-sm text-ink outline-none focus:border-brand-light focus:ring-2 focus:ring-brand-light/20 sm:w-[160px]"
         >
           {children}
         </select>
@@ -199,39 +201,50 @@ export function AssetsList() {
   const columnCount = 10;
 
   return (
-    <section className="flex min-w-0 flex-col gap-6">
-      <header className="space-y-1.5">
-        <h1 className="text-2xl font-semibold text-ink">
-          <span className="font-medium">Asset Inventory</span> — Реестр активов
-        </h1>
-        <p className="text-sm text-ink-muted">
-          Учёт информационных активов организаций, их параметры, критичность и статус.
-        </p>
-      </header>
-
-      <AssetStats
-        total={data ? assets.length : undefined}
-        active={data ? assets.filter((asset) => asset.enabled).length : undefined}
-        attention={data ? assets.filter(needsAttention).length : undefined}
-        inactive={data ? assets.filter((asset) => !asset.enabled).length : undefined}
+    <section className={pageStackClass}>
+      <PageHeader
+        title="Активы"
+        description="Учёт информационных активов организаций, их параметры, критичность и статус"
       />
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="relative block min-w-[240px] flex-[1_1_280px]">
-          <Search
-            aria-hidden="true"
-            className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => withPageReset(setSearch)(event.target.value)}
-            placeholder="Поиск по имени, IP, ID, хосту, тегам…"
-            aria-label="Поиск активов"
-            className="h-10 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-          />
-        </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={withPageReset(setSearch)}
+          placeholder="Поиск по имени, IP, ID, хосту, тегам…"
+          label="Поиск активов"
+        />
+        {selectedAssets.length > 0 && (
+          <button
+            type="button"
+            onClick={() => handleDelete(selectedAssets)}
+            disabled={isDeleting}
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold whitespace-nowrap text-red-600 transition-colors hover:bg-red-100 disabled:opacity-60"
+          >
+            <Trash2 className="size-4" />
+            Удалить ({selectedAssets.length})
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => exportAssetsCsv(filtered, organizationName)}
+          disabled={!filtered.length}
+          className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-surface-muted disabled:opacity-50"
+        >
+          <Download className="size-4 text-brand-light" />
+          Экспорт
+        </button>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#1677ff] px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand-light"
+        >
+          <Plus className="size-4" />
+          Добавить актив
+        </button>
+      </div>
 
+      <div className="flex flex-wrap items-end gap-3">
         <FilterSelect label="Организация" value={organizationFilter} onChange={withPageReset(setOrganizationFilter)}>
           <option value="">Все</option>
           {organizationOptions.map((organization) => (
@@ -269,38 +282,14 @@ export function AssetsList() {
           <option value="enabled">Активен</option>
           <option value="disabled">Неактивен</option>
         </FilterSelect>
-
-        <div className="flex flex-wrap items-center gap-3 2xl:ml-auto">
-          {selectedAssets.length > 0 && (
-            <button
-              type="button"
-              onClick={() => handleDelete(selectedAssets)}
-              disabled={isDeleting}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold whitespace-nowrap text-red-600 transition-colors hover:bg-red-100 disabled:opacity-60"
-            >
-              <Trash2 className="size-4" />
-              Удалить ({selectedAssets.length})
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => exportAssetsCsv(filtered, organizationName)}
-            disabled={!filtered.length}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-surface-muted disabled:opacity-50"
-          >
-            <Download className="size-4 text-brand-light" />
-            Экспорт
-          </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1677ff] px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand-light"
-          >
-            <Plus className="size-4" />
-            Добавить актив
-          </button>
-        </div>
       </div>
+
+      <AssetStats
+        total={data ? assets.length : undefined}
+        active={data ? assets.filter((asset) => asset.enabled).length : undefined}
+        attention={data ? assets.filter(needsAttention).length : undefined}
+        inactive={data ? assets.filter((asset) => !asset.enabled).length : undefined}
+      />
 
       {isError ? (
         <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
@@ -500,7 +489,7 @@ export function AssetsList() {
                   <select
                     value={pageSize}
                     onChange={(event) => withPageReset(setPageSize)(Number(event.target.value))}
-                    className="h-10 w-20 cursor-pointer appearance-none rounded-xl border border-line bg-white pr-8 pl-3.5 text-sm outline-none focus:border-brand-light"
+                    className="h-11 w-20 cursor-pointer appearance-none rounded-xl border border-line bg-white pr-8 pl-3.5 text-sm outline-none focus:border-brand-light"
                   >
                     {PAGE_SIZE_OPTIONS.map((option) => (
                       <option key={option} value={option}>

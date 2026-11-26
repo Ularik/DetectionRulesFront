@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { IocTable, useIocs } from "@/entities/ioc";
 import { routes } from "@/shared/config";
@@ -11,9 +13,11 @@ import { routes } from "@/shared/config";
 type Props = {
   /** ioc_id открытого IOC: таблица становится компактной, карточка показывается справа */
   selectedId?: string | null;
+  /** Карточка IOC — открывается справа от таблицы */
+  detail?: ReactNode;
 };
 
-export function IocList({ selectedId }: Props) {
+export function IocList({ selectedId, detail }: Props) {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(15);
   const { data, isPending, isFetching, error, refetch } = useIocs({ page, size });
@@ -22,18 +26,23 @@ export function IocList({ selectedId }: Props) {
   const compact = Boolean(selectedId);
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-ink">Threat Intelligence</h1>
-        <Link
-          href={routes.iocNew}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-light"
-        >
-          <Plus className="size-4" />
-          Добавить IOC
-        </Link>
-      </div>
+    <section className={cn(pageStackClass, "font-(family-name:--font-inter)")}>
+      <PageHeader
+        title="Threat Intelligence"
+        description="Индикаторы компрометации (IOC) из источников threat intelligence"
+        actions={
+          <Link
+            href={routes.iocNew}
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
+          >
+            <Plus className="size-4" />
+            Добавить IOC
+          </Link>
+        }
+      />
 
+      <div className={cn("grid items-start gap-5", detail && "xl:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]")}>
+      <div className={cn("min-w-0", detail && "order-2 xl:order-1")}>
       {error ? (
         <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
           <p className="font-semibold text-ink">Не удалось загрузить IOC</p>
@@ -64,6 +73,13 @@ export function IocList({ selectedId }: Props) {
           />
         </div>
       )}
+      </div>
+      {detail && (
+        <aside className="order-1 xl:sticky xl:top-5 xl:order-2 xl:max-h-[calc(100vh-40px)] xl:overflow-y-auto">
+          {detail}
+        </aside>
+      )}
+      </div>
     </section>
   );
 }

@@ -2,10 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Copy, ExternalLink } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
-import { routes } from "@/shared/config";
 import {
   INCIDENT_STATUS_LABELS,
   type Incident,
@@ -13,6 +11,7 @@ import {
 } from "@/entities/incident";
 import { IncidentStatusMenu } from "@/features/incident-change-status";
 import { IncidentArtifacts } from "./IncidentArtifacts";
+import { MitreTechniqueLink } from "./MitreTechniqueLink";
 
 // Вёрстка по фрейму «modal» макета CERT-KG SIEM (Figma 164:4587)
 
@@ -111,13 +110,13 @@ function MitreRow({ label, values }: { label: string; values: string[] }) {
           : values.map((value) => {
               const mitreId = value.match(MITRE_ID_PATTERN)?.[0];
               return mitreId ? (
-                <Link
+                <MitreTechniqueLink
                   key={value}
-                  href={routes.mitreTechnique(mitreId)}
+                  mitreId={mitreId}
                   className="text-[#0965c5] hover:underline"
                 >
                   {value}
-                </Link>
+                </MitreTechniqueLink>
               ) : (
                 <span key={value}>{value}</span>
               );
@@ -452,12 +451,12 @@ export function IncidentModalContent({ data }: { data: IncidentSchema }) {
                       >
                         <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#0965c5]" />
                         {mitreId ? (
-                          <Link
-                            href={routes.mitreTechnique(mitreId)}
+                          <MitreTechniqueLink
+                            mitreId={mitreId}
                             className="hover:underline"
                           >
                             {technique}
-                          </Link>
+                          </MitreTechniqueLink>
                         ) : (
                           technique
                         )}

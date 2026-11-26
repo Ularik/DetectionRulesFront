@@ -83,6 +83,8 @@ export const routes = {
     `/admin/normalization-profiles/${encodeURIComponent(name)}/edit`,
   normalizationFields: "/admin/normalization-fields",
   assets: "/admin/assets",
+  dataQuality: "/admin/data-quality",
+  engineSettings: "/admin/engine-settings",
   mitre: "/admin/mitre",
   mitreTechnique: (mitreId: string) =>
     `/admin/mitre/${encodeURIComponent(mitreId)}`,

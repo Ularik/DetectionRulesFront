@@ -2,7 +2,6 @@ export type {
   AuditType,
   AuditDetailType,
   ApiAuditResponseType,
-  AuditParams,
   RuleAuditParams,
   CorrelationAuditAction,
   CorrelationAuditType,
@@ -12,18 +11,18 @@ export type {
   CorrelationAuditDetailType,
   CorrelationAuditParams,
 } from "./model/types";
+export type { EngineAuditType, EngineAuditParams } from "./model/engineTypes";
 export {
-  fetchAudits,
   fetchAudit,
   fetchRuleAudits,
   fetchAllRuleAudits,
   fetchCorrelationAudits,
   fetchCorrelationRuleAudits,
   fetchCorrelationAudit,
+  fetchEngineAudits,
 } from "./api/auditApi";
 export { auditKeys } from "./api/queryKeys";
 export {
-  useAudits,
   useAudit,
   useRuleAudits,
   useRuleAuditVersion,
@@ -31,6 +30,23 @@ export {
   useCorrelationAudits,
   useCorrelationRuleAudits,
   useCorrelationAudit,
+  useEngineAudits,
 } from "./api/queries";
-export { AuditTable } from "./ui/AuditTable";
 export { AuditTimeline, AUDIT_ACTION_LABELS, normalizeAuditAction } from "./ui/AuditTimeline";
+export {
+  ENGINE_ACTION_LABELS,
+  ENGINE_RESOURCE_LABELS,
+  getEngineActionKind,
+  getEngineResourceLabel,
+  normalizeEngineResourceType,
+  type EngineActionKind,
+} from "./config/engine";
+export {
+  diffEngineAudit,
+  resolveEngineAction,
+  getEngineActionLabel,
+  describeEngineAudit,
+  formatAuditValue,
+  type EngineAuditChange,
+} from "./lib/engineAudit";
+export { EngineActionBadge } from "./ui/EngineActionBadge";

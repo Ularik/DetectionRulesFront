@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, FileSearch, SquarePlus } from "lucide-react";
 import Link from "next/link";
 import { PaginationControl } from "@/shared/ui/pagination";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { DateRangeFilter, PeriodBadge } from "@/shared/ui/filter-bar";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -96,8 +97,8 @@ export function EventsTable() {
   };
 
   return (
-    <section className="flex flex-col gap-[18px]">
-      <h1 className="sr-only">Raw data</h1>
+    <section className={pageStackClass}>
+      <PageHeader title="Raw data" description="Сырые события, поступающие от источников" />
 
       <EventsFilter filters={filters} onChange={handleFiltersChange} />
 

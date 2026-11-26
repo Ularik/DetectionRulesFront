@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ChevronDown, FileSearch, Search } from "lucide-react";
+import { ChevronDown, FileSearch } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
+import { SearchInput } from "@/shared/ui/search-input";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { cn } from "@/shared/lib/utils";
 import { getErrorMessage } from "@/shared/lib/errors";
@@ -64,9 +66,11 @@ const cellClass = "px-1.5 py-3 text-sm text-ink";
 type Props = {
   /** mitre_id открытой техники: строка подсвечивается, таблица становится компактной */
   selectedId?: string | null;
+  /** Карточка техники — открывается справа от таблицы */
+  detail?: ReactNode;
 };
 
-export function MitreTechniques({ selectedId }: Props) {
+export function MitreTechniques({ selectedId, detail }: Props) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(PAGE_SIZE);
@@ -92,30 +96,26 @@ export function MitreTechniques({ selectedId }: Props) {
   const columnCount = compact ? 5 : 6;
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
+    <section className={pageStackClass}>
+      <PageHeader title="MITRE ATT&CK" description="Справочник техник и тактик MITRE ATT&CK" />
+
       <div className="flex flex-wrap items-center gap-3">
-        <label className="relative block min-w-0 flex-1">
-          <Search
-            aria-hidden="true"
-            className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Поиск по ID, названию или описанию"
-            aria-label="Поиск техник MITRE"
-            className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-          />
-        </label>
+        <SearchInput
+          value={search}
+          onChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder="Поиск по ID, названию или описанию"
+          label="Поиск техник MITRE"
+        />
         {!compact && <SyncMitreButton sync={sync} />}
       </div>
 
       <SyncMitreStatus sync={sync} />
 
+      <div className={cn("grid items-start gap-5", detail && "xl:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]")}>
+      <div className={cn("min-w-0", detail && "order-2 xl:order-1")}>
       {query.isError ? (
         <div className="space-y-3 rounded-2xl border border-line bg-white py-16 text-center">
           <p className="font-semibold text-ink" role="alert">
@@ -251,6 +251,13 @@ export function MitreTechniques({ selectedId }: Props) {
           />
         </div>
       )}
+      </div>
+      {detail && (
+        <aside className="order-1 xl:sticky xl:top-5 xl:order-2 xl:max-h-[calc(100vh-40px)] xl:overflow-y-auto">
+          {detail}
+        </aside>
+      )}
+      </div>
     </section>
   );
 }

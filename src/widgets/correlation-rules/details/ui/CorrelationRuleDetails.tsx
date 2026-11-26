@@ -158,7 +158,7 @@ export function CorrelationRuleCreate({ copyFrom }: { copyFrom?: string }) {
       />
     );
   }
-  if (isPending) return <div className="mx-auto w-full max-w-[920px]"><PanelSkeleton /></div>;
+  if (isPending) return <PanelSkeleton />;
   if (error || !source) {
     return <PanelMessage title={`Не удалось загрузить правило ${copyFrom} для копирования`} />;
   }

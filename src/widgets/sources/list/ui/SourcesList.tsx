@@ -4,11 +4,13 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Layers, Plus, RefreshCw, Search } from "lucide-react";
+import { ChevronDown, Layers, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { SelectPill } from "@/shared/ui/select-pill";
 import { PaginationControl } from "@/shared/ui/pagination";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
@@ -115,24 +117,16 @@ export function SourcesList({ selectedId, detail }: Props) {
     value ? options[value] ?? value : "Все";
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
-      <h1 className="text-xl font-semibold text-ink">Источники</h1>
+    <section className={pageStackClass}>
+      <PageHeader title="Источники" description="Источники событий, подключённые к SOC Engine" />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="relative block min-w-[240px] flex-1">
-          <Search
-            aria-hidden="true"
-            className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => withPageReset(setSearch)(event.target.value)}
-            placeholder="Поиск по ID, названию, IP, хосту или описанию"
-            aria-label="Поиск источников"
-            className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-          />
-        </label>
+        <SearchInput
+          value={search}
+          onChange={withPageReset(setSearch)}
+          placeholder="Поиск по ID, названию, IP, хосту или описанию"
+          label="Поиск источников"
+        />
 
         <SelectPill
           label="Тип"

@@ -499,7 +499,7 @@ export function ScenarioDetails({ scenarioId }: ScenarioDetailProps) {
   }
 
   return (
-    <main className="mx-auto max-w-6xl">
+    <div>
       <ScenarioContent
         scenario={query.data.scenario}
         data={query.data}
@@ -514,6 +514,6 @@ export function ScenarioDetails({ scenarioId }: ScenarioDetailProps) {
         }}
         onToggleEvents={() => setEventsVisible((visible) => !visible)}
       />
-    </main>
+    </div>
   );
 }

@@ -185,7 +185,7 @@ function SourceContent({ source }: { source: SourceType }) {
         <SourceTag className="bg-[#8fcdf1]/60 px-2.5 text-sm leading-6 font-semibold text-[#1067c2]">
           {source.source_id}
         </SourceTag>
-        <h1 className="min-w-0 flex-1 text-base font-semibold break-words text-ink">{source.name}</h1>
+        <h2 className="min-w-0 flex-1 text-base font-semibold break-words text-ink">{source.name}</h2>
         <SourceStatusBadge enabled={source.enabled} />
         <Link
           href={routes.sources}

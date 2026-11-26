@@ -16,7 +16,7 @@ interface CopyButtonProps {
 
 // navigator.clipboard есть только в secure context (HTTPS/localhost); по обычному http
 // он undefined — тогда копируем через скрытый textarea и execCommand("copy")
-function copyToClipboard(text: string): Promise<void> {
+export function copyToClipboard(text: string): Promise<void> {
   if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
     return navigator.clipboard.writeText(text);
   }

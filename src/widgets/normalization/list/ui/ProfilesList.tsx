@@ -3,9 +3,11 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Copy, Eye, Layers, MoreHorizontal, Plus, Search, SquarePen, Shuffle } from "lucide-react";
+import { ChevronDown, Copy, Eye, Layers, MoreHorizontal, Plus, SquarePen, Shuffle } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
@@ -91,71 +93,57 @@ export function ProfilesList({ selectedId, detail }: Props) {
     .filter((profile) => !typeFilter || profile.source_type === typeFilter);
 
   return (
-    <section className="flex min-w-0 flex-col gap-5">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Профили нормализации</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Правила преобразования событий из разных источников в единую модель SOC Engine.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={routes.normalizationFields}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold text-ink transition-colors hover:bg-surface-muted"
+    <section className={pageStackClass}>
+      <PageHeader
+        title="Профили нормализации"
+        description="Правила преобразования событий из разных источников в единую модель SOC Engine"
+      />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Поиск по названию или описанию"
+          label="Поиск профилей"
+        />
+        <div className="relative flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-line bg-white pr-9 pl-3.5 text-sm text-ink focus-within:border-brand-light focus-within:ring-2 focus-within:ring-brand-light/20">
+          <span className="text-ink-muted">Тип источника:</span>
+          <span className={cn(typeFilter && "font-medium")}>
+            {typeFilter ? getProfileTypeLabel(typeFilter) : "Все"}
+          </span>
+          <ChevronDown aria-hidden className="pointer-events-none absolute right-3 size-4 text-ink-muted" />
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
+            aria-label="Фильтр: тип источника"
+            className="absolute inset-0 cursor-pointer appearance-none opacity-0"
           >
-            <Layers className="size-4" />
-            Поля нормализации
-          </Link>
-          <Link
-            href={routes.normalizationProfileNew}
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold text-white transition-colors hover:bg-brand"
-          >
-            <Plus className="size-4" />
-            Создать профиль
-          </Link>
+            <option value={ALL}>Все</option>
+            {typeOptions.map((type) => (
+              <option key={type} value={type}>
+                {getProfileTypeLabel(type)}
+              </option>
+            ))}
+          </select>
         </div>
-      </header>
+        <Link
+          href={routes.normalizationFields}
+          className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold text-ink transition-colors hover:bg-surface-muted"
+        >
+          <Layers className="size-4" />
+          Поля нормализации
+        </Link>
+        <Link
+          href={routes.normalizationProfileNew}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold text-white transition-colors hover:bg-brand"
+        >
+          <Plus className="size-4" />
+          Создать профиль
+        </Link>
+      </div>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex flex-wrap gap-3">
-            <label className="relative block min-w-[200px] flex-1">
-              <Search
-                aria-hidden
-                className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Поиск по названию или описанию"
-                aria-label="Поиск профилей"
-                className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-              />
-            </label>
-            <div className="relative flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-line bg-white pr-9 pl-3.5 text-sm text-ink focus-within:border-brand-light focus-within:ring-2 focus-within:ring-brand-light/20">
-              <span className="text-ink-muted">Тип источника:</span>
-              <span className={cn(typeFilter && "font-medium")}>
-                {typeFilter ? getProfileTypeLabel(typeFilter) : "Все"}
-              </span>
-              <ChevronDown aria-hidden className="pointer-events-none absolute right-3 size-4 text-ink-muted" />
-              <select
-                value={typeFilter}
-                onChange={(event) => setTypeFilter(event.target.value)}
-                aria-label="Фильтр: тип источника"
-                className="absolute inset-0 cursor-pointer appearance-none opacity-0"
-              >
-                <option value={ALL}>Все</option>
-                {typeOptions.map((type) => (
-                  <option key={type} value={type}>
-                    {getProfileTypeLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
           <h2 className="text-base font-semibold text-ink">
             Профили{data ? ` (${filtered.length})` : ""}
           </h2>

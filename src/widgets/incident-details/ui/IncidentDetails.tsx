@@ -526,7 +526,7 @@ export function IncidentDetails({ incidentId }: { incidentId: string }) {
   const router = useRouter();
 
   return (
-    <main className="mx-auto max-w-7xl">
+    <div>
       <Button
         variant="ghost"
         onClick={() => router.push(routes.incidents)}
@@ -536,6 +536,6 @@ export function IncidentDetails({ incidentId }: { incidentId: string }) {
       </Button>
 
       <IncidentDetailsBody incidentId={incidentId} />
-    </main>
+    </div>
   );
 }

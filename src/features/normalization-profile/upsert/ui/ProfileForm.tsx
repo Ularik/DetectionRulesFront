@@ -199,7 +199,7 @@ export function ProfileForm({
           <ArrowLeft className="h-4 w-4" />
           {backLabel}
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-2xl leading-8 font-semibold text-ink">{title}</h1>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-8 rounded-2xl border border-line bg-white p-6">

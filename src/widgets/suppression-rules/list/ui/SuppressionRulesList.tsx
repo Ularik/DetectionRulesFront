@@ -17,7 +17,6 @@ import {
   Plus,
   Power,
   RefreshCw,
-  Search,
   ShieldOff,
   SquarePen,
   Trash2,
@@ -29,6 +28,8 @@ import { Button } from "@/shared/ui/button";
 import { PaginationControl } from "@/shared/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { SelectPill } from "@/shared/ui/select-pill";
+import { SearchInput } from "@/shared/ui/search-input";
+import { PageHeader, pageStackClass } from "@/shared/ui/page-header";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/shared/config";
 import {
@@ -222,12 +223,79 @@ export function SuppressionRulesList({ selectedId, detail }: Props) {
   const columnCount = compact ? 6 : 8;
 
   return (
-    <section className="flex min-w-0 flex-col gap-[18px]">
-      <div>
-        <h1 className="text-2xl font-semibold text-ink">Правила подавления</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Настройка логики исключений и снижения ложных срабатываний
-        </p>
+    <section className={pageStackClass}>
+      <PageHeader
+        title="Правила подавления"
+        description="Настройка логики исключений и снижения ложных срабатываний"
+      />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={withPageReset(setSearch)}
+          placeholder="Поиск по правилам подавления (название, IP, тип атаки, категория, путь …)"
+          label="Поиск правил подавления"
+        />
+        <Link
+          href={routes.suppressionRuleNew}
+          scroll={false}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
+        >
+          <Plus className="size-4" />
+          Создать правило
+        </Link>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SelectPill
+          label="Статус"
+          icon={<Activity aria-hidden className="size-4 text-ink-muted" />}
+          value={statusFilter}
+          display={filterLabel(statusFilter, (value) => (value === "enabled" ? "Активно" : "Отключено"))}
+          onChange={withPageReset((value: string) => setStatusFilter(value as StatusFilter))}
+        >
+          <option value="">Все</option>
+          <option value="enabled">Активно</option>
+          <option value="disabled">Отключено</option>
+        </SelectPill>
+        <SelectPill
+          label="Тип"
+          icon={<Filter aria-hidden className="size-4 text-ink-muted" />}
+          value={typeFilter}
+          display={filterLabel(typeFilter, (value) => EXCLUSION_TYPE_LABELS[value as ExclusionType] ?? value)}
+          onChange={withPageReset(setTypeFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {EXCLUSION_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {EXCLUSION_TYPE_LABELS[type]}
+            </option>
+          ))}
+        </SelectPill>
+        <SelectPill
+          label="Attack type"
+          icon={<Globe aria-hidden className="size-4 text-ink-muted" />}
+          value={attackTypeFilter}
+          display={filterLabel(attackTypeFilter, (value) => value)}
+          onChange={withPageReset(setAttackTypeFilter)}
+        >
+          <option value={ALL}>Все</option>
+          {attackTypeOptions.map((attackType) => (
+            <option key={attackType} value={attackType}>
+              {attackType}
+            </option>
+          ))}
+        </SelectPill>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          aria-label="Обновить список"
+          title="Обновить список"
+          className="ml-auto flex size-11 items-center justify-center rounded-xl border border-line bg-white text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:opacity-60"
+        >
+          <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
+        </button>
       </div>
 
       <div
@@ -236,84 +304,7 @@ export function SuppressionRulesList({ selectedId, detail }: Props) {
           detail && "xl:grid-cols-[minmax(0,1fr)_minmax(440px,520px)]",
         )}
       >
-        <div className={cn("flex min-w-0 flex-col gap-[18px]", detail && "order-2 xl:order-1")}>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="relative block min-w-[240px] flex-1">
-              <Search
-                aria-hidden="true"
-                className="absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-ink-muted"
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => withPageReset(setSearch)(event.target.value)}
-                placeholder="Поиск по правилам подавления (название, IP, тип атаки, категория, путь …)"
-                aria-label="Поиск правил подавления"
-                className="h-11 w-full rounded-xl border border-line bg-white pr-3.5 pl-10 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-light focus:ring-2 focus:ring-brand-light/20"
-              />
-            </label>
-            <Link
-              href={routes.suppressionRuleNew}
-              scroll={false}
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-light px-4 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-brand"
-            >
-              <Plus className="size-4" />
-              Создать правило
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <SelectPill
-              label="Статус"
-              icon={<Activity aria-hidden className="size-4 text-ink-muted" />}
-              value={statusFilter}
-              display={filterLabel(statusFilter, (value) => (value === "enabled" ? "Активно" : "Отключено"))}
-              onChange={withPageReset((value: string) => setStatusFilter(value as StatusFilter))}
-            >
-              <option value="">Все</option>
-              <option value="enabled">Активно</option>
-              <option value="disabled">Отключено</option>
-            </SelectPill>
-            <SelectPill
-              label="Тип"
-              icon={<Filter aria-hidden className="size-4 text-ink-muted" />}
-              value={typeFilter}
-              display={filterLabel(typeFilter, (value) => EXCLUSION_TYPE_LABELS[value as ExclusionType] ?? value)}
-              onChange={withPageReset(setTypeFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {EXCLUSION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {EXCLUSION_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </SelectPill>
-            <SelectPill
-              label="Attack type"
-              icon={<Globe aria-hidden className="size-4 text-ink-muted" />}
-              value={attackTypeFilter}
-              display={filterLabel(attackTypeFilter, (value) => value)}
-              onChange={withPageReset(setAttackTypeFilter)}
-            >
-              <option value={ALL}>Все</option>
-              {attackTypeOptions.map((attackType) => (
-                <option key={attackType} value={attackType}>
-                  {attackType}
-                </option>
-              ))}
-            </SelectPill>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              aria-label="Обновить список"
-              title="Обновить список"
-              className="ml-auto flex size-11 items-center justify-center rounded-xl border border-line bg-white text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:opacity-60"
-            >
-              <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
-            </button>
-          </div>
-
+        <div className={cn("flex min-w-0 flex-col gap-5", detail && "order-2 xl:order-1")}>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard icon={Layers} tone="blue" label="Всего правил" value={stats.total} loading={isPending} />
             <StatCard icon={CircleCheck} tone="green" label="Активных" value={stats.enabled} loading={isPending} />
